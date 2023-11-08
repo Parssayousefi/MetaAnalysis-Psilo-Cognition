@@ -2,43 +2,66 @@
 # Data for Number of Attempted Trials is extracted from Figure S1
 
 # --------------------- Accuracy (From Figure S2) ---------------------
+# Function to calculate Cohen's d
+calculate_cohens_d <- function(median_diff, sd1, sd2) {
+  pooled_sd <- sqrt((sd1^2 + sd2^2) / 2)
+  cohens_d <- median_diff / pooled_sd
+  return(cohens_d)
+}
 
-# Post-treatment median and SD for accuracy
-# Placebo
-median_post_placebo_acc <- 98.2703  
-sd_post_placebo_acc <- (98.6486 - 96.9730) / 1.35  
+# Function to estimate SD from IQR
+estimate_sd_from_iqr <- function(iqr) {
+  sd <- iqr / 1.35
+  return(sd)
+}
 
-# 10mg Psilocybin
-median_post_10mg_acc <- 98.5946  
-sd_post_10mg_acc <- (100 - 96.8649) / 1.35  
+# Function to print Cohen's d
+print_cohens_d <- function(dose, time, cohens_d) {
+  print(paste("Cohen's d for", dose, "vs placebo (accuracy at", time, "):", cohens_d))
+}
 
-# 20mg Psilocybin
-median_post_20mg_acc <- 98.4324  
-sd_post_20mg_acc <- (100.00 - 96.3243) / 1.35  
+# Data for placebo and psilocybin groups (median and IQR)
+data <- list(
+  "2h" = list(
+    "placebo" = list(median = 0.9827, iqr = c(0.9697, 0.9864)),
+    "10mg" = list(median = 0.9859, iqr = c(0.9686, 1.00)),
+    "20mg" = list(median = 0.9843, iqr = c(0.9632, 1.00)),
+    "30mg" = list(median = 1.0000, iqr = c(0.89, 0.9987))
+  ),
+  "4h" = list(
+    "placebo" = list(median = 0.98, iqr = c(0.97, 1.00)),
+    "10mg" = list(median = 0.99, iqr = c(0.98, 1.00)),
+    "20mg" = list(median = 0.9839, iqr = c(0.9634, 1.00)),
+    "30mg" = list(median = 1.00, iqr = c(0.98, 1.00))
+  ),
+  "6h" = list(
+    "placebo" = list(median = 0.98, iqr = c(0.98, 1.00)),
+    "10mg" = list(median = 0.99, iqr = c(0.97, 1.00)),
+    "20mg" = list(median = 0.9833, iqr = c(0.9683, 1.00)),
+    "30mg" = list(median = 0.99, iqr = c(0.98, 1.00))
+  )
+)
 
-# 30mg Psilocybin
-median_post_30mg_acc <- 100.00  
-sd_post_30mg_acc <- (99.87 - 88.99) / 1.35  
+# Calculate and print Cohen's d for each dose and time point
+results <- list()
+for (time in names(data)) {
+  placebo_data <- data[[time]][["placebo"]]
+  placebo_sd <- estimate_sd_from_iqr(diff(unlist(placebo_data$iqr)))
+  
+  for (dose in c("10mg", "20mg", "30mg")) {
+    psilocybin_data <- data[[time]][[dose]]
+    psilocybin_sd <- estimate_sd_from_iqr(diff(unlist(psilocybin_data$iqr)))
+    median_diff <- psilocybin_data$median - placebo_data$median
+    
+    cohens_d <- calculate_cohens_d(median_diff, placebo_sd, psilocybin_sd)
+    results[[paste(dose, time, sep = "_")]] <- cohens_d
+    print_cohens_d(dose, time, cohens_d)
+  }
+}
 
-# median differences for accuracy
-median_diff_10mg_vs_placebo_acc <- median_post_10mg_acc - median_post_placebo_acc
-median_diff_20mg_vs_placebo_acc <- median_post_20mg_acc - median_post_placebo_acc
-median_diff_30mg_vs_placebo_acc <- median_post_30mg_acc - median_post_placebo_acc
+# The results are stored in a list for further processing if needed
+results
 
-# Pooled SD for accuracy
-pooled_sd_10mg_vs_placebo_acc <- sqrt((sd_post_placebo_acc^2 + sd_post_10mg_acc^2) / 2)
-pooled_sd_20mg_vs_placebo_acc <- sqrt((sd_post_placebo_acc^2 + sd_post_20mg_acc^2) / 2)
-pooled_sd_30mg_vs_placebo_acc <- sqrt((sd_post_placebo_acc^2 + sd_post_30mg_acc^2) / 2)
-
-# Cohen's d for accuracy
-cohens_d_10mg_vs_placebo_acc <- median_diff_10mg_vs_placebo_acc / pooled_sd_10mg_vs_placebo_acc
-cohens_d_20mg_vs_placebo_acc <- median_diff_20mg_vs_placebo_acc / pooled_sd_20mg_vs_placebo_acc
-cohens_d_30mg_vs_placebo_acc <- median_diff_30mg_vs_placebo_acc / pooled_sd_30mg_vs_placebo_acc
-
-# Print Cohen's d for accuracy
-print(paste("Cohen's d for 10mg vs placebo (accuracy): ", cohens_d_10mg_vs_placebo_acc))
-print(paste("Cohen's d for 20mg vs placebo (accuracy): ", cohens_d_20mg_vs_placebo_acc))
-print(paste("Cohen's d for 30mg vs placebo (accuracy): ", cohens_d_30mg_vs_placebo_acc))
 
 # --------------------- Number of Attempted Trials (From Figure S1) ---------------------
 
