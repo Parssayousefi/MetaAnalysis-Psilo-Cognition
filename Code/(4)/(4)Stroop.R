@@ -8,7 +8,7 @@ n <- length(unique(stroop_data$subject))
 print(n)
 
 #------RT-----#
-#positive values here mean increased RT
+#positive values mean increased RT
 
 # Function  Cohen's d
 calculate_cohens_d <- function(baseline_group, post_group) {
