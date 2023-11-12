@@ -3,7 +3,7 @@ This repository contains the data and code used in our analysis for the systemat
 
 Files and Folders
 1. Study_ID_Key.xlsx
-Description: This Excel file, named "Study_ID_Key", includes a comprehensive reference list of all the studies included in our analysis. Each study is associated with a unique ID that links to other relevant files and data in this repository.
+Description: This Excel file, named "Study_ID_Key", includes the reference of all the studies included in our analysis. Each study is associated with a unique ID that links to other relevant files and data in this repository.
 2. Overview_Studies.xlsx
 Description: The file "Overview_Studies" is a crucial component of our analysis. It contains all the extracted effect sizes from the individual studies that were part of our review. Additionally, this file includes detailed data that underlie the calculation of these effect sizes, providing a transparent view of our analytical process.
 3. Code Folder
