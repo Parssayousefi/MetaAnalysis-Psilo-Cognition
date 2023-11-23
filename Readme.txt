@@ -19,6 +19,6 @@ Description: The "ROB" file contains information regarding the risk of bias asse
 
 
 Additional Information
-Data Confidentiality: Please note that the data and scripts in this repository are confidential and should be used in accordance with the terms and conditions specified by our research team.
+Data Confidentiality: Please note that the data and scripts in this repository should be used in accordance with the terms and conditions specified by our research team.
 
 Contact Information: For any queries or further information, please contact Parsa Yousefi at p.yousefi@umail.leidenuniv.nl . 
