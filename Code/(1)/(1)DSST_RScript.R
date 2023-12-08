@@ -59,9 +59,6 @@ for (time in names(data)) {
   }
 }
 
-# The results are stored in a list for further processing if needed
-results
-
 
 # --------------------- Number of Attempted Trials (From Figure S1) ---------------------
 
