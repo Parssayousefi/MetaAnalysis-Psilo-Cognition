@@ -26,7 +26,6 @@ datafile <- "Overview_Studies.xlsx"
 data_low <- as.data.frame(read_excel(datafile, sheet= "Low Dose"))
 data_mid <- as.data.frame(read_excel(datafile, sheet= "Mid Dose"))
 data_high <- as.data.frame(read_excel(datafile, sheet= "High Dose"))
-
 # Combine datasets
 data <- rbind(data_low[,  c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)", "Dose range (Hi, Mid, Low, MD)", "PlotLabel", "DoseLabel")],
               data_mid[,  c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)", "Dose range (Hi, Mid, Low, MD)", "PlotLabel", "DoseLabel")],
