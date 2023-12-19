@@ -6,7 +6,8 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE)a
+library("rmarkdown")
 library('readxl')
 library('metafor')
 library("dplyr")
@@ -42,11 +43,14 @@ for (j in c(3,4,5,6,7))  data[,j] <- as.numeric(data[,j])
 #Multiverse variables
 multi_timepoint <- list(120, 180, 240, 360)
 multi_outlier <- list(2,3)
-for item in multi_timepoint:
-  for item in multi_outlier:
-data$timing                       <- 0
-data$timing[data[,7] > multi_timepoint]       <- 1 #post multi_timepoint coded as 1
+#for item in multi_timepoint:
+ # for item in multi_outlier:
+data$timing <- 0
+data$timing[data[,7] < 120] <- 0 # pre-peak coded as 0
+data$timing[data[,7] > 180] <- 2 # post-peak coded as 2
+data$timing[data[,7] >= 120 & data[,7] <= 180] <- 1 # for during peak (neither pre-peak nor post-peak), coded as 1
 ```
+
 
 ###nr of datapoints pre vs post
 
@@ -57,7 +61,7 @@ table(data$timing)
 ```{r}
 #code microdosing studies
 data$micro                        <- ifelse(data[,8]=="Micro", TRUE, FALSE)
-
+table(data$micro)
 #define dosage categories
 data$dosage_cat_3                 <- c(rep(1, times = nrow(data_low)),
                                        rep(2, times = nrow(data_mid)),
@@ -336,7 +340,7 @@ fsn(yi     = ES_final_RT,
 
 ```
 
-##Mdoeration: Pre vs psot peak
+##Mdoeration: Pre vs during vs post peak
 
 ```{r}
 (mod <- rma.mv(yi     = ES_final_RT, 
