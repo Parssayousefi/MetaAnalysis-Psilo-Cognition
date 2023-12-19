@@ -35,14 +35,16 @@ data <- rbind(data_low[,  c("ID", "CognitiveFunction", "N_final", "ES_final_RT",
 # preprocessing
 for (j in c(3,4,5,6,7))  data[,j] <- as.numeric(data[,j])
 
+for x in data[,]
+print(length(data))
 ```
 
 #define pre vs post peak
 
 ```{r}
 #Multiverse variables
-multi_timepoint <- list(120, 180, 240, 360)
-multi_outlier <- list(2,3)
+#multi_timepoint <- list(120, 180, 240, 360)
+#multi_outlier <- list(2,3)
 #for item in multi_timepoint:
  # for item in multi_outlier:
 data$timing <- 0
@@ -75,6 +77,7 @@ data <- data[,-c(8)]
 
 ```{r} 
 length(unique(data$ID))
+summary(data)
 ```
 
 ```{r}
@@ -113,6 +116,7 @@ nrow(data_RT)
 ```{r}
 #nr of unique studies in dataset
 length(table(data_RT$ID))
+table(data_RT$timing)
 ```
 
 ##Random Effect Models
