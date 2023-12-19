@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)a
+#knitr::opts_chunk$set(echo = TRUE)a
 library("rmarkdown")
 library('readxl')
 library('metafor')
@@ -35,8 +35,7 @@ data <- rbind(data_low[,  c("ID", "CognitiveFunction", "N_final", "ES_final_RT",
 # preprocessing
 for (j in c(3,4,5,6,7))  data[,j] <- as.numeric(data[,j])
 
-for x in data[,]
-print(length(data))
+
 ```
 
 #define pre vs post peak
@@ -57,13 +56,15 @@ data$timing[data[,7] >= 120 & data[,7] <= 180] <- 1 # for during peak (neither p
 ###nr of datapoints pre vs post
 
 ```{r}
-table(data$timing)                    
+str(data)                    
 ```
 
 ```{r}
 #code microdosing studies
-data$micro                        <- ifelse(data[,8]=="Micro", TRUE, FALSE)
+str(data)
+data$micro                        <- ifelse(data[,"Dose range (Hi, Mid, Low, MD)"]=="Micro", TRUE, FALSE)
 table(data$micro)
+
 #define dosage categories
 data$dosage_cat_3                 <- c(rep(1, times = nrow(data_low)),
                                        rep(2, times = nrow(data_mid)),
@@ -77,7 +78,7 @@ data <- data[,-c(8)]
 
 ```{r} 
 length(unique(data$ID))
-summary(data)
+length(data[,1])
 ```
 
 ```{r}
@@ -115,7 +116,7 @@ nrow(data_RT)
 
 ```{r}
 #nr of unique studies in dataset
-length(table(data_RT$ID))
+length(unique(data_RT$ID))
 table(data_RT$timing)
 ```
 
@@ -199,6 +200,7 @@ outlier_studies <- data_RT[outliers_indices, ]
 print(outlier_studies) 
 # Exclude these studies from the dataset
 data_RT_no_outliers <- data_RT[-outliers_indices, ]
+
 
 ```
 
