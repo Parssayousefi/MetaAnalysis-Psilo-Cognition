@@ -56,7 +56,7 @@ data$timing[data[,7] >= 120 & data[,7] <= 180] <- 1 # for during peak (neither p
 ###nr of datapoints pre vs post
 
 ```{r}
-str(data)                    
+table(data$timing)                    
 ```
 
 ```{r}
@@ -71,7 +71,7 @@ data$dosage_cat_3                 <- c(rep(1, times = nrow(data_low)),
                                        rep(3, times = nrow(data_high)))
 data$dosage_cat_2                 <- c(rep(1, times = nrow(data_low)),
                                        rep(2, times = (nrow(data_mid) + nrow(data_high))))
-data <- data[,-c(8)]
+data <- data %>% select(-`Dose range (Hi, Mid, Low, MD)`)
 ```
 
 #### this many unique studies in dataset
@@ -101,15 +101,18 @@ for (i in 1:nrow(data)) {
 ###dataset after completion
 
 ```{r}
-print(data)
+print(length(data[,1]))
 ```
 
 #Analysis for RT
 
 ```{r}
-sel_RT  <- !is.na(data$ES_final_RT)
-data_RT <- data[sel_RT,]
-
+#exclude microdosing
+data_no_md <- data[data$micro != TRUE, ]
+print(length(data_no_md[,1]))
+#select RT
+sel_RT  <- !is.na(data_no_md$ES_final_RT)
+data_RT <- data_no_md[sel_RT, ]
 # nr of ESs for RT measure
 nrow(data_RT)
 ```
@@ -192,14 +195,15 @@ ggplot(zresids, aes(x = ID, y = Residuals)) +
 
 ```{r}
 #outliers based on standardized residuals > multi_outlier
-outliers_indices <- which(abs(res_mod_all_ml$z) > multi_outlier) 
+outliers_indices <- which(abs(res_mod_all_ml$z) > 2) 
 # Extract the corresponding rows from the dataset
 outlier_studies <- data_RT[outliers_indices, ]
 
 # outlier studies
 print(outlier_studies) 
 # Exclude these studies from the dataset
-data_RT_no_outliers <- data_RT[-outliers_indices, ]
+#data_RT_no_outliers <- data_RT[-outliers_indices, ]
+data_RT_no_outliers <- data_RT
 
 
 ```
