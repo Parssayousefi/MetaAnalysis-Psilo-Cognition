@@ -21,35 +21,74 @@ datafile <- "Overview_Studies.xlsx"
 ###Data Preparation
 
 ```{r}
+# Load necessary library
+Read_Prepare <- function(datafile) {
+  
+  # Read and prepare data
+  data_low <- as.data.frame(read_excel(datafile, sheet = "Low Dose"))
+  data_mid <- as.data.frame(read_excel(datafile, sheet = "Mid Dose"))
+  data_high <- as.data.frame(read_excel(datafile, sheet = "High Dose"))
 
-# Read and prepare data
-data_low <- as.data.frame(read_excel(datafile, sheet= "Low Dose"))
-data_mid <- as.data.frame(read_excel(datafile, sheet= "Mid Dose"))
-data_high <- as.data.frame(read_excel(datafile, sheet= "High Dose"))
+  # Columns to select
+  cols_to_select <- c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", 
+                      "ES_final_other", "Timepoint (min)", "Dose range (Hi, Mid, Low, MD)", 
+                      "PlotLabel", "DoseLabel")
 
-# Combine datasets
-data <- rbind(data_low[,  c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)", "Dose range (Hi, Mid, Low, MD)", "PlotLabel", "DoseLabel")],
-              data_mid[,  c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)", "Dose range (Hi, Mid, Low, MD)", "PlotLabel", "DoseLabel")],
-              data_high[, c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)", "Dose range (Hi, Mid, Low, MD)", "PlotLabel", "DoseLabel")])
+  # Combine datasets
+  data <- rbind(data_low[, cols_to_select],
+                data_mid[, cols_to_select],
+                data_high[, cols_to_select])
 
-# preprocessing
-for (j in c(3,4,5,6,7))  data[,j] <- as.numeric(data[,j])
+  # preprocessing
+  numeric_cols <- c("N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)")
+  for (col in numeric_cols) {
+    if (col %in% colnames(data)) {
+      data[, col] <- as.numeric(data[, col])
+    }
+  }
+  
 
-
+  return(list(data = data, data_low = data_low, data_mid = data_mid, data_high = data_high))
+}
+datasets <- Read_Prepare(datafile)
+data <- datasets$data
+data_low <- datasets$data_low
+data_mid <- datasets$data_mid
+data_high <- datasets$data_high
 ```
 
 #define pre vs post peak
 
 ```{r}
-#Multiverse variables
-#multi_timepoint <- list(120, 180, 240, 360)
-#multi_outlier <- list(2,3)
-#for item in multi_timepoint:
- # for item in multi_outlier:
-data$timing <- 0
-data$timing[data[,7] < 120] <- 0 # pre-peak coded as 0
-data$timing[data[,7] > 180] <- 2 # post-peak coded as 2
-data$timing[data[,7] >= 120 & data[,7] <= 180] <- 1 # for during peak (neither pre-peak nor post-peak), coded as 1
+ClassifyTiming <- function(data, start_peak, stop_peak) {
+    # Ensure 'data' is a data frame
+    if(!is.data.frame(data)) {
+        stop("The 'data' argument must be a data frame.")
+    }
+
+    # Check if the "Timepoint (min)" column exists in the data frame
+    if(!"Timepoint (min)" %in% names(data)) {
+        stop("The data frame does not contain a 'Timepoint (min)' column.")
+    }
+
+    # Initialize the 'timing' column to 0
+    data$timing <- 0
+
+    # Retrieve the "Timepoint (min)" column
+    timepoint_col <- data[["Timepoint (min)"]]
+
+    # Classify as pre-peak (coded as 0)
+    data$timing[timepoint_col < start_peak] <- 0
+
+    # Classify as post-peak (coded as 2)
+    data$timing[timepoint_col > stop_peak] <- 2
+
+    # Classify as during peak (neither pre-peak nor post-peak, coded as 1)
+    data$timing[timepoint_col >= start_peak & timepoint_col <= stop_peak] <- 1
+
+    return(data)
+}
+data <- ClassifyTiming(data, start_peak=120,stop_peak = 180)
 ```
 
 
@@ -59,19 +98,44 @@ data$timing[data[,7] >= 120 & data[,7] <= 180] <- 1 # for during peak (neither p
 table(data$timing)                    
 ```
 
+### code dosage
 ```{r}
-#code microdosing studies
-str(data)
-data$micro                        <- ifelse(data[,"Dose range (Hi, Mid, Low, MD)"]=="Micro", TRUE, FALSE)
-table(data$micro)
+CodeDosage <- function(data, data_low = NULL, data_mid = NULL, data_high = NULL) {
+    # Check if 'data' is a data frame
+    if (!is.data.frame(data)) {
+        stop("The 'data' argument must be a data frame.")
+    }
 
-#define dosage categories
-data$dosage_cat_3                 <- c(rep(1, times = nrow(data_low)),
-                                       rep(2, times = nrow(data_mid)),
-                                       rep(3, times = nrow(data_high)))
-data$dosage_cat_2                 <- c(rep(1, times = nrow(data_low)),
-                                       rep(2, times = (nrow(data_mid) + nrow(data_high))))
-data <- data %>% select(-`Dose range (Hi, Mid, Low, MD)`)
+    # Assign default values to data_low, data_mid, and data_high if they are not provided
+    if (is.null(data_low) && exists("data_low")) {
+        data_low <- get("data_low")
+    }
+    if (is.null(data_mid) && exists("data_mid")) {
+        data_mid <- get("data_mid")
+    }
+    if (is.null(data_high) && exists("data_high")) {
+        data_high <- get("data_high")
+    }
+
+    # Code for microdosing studies
+    data$micro <- ifelse(data[,"Dose range (Hi, Mid, Low, MD)"] == "Micro", TRUE, FALSE)
+
+    # Check if dosage data frames exist before defining dosage categories
+    if (!is.null(data_low) && !is.null(data_mid) && !is.null(data_high)) {
+        data$dosage_cat_3 <- c(rep(1, times = nrow(data_low)),
+                               rep(2, times = nrow(data_mid)),
+                               rep(3, times = nrow(data_high)))
+        data$dosage_cat_2 <- c(rep(1, times = nrow(data_low)),
+                               rep(2, times = (nrow(data_mid) + nrow(data_high))))
+    }
+
+    # Remove the 'Dose range (Hi, Mid, Low, MD)' column
+    data <- dplyr::select(data, -`Dose range (Hi, Mid, Low, MD)`)
+
+    return(data)
+}
+data <- CodeDosage(data)
+
 ```
 
 #### this many unique studies in dataset
