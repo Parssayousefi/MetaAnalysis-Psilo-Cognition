@@ -145,21 +145,41 @@ length(unique(data$ID))
 length(data[,1])
 ```
 
+###add varaince of cohens d  to the dataset
 ```{r}
 # add the variance of the Cohen's d to the dataset
 # https://stats.stackexchange.com/questions/144084/variance-of-cohens-d-statistic
 # https://stats.stackexchange.com/questions/495015/what-is-the-formula-for-the-standard-error-of-cohens-d
-data$ES_var_RT         <- NA
-data$ES_var_ACC        <- NA
-data$ES_var_other      <- NA
-splitfactor            <- 2
-for (i in 1:nrow(data)) {
-  N_sum                <-  data$N_final[i] 
-  N_prod               <- (data$N_final[i]/splitfactor)*(data$N_final[i]/splitfactor)
-  data$ES_var_RT[i]    <- (N_sum / N_prod) + (data$ES_final_RT[i]^2 / (2*N_sum)) # or Vdrm=(1/n+drm2/2n)2(1-r) should r be known
-  data$ES_var_ACC[i]   <- (N_sum / N_prod) + (data$ES_final_ACC[i]^2 / (2*N_sum))
-  data$ES_var_other[i] <- (N_sum / N_prod) + (data$ES_final_other[i]^2 / (2*N_sum))
+AddCohensDVariance <- function(data) {
+    # Ensure 'data' is a data frame
+    if (!is.data.frame(data)) {
+        stop("The 'data' argument must be a data frame.")
+    }
+
+    # Initialize variance columns with NA
+    data$ES_var_RT <- NA
+    data$ES_var_ACC <- NA
+    data$ES_var_other <- NA
+
+    # Define split factor
+    splitfactor <- 2
+
+    # Loop through each row to calculate variances
+    for (i in 1:nrow(data)) {
+        N_sum <- data$N_final[i]
+        N_prod <- (data$N_final[i] / splitfactor) * (data$N_final[i] / splitfactor)
+        
+        # Calculating variance for each effect size
+        data$ES_var_RT[i] <- (N_sum / N_prod) + (data$ES_final_RT[i]^2 / (2 * N_sum))
+        data$ES_var_ACC[i] <- (N_sum / N_prod) + (data$ES_final_ACC[i]^2 / (2 * N_sum))
+        data$ES_var_other[i] <- (N_sum / N_prod) + (data$ES_final_other[i]^2 / (2 * N_sum))
+    }
+
+    return(data)
 }
+
+data <- AddCohensDVariance(data)
+
 ```
 
 ###dataset after completion
@@ -171,14 +191,20 @@ print(length(data[,1]))
 #Analysis for RT
 
 ```{r}
-#exclude microdosing
-data_no_md <- data[data$micro != TRUE, ]
-print(length(data_no_md[,1]))
-#select RT
-sel_RT  <- !is.na(data_no_md$ES_final_RT)
-data_RT <- data_no_md[sel_RT, ]
-# nr of ESs for RT measure
-nrow(data_RT)
+ExcludeMD <- function(data) {
+    # Ensure 'data' is a data frame
+    if (!is.data.frame(data)) {
+        stop("The 'data' argument must be a data frame.")
+    }
+
+    # Exclude microdosing
+    data_no_md <- data[data$micro != TRUE, ]
+
+    # Return the dataset without microdosing
+    return(data_no_md)
+}
+data_RT <- ExcludeMD(data)
+
 ```
 
 ```{r}
