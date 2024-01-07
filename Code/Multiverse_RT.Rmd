@@ -88,7 +88,9 @@ ClassifyTiming <- function(data, start_peak, stop_peak) {
 
     return(data)
 }
+
 data <- ClassifyTiming(data, start_peak=120,stop_peak = 180)
+
 ```
 
 
@@ -180,6 +182,20 @@ AddCohensDVariance <- function(data) {
 
 data <- AddCohensDVariance(data)
 
+#Exclude/include Microdosing
+ExcludeMD <- function(data) {
+    if (!is.data.frame(data)) {
+        stop("The 'data' argument must be a data frame.")
+    }
+
+    # Exclude microdosing
+    data_no_md <- data[data$micro != TRUE, ]
+
+    # Return the dataset without microdosing
+    return(data_no_md)
+}
+#data <- ExcludeMD(data)
+
 ```
 
 ###dataset after completion
@@ -191,19 +207,12 @@ print(length(data[,1]))
 #Analysis for RT
 
 ```{r}
-ExcludeMD <- function(data) {
-    # Ensure 'data' is a data frame
-    if (!is.data.frame(data)) {
-        stop("The 'data' argument must be a data frame.")
-    }
 
-    # Exclude microdosing
-    data_no_md <- data[data$micro != TRUE, ]
-
-    # Return the dataset without microdosing
-    return(data_no_md)
-}
-data_RT <- ExcludeMD(data)
+#select RT
+sel_RT  <- !is.na(data$ES_final_RT)
+data_RT <- data[sel_RT, ]
+# nr of ESs for RT measure
+nrow(data_RT)
 
 ```
 
@@ -230,18 +239,17 @@ X <- model.matrix(mod_all_ml)
 P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
 100 * sum(mod_all_ml$sigma2) / (sum(mod_all_ml$sigma2) + (mod_all_ml$k-mod_all_ml$p)/sum(diag(P)))
 
-
 ```
 
 ##outlier handling
 
 ```{r}
 #Residuals raw
-(res_mod_all_plain <- rstandard(mod_all_plain))  
+#(res_mod_all_plain <- rstandard(mod_all_plain))  
 ```
 
 ```{r}
-#residuals  standardized
+#residuals standardized
 
 (res_mod_all_ml    <- rstandard(mod_all_ml))
 ```
@@ -438,6 +446,9 @@ fsn(yi     = ES_final_RT,
                data   = data_RT_no_outliers))
 
 
+```
+```{r}
+print(unique(data_RT_no_outliers$CognitiveFunction))
 ```
 
 ##Mdoeration: Pre vs during vs post peak
