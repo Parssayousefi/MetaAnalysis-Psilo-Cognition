@@ -29,3 +29,4 @@ d <- cohens_d(df_merged$acc_diff)
 
 # Output the result
 print(d)
+
