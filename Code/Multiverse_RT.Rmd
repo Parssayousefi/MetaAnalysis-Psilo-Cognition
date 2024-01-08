@@ -214,7 +214,7 @@ sel_RT  <- !is.na(data$ES_final_RT)
 data_RT <- data[sel_RT, ]
 # nr of ESs for RT measure
 nrow(data_RT)
-print(data_RT[data_RT$ID == 11, ])
+print(data_RT)
 
 ```
 
@@ -227,20 +227,59 @@ table(data_RT$timing)
 ##Random Effect Models
 
 ```{r}
-#nested model
-mod_all_ml <- rma.mv(yi     = ES_final_RT,
-                     V      = ES_var_RT,
-                     random = ~ 1 | ID, 
-                     data   = data_RT)
-summary(mod_all_ml)
+# #nested model
+# mod_all_ml <- rma.mv(yi     = ES_final_RT,
+#                      V      = ES_var_RT,
+#                      random = ~ 1 | ID, 
+#                      data   = data_RT)
+# summary(mod_all_ml)
 
 
- ### UPDATED I^2 here #######
-W <- diag(1/mod_all_ml$vi)
-X <- model.matrix(mod_all_ml)
-P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
-100 * sum(mod_all_ml$sigma2) / (sum(mod_all_ml$sigma2) + (mod_all_ml$k-mod_all_ml$p)/sum(diag(P)))
+#  ### UPDATED I^2 here #######
+# W <- diag(1/mod_all_ml$vi)
+# X <- model.matrix(mod_all_ml)
+# P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
+# 100 * sum(mod_all_ml$sigma2) / (sum(mod_all_ml$sigma2) + (mod_all_ml$k-mod_all_ml$p)/sum(diag(P)))
 
+```
+
+
+```{r}
+multilevel_meta_RT <- function(data, 
+                                     effect_size_col = "ES_final_RT",
+                                     variance_col = "ES_var_RT",
+                                     id_col = "ID") {
+  # Ensure column names are in the data
+  if (!(effect_size_col %in% names(data)) || !(variance_col %in% names(data)) || !(id_col %in% names(data))) {
+    stop("One or more specified columns are not in the data frame.")
+  }
+  
+  # Dynamically create the formula for random effects
+  random_formula <- eval(parse(text = paste("~ 1 |", id_col)))
+  
+  # Fit the nested random-effects model
+  model <- rma.mv(yi = data[[effect_size_col]], 
+                  V = data[[variance_col]], 
+                  random = random_formula, 
+                  data = data)
+  
+
+  
+  # Calculate the updated I^2 statistic
+  W <- diag(1/model$vi)
+  X <- model.matrix(model)
+  P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
+  I2 <- 100 * sum(model$sigma2) / (sum(model$sigma2) + (model$k-model$p)/sum(diag(P)))
+  
+  # print the I^2 statistic
+  # Return the model
+  print("updated heterogeneity in %: (ignore model heterogenetiy!)")
+  print(I2)
+  return(model)
+  
+}
+
+multilevel_meta_RT(data = data_RT)
 ```
 
 ##outlier handling
@@ -292,7 +331,7 @@ ggplot(zresids, aes(x = ID, y = Residuals)) +
         labs(x = "ID", y = "Standardized Residuals", title = "Barplot of Standardized Residuals")
 
 ```
-
+###outlier handling
 ```{r}
 #outliers based on standardized residuals > multi_outlier
 outliers_indices <- which(abs(res_mod_all_ml$z) > 2) 
@@ -303,8 +342,8 @@ outlier_studies <- data_RT[outliers_indices, ]
 print(outlier_studies) 
 # Exclude these studies from the dataset
 #data_RT_no_outliers <- data_RT[-outliers_indices, ]
-data_RT_no_outliers <- data_RT
 
+data_RT_no_outliers <- data_RT
 
 ```
 
@@ -341,17 +380,25 @@ P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
 ##Forestplot no moderator
 
 ```{r}
-forest.rma(mod_all_ml_no_outliers,
-           #data        = data_RT_no_outliers, 
+
+slab_vector <- paste(data_RT_no_outliers$ID, 
+                     data_RT_no_outliers$PlotLabel, 
+                     data_RT_no_outliers$CognitiveFunction, 
+                     data_RT_no_outliers$DoseLabel, 
+                     data_RT_no_outliers$`Timepoint (min)`, 
+                     sep = '   ')
+
+forest.rma(multilevel_meta_RT(data = data_RT_no_outliers),
+           data        = data_RT_no_outliers, 
            header      = T,
            addfit      = T,
            showweights = T,
-           #addcrea     = T,
+           addcrea     = T,
            annotate    = T,
-           xlim        = c(-12, 10), 
+           xlim        = c(-17, 10), 
            col         = 'red',
            order       = order(data_RT_no_outliers$ID),
-           slab        = paste("(", data_RT_no_outliers$ID, ")",data_RT_no_outliers$PlotLabel, data_RT_no_outliers$CognitiveFunction, data_RT_no_outliers$DoseLabel, sep = '  '))
+           slab        = slab_vector)
 
 
 ```
@@ -378,20 +425,16 @@ ranktest(mod_all_ml_no_outliers)
 
 
 ```{r}
-fsn(yi     = ES_final_RT, 
-    vi     = ES_var_RT,
-    data   = data_RT_no_outliers,
-    type   = "Rosenthal")
-fsn(yi     = ES_final_RT,
-    vi     = ES_var_RT,
-    data   = data_RT_no_outliers,
-    type   = "Orwin",
-    target = 0.1)                    
-fsn(yi     = ES_final_RT,
-    vi     = ES_var_RT,
-    data   = data_RT_no_outliers,
-    type   = "Rosenberg")            # 252 needed to go down to non-sign ES
-
+fsn(x = data_RT$ES_final_RT, 
+    vi = data_RT$ES_var_RT, 
+    type = "Rosenthal")
+fsn(x = data_RT$ES_final_RT, 
+    vi = data_RT$ES_var_RT, 
+    type = "Orwin",
+    target = 0.1)
+fsn(x = data_RT$ES_final_RT, 
+    vi = data_RT$ES_var_RT, 
+    type = "Rosenberg")
 
 ```
 
@@ -421,6 +464,7 @@ fsn(yi     = ES_final_RT,
 
 
 ```
+
 
 
 
