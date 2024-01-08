@@ -22,23 +22,23 @@ print_cohens_d <- function(dose, time, cohens_d) {
 
 # Data for placebo and psilocybin groups (median and IQR)
 data <- list(
-  "2h" = list(
+  "120min" = list(
     "placebo" = list(median = 0.9827, iqr = c(0.9697, 0.9864)),
     "10mg" = list(median = 0.9859, iqr = c(0.9686, 1.00)),
     "20mg" = list(median = 0.9843, iqr = c(0.9632, 1.00)),
     "30mg" = list(median = 1.0000, iqr = c(0.89, 0.9987))
   ),
-  "4h" = list(
+  "240min" = list(
     "placebo" = list(median = 0.98, iqr = c(0.97, 1.00)),
-    "10mg" = list(median = 0.99, iqr = c(0.98, 1.00)),
-    "20mg" = list(median = 0.9839, iqr = c(0.9634, 1.00)),
-    "30mg" = list(median = 1.00, iqr = c(0.98, 1.00))
+    "10mg" = list(median = 0.99, iqr = c(0.981, 1.00)),
+    "20mg" = list(median = 0.9839, iqr = c(0.963, 1.00)),
+    "30mg" = list(median = 1.00, iqr = c(0.982, 1.00))
   ),
-  "6h" = list(
-    "placebo" = list(median = 0.98, iqr = c(0.98, 1.00)),
+  "360min" = list(
+    "placebo" = list(median = 0.98, iqr = c(0.983, 1.00)),
     "10mg" = list(median = 0.99, iqr = c(0.97, 1.00)),
     "20mg" = list(median = 0.9833, iqr = c(0.9683, 1.00)),
-    "30mg" = list(median = 0.99, iqr = c(0.98, 1.00))
+    "30mg" = list(median = 0.99, iqr = c(0.984, 1.00))
   )
 )
 
