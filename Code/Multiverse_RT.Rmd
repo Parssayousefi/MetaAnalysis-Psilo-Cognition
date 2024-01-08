@@ -181,7 +181,8 @@ AddCohensDVariance <- function(data) {
 }
 
 data <- AddCohensDVariance(data)
-
+```
+```{r}
 #Exclude/include Microdosing
 ExcludeMD <- function(data) {
     if (!is.data.frame(data)) {
@@ -213,6 +214,7 @@ sel_RT  <- !is.na(data$ES_final_RT)
 data_RT <- data[sel_RT, ]
 # nr of ESs for RT measure
 nrow(data_RT)
+print(data_RT[data_RT$ID == 11, ])
 
 ```
 
