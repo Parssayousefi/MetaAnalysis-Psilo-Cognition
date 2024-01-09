@@ -545,6 +545,46 @@ multilevel_meta(data = data_ACC,effect_size_col = "ES_final_ACC", variance_col =
 
 ```
 ```{r}
+#residuals  standardized
+
+(res_ACC    <- rstandard(mod_ACC))
+```
+# boxplot residuals
+
+```{r}
+data_for_plot <- data.frame(z = res_mod_all_ml$z, ID = data_ACC$ID)
+
+Q1 <- quantile(data_for_plot$z, 0.25)
+Q3 <- quantile(data_for_plot$z, 0.75)
+IQR <- Q3 - Q1
+outlier_threshold_lower <- Q1 - 1.5 * IQR
+outlier_threshold_upper <- Q3 + 1.5 * IQR
+
+data_for_plot$outlier <- data_for_plot$z < outlier_threshold_lower | data_for_plot$z > outlier_threshold_upper
+
+ggplot(data_for_plot, aes(x = "", y = z)) +
+    geom_boxplot() +
+    geom_text(data = filter(data_for_plot, outlier), aes(label = ID), nudge_y = 0.2) +
+    theme_gray() +
+    labs(y = "Z values", title = "Boxplot with Outliers Labeled")
+
+
+```
+# barplot residuals
+
+```{r}
+zresids <- data.frame(ID = data_ACC[,1], Residuals = rstandard(mod_ACC)$z)
+
+# Creating a horizontal barplot
+ggplot(zresids, aes(x = ID, y = Residuals)) +
+        geom_bar(stat = "identity", position = position_dodge()) +
+        coord_flip() +  # To make the barplot horizontal
+        theme_gray() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        labs(x = "ID", y = "Standardized Residuals", title = "Barplot of Standardized Residuals")
+
+```
+```{r}
 ranktest(mod_ACC)
 
 ```
