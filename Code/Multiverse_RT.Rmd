@@ -1,5 +1,5 @@
 ---
-title: "RRIP_s3648540_RT"
+title: "Meta Analysis Psilocybin Cognition"
 author: "Parsa Yousefi"
 date: "`r Sys.Date()`"
 output: html_document
@@ -98,6 +98,7 @@ data <- ClassifyTiming(data, start_peak=120,stop_peak = 180)
 
 ```{r}
 table(data$timing)                    
+
 ```
 
 ### code dosage
@@ -245,10 +246,7 @@ table(data_RT$timing)
 
 
 ```{r}
-multilevel_meta_RT <- function(data, 
-                                     effect_size_col = "ES_final_RT",
-                                     variance_col = "ES_var_RT",
-                                     id_col = "ID") {
+multilevel_meta <- function(data, effect_size_col,variance_col, id_col) {
   # Ensure column names are in the data
   if (!(effect_size_col %in% names(data)) || !(variance_col %in% names(data)) || !(id_col %in% names(data))) {
     stop("One or more specified columns are not in the data frame.")
@@ -279,7 +277,8 @@ multilevel_meta_RT <- function(data,
   
 }
 
-multilevel_meta_RT(data = data_RT)
+multilevel_meta(data = data_RT,effect_size_col = "ES_final_RT",variance_col = "ES_var_RT",id_col = "ID")
+
 ```
 
 ##outlier handling
@@ -377,7 +376,7 @@ P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
 
 ```
 
-##Forestplot no moderator
+##Forestplot
 
 ```{r}
 
@@ -388,7 +387,7 @@ slab_vector <- paste(data_RT_no_outliers$ID,
                      data_RT_no_outliers$`Timepoint (min)`, 
                      sep = '   ')
 
-forest.rma(multilevel_meta_RT(data = data_RT_no_outliers),
+forest.rma(multilevel_meta(data = data_RT_no_outliers),
            data        = data_RT_no_outliers, 
            header      = T,
            addfit      = T,
@@ -412,6 +411,8 @@ funnel(mod_all_ml_no_outliers,
        level            = c(95, 99), 
        shade            = c("white", "gray65"))
 
+
+print(length(unique(data_RT$ID)))
 ```
 
 ##Piublication Bias #nested model w.o outlier
@@ -465,11 +466,6 @@ fsn(yi     = ES_final_RT,
 
 ```
 
-
-
-
-
-
 ##Moderation ###by dosage:low vs mid vs high
 
 ```{r}
@@ -477,7 +473,7 @@ fsn(yi     = ES_final_RT,
                V      = ES_var_RT, 
                random = ~ 1 | ID, 
                mods   = ~factor(dosage_cat_3), 
-               data   = data_RT_no_outliers))
+               data   = data_RT))
 
 
 ```
@@ -489,7 +485,7 @@ fsn(yi     = ES_final_RT,
                V      = ES_var_RT, 
                random = ~ 1 | ID, 
                mods   = ~factor(dosage_cat_2), 
-               data   = data_RT_no_outliers))
+               data   = data_RT))
 
 
 ```
@@ -504,7 +500,7 @@ print(unique(data_RT_no_outliers$CognitiveFunction))
                V      = ES_var_RT, 
                random = ~ 1 | ID, 
                mods   = ~factor(timing), 
-               data   = data_RT_no_outliers))
+               data   = data_RT))
 
 
 
@@ -518,7 +514,7 @@ print(unique(data_RT_no_outliers$CognitiveFunction))
                V      = ES_var_RT, 
                random = ~ 1 | ID, 
                mods   = ~factor(CognitiveFunction), 
-               data   = data_RT_no_outliers))
+               data   = data_RT))
 
 
 ```
@@ -526,5 +522,80 @@ print(unique(data_RT_no_outliers$CognitiveFunction))
 #Analysis for Accuracy
 
 ```{r}
+#select ACC
+sel_ACC  <- !is.na(data$ES_final_ACC)
+data_ACC <- data[sel_ACC, ]
+# nr of ESs for RT measure
+nrow(data_ACC)
+#unique IDs
+length(unique(data_ACC$ID))
+```
 
+```{r}
+#nested model
+multilevel_meta(data = data_ACC,effect_size_col = "ES_final_ACC", variance_col = "ES_var_ACC", id_col = "ID")
+
+```
+```{r}
+(mod_ACC <- rma.mv(yi     = ES_final_ACC, 
+               V      = ES_var_ACC, 
+               random = ~ 1 | ID, 
+               data   = data_ACC))
+
+
+```
+```{r}
+ranktest(mod_ACC)
+
+```
+```{r}
+fsn(x = data_ACC$ES_final_ACC, 
+    vi = data_ACC$ES_var_ACC, 
+    type = "Rosenthal")
+fsn(x = data_ACC$ES_final_ACC, 
+    vi = data_ACC$ES_var_ACC, 
+    type = "Orwin",
+    target = 0.1)
+fsn(x = data_ACC$ES_final_ACC, 
+    vi = data_ACC$ES_var_ACC, 
+    type = "Rosenberg")
+```
+
+##Forestplot
+
+```{r}
+
+slab_vector <- paste(data_ACC$ID, 
+                     data_ACC$PlotLabel, 
+                     data_ACC$CognitiveFunction, 
+                     data_ACC$DoseLabel, 
+                     data_ACC$`Timepoint (min)`, 
+                     sep = '   ')
+
+forest.rma(mod_ACC,
+           data        = data_ACC, 
+           header      = T,
+           addfit      = T,
+           showweights = T,
+           addcrea     = T,
+           annotate    = T,
+           xlim        = c(-17, 10), 
+           col         = 'red',
+           order       = order(data_ACC$ID),
+           slab        = slab_vector)
+
+
+```
+
+#funnelplot ACC
+
+```{r}
+funnel(mod_ACC,
+       yaxis            = "vi",
+       legend           = T,
+       level            = c(95, 99), 
+       shade            = c("white", "gray65"))
+
+
+print(data_ACC$ES_final_ACC)
 ```
