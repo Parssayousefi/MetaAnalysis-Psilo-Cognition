@@ -465,7 +465,17 @@ fsn(yi     = ES_final_RT,
 
 
 ```
+```{r}
+#modified Eggers test to assess publication bias
+#trim and fill deosnt work on rma.mv
+mod_egger_RT <- rma.mv(yi = ES_final_RT, 
+                    V = ES_var_RT, 
+                    mods = ~ I(1/sqrt(ES_var_RT)), # precision as moderator
+                    random = ~ 1 | ID, 
+                    data = data_RT)
+summary(mod_egger)
 
+```
 ##Moderation ###by dosage:low vs mid vs high
 
 ```{r}
@@ -493,7 +503,7 @@ fsn(yi     = ES_final_RT,
 print(unique(data_RT_no_outliers$CognitiveFunction))
 ```
 
-##Mdoeration: Pre vs during vs post peak
+##Mdoeration RT: Pre vs during vs post peak
 
 ```{r}
 (mod <- rma.mv(yi     = ES_final_RT, 
@@ -502,12 +512,9 @@ print(unique(data_RT_no_outliers$CognitiveFunction))
                mods   = ~factor(timing), 
                data   = data_RT))
 
-
-
-
 ```
 
-##Mdoeration: Cognitive fucntion category
+##Mdoeration RT: Cognitive fucntion category
 
 ```{r}
 (mod <- rma.mv(yi     = ES_final_RT, 
@@ -520,7 +527,6 @@ print(unique(data_RT_no_outliers$CognitiveFunction))
 ```
 
 #Analysis for Accuracy
-
 ```{r}
 #select ACC
 sel_ACC  <- !is.na(data$ES_final_ACC)
@@ -638,4 +644,64 @@ funnel(mod_ACC,
 
 
 print(data_ACC$ES_final_ACC)
+```
+```{r}
+#modified Eggers test to assess publication bias
+#trim and fill deosnt work on rma.mv
+mod_egger_ACC <- rma.mv(yi = ES_final_ACC, 
+                    V = ES_var_ACC, 
+                    mods = ~ I(1/sqrt(ES_var_ACC)), # precision as moderator
+                    random = ~ 1 | ID, 
+                    data = data_ACC)
+summary(mod_egger)
+```
+
+
+##moderation analysis ACC
+##Moderation ###by dosage:low vs mid vs high
+
+```{r}
+(mod <- rma.mv(yi     = ES_final_RT, # low vs mid vs high
+               V      = ES_var_RT, 
+               random = ~ 1 | ID, 
+               mods   = ~factor(dosage_cat_3), 
+               data   = data_RT))
+
+
+```
+
+###by dosage:low vs mid & high
+
+```{r}
+(mod <- rma.mv(yi     = ES_final_RT, #low vs mid&high
+               V      = ES_var_RT, 
+               random = ~ 1 | ID, 
+               mods   = ~factor(dosage_cat_3), 
+               data   = data_RT))
+
+
+```
+
+##Mdoeration: Pre vs during vs post peak
+
+```{r}
+(mod <- rma.mv(yi     = ES_final_ACC, 
+               V      = ES_var_ACC, 
+               random = ~ 1 | ID, 
+               mods   = ~factor(timing), 
+               data   = data_ACC))
+
+
+```
+
+##Mdoeration: Cognitive fucntion category
+
+```{r}
+(mod <- rma.mv(yi     = ES_final_ACC, 
+               V      = ES_var_ACC, 
+               random = ~ 1 | ID, 
+               mods   = ~factor(CognitiveFunction), 
+               data   = data_ACC))
+
+
 ```
