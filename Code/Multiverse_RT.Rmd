@@ -17,7 +17,9 @@ source("https://raw.githubusercontent.com/talgalili/R-code-snippets/master/boxpl
 if (!require("remotes")) {
   install.packages("remotes")
 }
+remotes::install_github("guido-s/meta", ref = "R-book-first-edition")
 remotes::install_github("MathiasHarrer/dmetar")
+
 # Define data file
 datafile <- "Overview_Studies.xlsx"
 ```
