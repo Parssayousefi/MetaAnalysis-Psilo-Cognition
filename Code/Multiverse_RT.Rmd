@@ -14,6 +14,10 @@ library("dplyr")
 library("ggplot2")
 source("transform_functions.r")
 source("https://raw.githubusercontent.com/talgalili/R-code-snippets/master/boxplot.with.outlier.label.r")
+if (!require("remotes")) {
+  install.packages("remotes")
+}
+remotes::install_github("MathiasHarrer/dmetar")
 # Define data file
 datafile <- "Overview_Studies.xlsx"
 ```
@@ -40,7 +44,8 @@ Read_Prepare <- function(datafile) {
                 data_high[, cols_to_select])
 
   # preprocessing
-  numeric_cols <- c("N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)")
+  data$ES_ID <- seq_along(data[,1])
+  numeric_cols <- c("ES_ID","N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)")
   for (col in numeric_cols) {
     if (col %in% colnames(data)) {
       data[, col] <- as.numeric(data[, col])
@@ -55,6 +60,7 @@ data <- datasets$data
 data_low <- datasets$data_low
 data_mid <- datasets$data_mid
 data_high <- datasets$data_high
+
 ```
 
 #define pre vs post peak
@@ -246,13 +252,13 @@ table(data_RT$timing)
 
 
 ```{r}
-multilevel_meta <- function(data, effect_size_col,variance_col, id_col) {
+multilevel_meta <- function(data, effect_size_col,variance_col, id_col, print = FALSE) {
   # Ensure column names are in the data
   if (!(effect_size_col %in% names(data)) || !(variance_col %in% names(data)) || !(id_col %in% names(data))) {
     stop("One or more specified columns are not in the data frame.")
   }
   
-  # Dynamically create the formula for random effects
+  # formula for random effects
   random_formula <- eval(parse(text = paste("~ 1 |", id_col)))
   
   # Fit the nested random-effects model
@@ -271,27 +277,41 @@ multilevel_meta <- function(data, effect_size_col,variance_col, id_col) {
   
   # print the I^2 statistic
   # Return the model
-  print("updated heterogeneity in %: (ignore model heterogenetiy!)")
-  print(I2)
+  if (print) {
+  cat("Updated heterogeneity in % (ignore model heterogeneity!):\n", I2, "\n")
+}
+  
   return(model)
   
 }
 
 multilevel_meta(data = data_RT,effect_size_col = "ES_final_RT",variance_col = "ES_var_RT",id_col = "ID")
-
+head(data_RT)
 ```
-
+```{r}
+model <- rma.mv(yi = data_RT$ES_final_RT, 
+                V = data_RT$ES_var_RT, 
+                random = ~ 1 | ID/ES_ID, 
+                data = data_RT,
+                test = "t",
+                method = "REML"
+                )
+  
+summary(model)
+i2 <- var.comp(model)
+summary(i2)
+```
 ##outlier handling
 
 ```{r}
 #Residuals raw
-#(res_mod_all_plain <- rstandard(mod_all_plain))  
+(res_mod_all_plain <- residuals(multilevel_meta(data = data_RT,effect_size_col = "ES_final_RT",variance_col = "ES_var_RT",id_col = "ID")))  
 ```
 
 ```{r}
 #residuals standardized
 
-(res_mod_all_ml    <- rstandard(mod_all_ml))
+(res_mod_all_ml    <- rstandard(multilevel_meta(data = data_RT,effect_size_col = "ES_final_RT",variance_col = "ES_var_RT",id_col = "ID")))
 ```
 
 # boxplot residuals
@@ -319,7 +339,7 @@ ggplot(data_for_plot, aes(x = "", y = z)) +
 # barplot residuals
 
 ```{r}
-zresids <- data.frame(ID = data_RT[,1], Residuals = rstandard(mod_all_ml)$z)
+zresids <- data.frame(ID = data_RT[,1], Residuals = res_mod_all_ml$z)
 
 # Creating a horizontal barplot
 ggplot(zresids, aes(x = ID, y = Residuals)) +
@@ -340,8 +360,9 @@ outlier_studies <- data_RT[outliers_indices, ]
 # outlier studies
 print(outlier_studies) 
 # Exclude these studies from the dataset
-#data_RT_no_outliers <- data_RT[-outliers_indices, ]
 
+#data_RT_no_outliers <- data_RT[-outliers_indices, ]
+#or dont
 data_RT_no_outliers <- data_RT
 
 ```
