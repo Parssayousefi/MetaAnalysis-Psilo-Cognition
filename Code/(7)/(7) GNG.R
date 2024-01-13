@@ -4,10 +4,9 @@
 #within subject design
 # Function to convert eta squared to Cohen's d
 convert_eta2_to_cohen_d <- function(eta_squared) {
-  cohen_d <- sqrt((2 * eta_squared) / (1 - eta_squared))
+  cohen_d <- 2 * sqrt(eta_squared / (1 - eta_squared))
   return(cohen_d)
 }
-
 
 #---RT--#
 eta_squared_RT <- 0.378
