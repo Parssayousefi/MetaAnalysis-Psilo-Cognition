@@ -272,13 +272,24 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
         data <- data_RT
         effect_size_col <- "ES_final_RT"
         variance_col <- "ES_var_RT"
+        if(multilevel) {
+            plot_title <- "Forest and Funnel plot for the multilevel model of Reaction Times"
+        } else {
+            plot_title <- "Forest and Funnel plot for the random effects model of Reaction Times"
+        }
     } else if (ACC) {
         data <- data_ACC
         effect_size_col <- "ES_final_ACC"
         variance_col <- "ES_var_ACC"
+        if(multilevel) {
+            plot_title <- "Forest and Funnel plot for the multilevel model of Accuracy"
+        } else {
+            plot_title <- "Forest and Funnel plot for the random effects model of Accuracy"
+        }
     }
-    data <- data[order(data$ID), ]
 
+    data <- data[order(data$ID), ]
+    
     if(multilevel) {
         library(metafor)
 
@@ -295,19 +306,16 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
                         test = "t",
                         method = "REML",
                         sigma2 =  c(0, NA))
+    
+        print(summary(model_plain))
+        print(summary(model))
+        print(anova(model,model_plain))
+        I2 <- var.comp(model)
+        print(I2$results)
         
-    print(summary(model_plain))
-    print(summary(model))
-    print(anova(model,model_plain))
-    I2 <- var.comp(model)
-    print(I2$results)
-        
-
         if(plot) {
-            # Assuming transform_functions.r is correctly sourced and available
             source("transform_functions.r")
-
-            # Ensure I2 calculation function and plotting functions are available
+            par(mfrow=c(2,1))
             I2_plot <- print(I2$plot)
 
             data$cluster_change <- c(0, diff(data$ID))  
@@ -317,23 +325,23 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
 
             op <- par(tck=-.01, mgp=c(1.6, .2, 0), mar=c(3, 8, 1, 6))
 
-            forest <- forest(model,
+            forest(model,
                    slab = data$PlotLabel,
                    ilab = cbind(data$N_final, data$DoseLabel),
                    ilab.xpos = c(-3, -2),
                    cex = 0.9,
                    header = TRUE,
                    rows = rows,
-                   ylim = c(0.5, max(rows) + 4))
+                   ylim = c(0.5, max(rows) + 4),
+                   main = plot_title)
 
             abline(h = rows[data$cluster_change == 1] - 0.5, lty = 2)
 
             par(op)
-            #plot(forest)
+            funnel(model, main = plot_title)
         }
 
     } else {
-        # Ensure the 'metafor' package is loaded
         library(metafor)
 
         model <- rma(yi = data[[effect_size_col]], 
@@ -342,20 +350,31 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
                      method = "DL")
         print(summary(model))
         if(plot) {
+            par(mfrow=c(2,1))
             forest(model, 
                    slab = data$PlotLabel, 
-                   ilab = cbind(data$N_final, data$DoseLabel))
+                   ilab = cbind(data$N_final, data$DoseLabel),
+                   main = plot_title)
+            funnel(model, main = plot_title)
         }
     }
+    par(mfrow=c(1,1))  # Reset to default single plot layout
 
-    return(invisible(model))}
+    return(invisible(model))
+}
+
 
 # Calculate the updated I^2 statistic
   #W <- diag(1/model$vi)
   #X <- model.matrix(model)
   #P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
   #I2 <- 100 * sum(model$sigma2) / (sum(model$sigma2) + (model$k-model$p)/sum(diag(P)))
-calculate_meta(RT= TRUE, plot =TRUE, multilevel= TRUE)
+calculate_meta(ACC= TRUE, plot =TRUE, multilevel= TRUE)
+print(data_ACC$ES_final_ACC, sort = TRUE)
+```
+
+```{r}
+
 ```
 ##moderation
 ```{r}
