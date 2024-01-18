@@ -370,7 +370,7 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
   #P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
   #I2 <- 100 * sum(model$sigma2) / (sum(model$sigma2) + (model$k-model$p)/sum(diag(P)))
 calculate_meta(ACC= TRUE, plot =TRUE, multilevel= TRUE)
-print(data_ACC$ES_final_ACC, sort = TRUE)
+#print(data_ACC$ES_final_ACC, sort = TRUE)
 ```
 
 ```{r}
@@ -424,9 +424,9 @@ moderation_analysis( ACC = TRUE, moderation_var = "CognitiveFunction")
 
 ```
 
-#residuals plots function
+#outlier inspection function
 ```{r}
-calculate_residuals <- function(RT = FALSE, ACC = FALSE) {
+calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) {
     # Ensure that either RT or ACC is TRUE, but not both
     if (RT == TRUE && ACC == TRUE) {
         stop("Only one of RT or ACC should be TRUE")
@@ -447,6 +447,7 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE) {
     # Determine the appropriate dataset for the ID
     data_for_ID <- if (RT) data_RT else data_ACC
 
+    
     # Set up the plotting area
     par(mfrow=c(1,2))
 
@@ -457,7 +458,7 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE) {
         theme_gray() +
         labs(y = "Z values", title = "Boxplot of Standardized Residuals")
 
-    print(boxplot)
+
 
     # Barplot
     data_for_barplot <- data.frame(ID = data_for_ID$ID, Residuals = res_mod_all_ml$z)
@@ -467,24 +468,22 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE) {
         theme_gray() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
         labs(x = "ID", y = "Standardized Residuals", title = "Barplot of Standardized Residuals")
-
-    print(barplot)
-
-    # Reset to default single plot layout
-    par(mfrow=c(1,1))
-
+    #display
+    library(gridExtra)
+    grid_arrangement <- grid.arrange(boxplot, barplot, ncol = 1)
+    print(grid_arrangement)
     #outlier handling:
     #outliers based on standardized residuals > multi_outlier
-    outliers_indices <- which(abs(res_mod_all_ml$z) > 2) 
+    outliers_indices <- which(abs(res_mod_all_ml$z) > outlier_threshold) 
     # Extract the corresponding rows from the dataset
     outlier_studies <- data_for_ID[outliers_indices, ]
 
-# outlier studies
+    # outlier studies
     print(outlier_studies)
     return(invisible(res_mod_all_ml))
 }
 
-calculate_residuals(ACC= TRUE)
+calculate_residuals(ACC= TRUE, outlier_threshold = 2)
 
 ```
 
