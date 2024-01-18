@@ -12,7 +12,7 @@ output: html_document
 #install.packages("metafor")
 #install.packages("meta")
 #install.packages("dplyr")
-install.packages("gridExtra")
+#install.packages("gridExtra")
 
 library("rmarkdown")
 library('readxl')
@@ -221,7 +221,7 @@ ExcludeMD <- function(data) {
 print(length(data[,1]))
 ```
 
-#ACC RT dataset selection
+#ACC & RT dataset selection
 
 ```{r}
 #select RT
@@ -421,6 +421,9 @@ moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
 }
 #possible moderators: CognitiveFunction. dosage_cat_3, dosage_cat_2, timing
 moderation_analysis( ACC = TRUE, moderation_var = "CognitiveFunction")
+moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_3")#low vs mid vs high
+moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_2")#low vs mid & high
+moderation_analysis( ACC = TRUE, moderation_var = "timing")
 
 ```
 
@@ -489,18 +492,6 @@ calculate_residuals(ACC= TRUE, outlier_threshold = 2)
 
 ###outlier handling function
 ```{r}
-#outliers based on standardized residuals > multi_outlier
-outliers_indices <- which(abs(res_mod_all_ml$z) > 2) 
-# Extract the corresponding rows from the dataset
-outlier_studies <- data_RT[outliers_indices, ]
-
-# outlier studies
-print(outlier_studies) 
-# Exclude these studies from the dataset
-
-#data_RT_no_outliers <- data_RT[-outliers_indices, ]
-#or dont
-#data_RT_no_outliers <- data_RT
 
 ```
 
