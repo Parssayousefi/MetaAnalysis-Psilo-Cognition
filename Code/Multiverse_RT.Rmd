@@ -448,7 +448,6 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE) {
     data_for_ID <- if (RT) data_RT else data_ACC
 
     # Set up the plotting area
-    par(mfrow=c(1,1))
     par(mfrow=c(1,2))
 
     # Boxplot
@@ -478,11 +477,11 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE) {
     #outliers based on standardized residuals > multi_outlier
     outliers_indices <- which(abs(res_mod_all_ml$z) > 2) 
     # Extract the corresponding rows from the dataset
-    outlier_studies <- data_selected[outliers_indices, ]
+    outlier_studies <- data_for_ID[outliers_indices, ]
 
 # outlier studies
-    print(outlier_studies) 
-    return(res_mod_all_ml)
+    print(outlier_studies)
+    return(invisible(res_mod_all_ml))
 }
 
 calculate_residuals(ACC= TRUE)
