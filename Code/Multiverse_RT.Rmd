@@ -490,7 +490,7 @@ calculate_residuals(ACC= TRUE, outlier_threshold = 2)
 
 ```
 
-###outlier handling function
+
 ```{r}
 
 ```
