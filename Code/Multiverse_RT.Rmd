@@ -426,7 +426,7 @@ moderation_analysis( ACC = TRUE, moderation_var = "CognitiveFunction")
 
 #residuals plots function
 ```{r}
-plot_residuals <- function(RT = FALSE, ACC = FALSE, plot_type = "barplot") {
+calculate_residuals <- function(RT = FALSE, ACC = FALSE) {
     # Ensure that either RT or ACC is TRUE, but not both
     if (RT == TRUE && ACC == TRUE) {
         stop("Only one of RT or ACC should be TRUE")
@@ -437,53 +437,56 @@ plot_residuals <- function(RT = FALSE, ACC = FALSE, plot_type = "barplot") {
     # Select the appropriate data based on RT or ACC
     data_selected <- if (RT) {
         calculate_meta(RT = TRUE, plot = FALSE, multilevel = TRUE)
-    } else {
+    } else if (ACC) {
         calculate_meta(ACC = TRUE, plot = FALSE, multilevel = TRUE)
     }
-    #standardized residuals
+    
+    # Standardized residuals
     res_mod_all_ml <- rstandard(data_selected)
-    # raw residuals
     res_mod_all_plain <- residuals(data_selected)
-
     # Determine the appropriate dataset for the ID
     data_for_ID <- if (RT) data_RT else data_ACC
 
-    # Plotting
-    if (plot_type == "boxplot") {
-        # Boxplot code
-        data_for_plot <- data.frame(z = res_mod_all_ml$z, ID = data_for_ID$ID)
+    # Set up the plotting area
+    par(mfrow=c(1,1))
+    par(mfrow=c(1,2))
 
-        Q1 <- quantile(data_for_plot$z, 0.25)
-        Q3 <- quantile(data_for_plot$z, 0.75)
-        IQR <- Q3 - Q1
-        outlier_threshold_lower <- Q1 - 1.5 * IQR
-        outlier_threshold_upper <- Q3 + 1.5 * IQR
+    # Boxplot
+    data_for_boxplot <- data.frame(z = res_mod_all_ml$z, ID = data_for_ID$ID)
+    boxplot <- ggplot(data_for_boxplot, aes(x = "", y = z)) +
+        geom_boxplot() +
+        theme_gray() +
+        labs(y = "Z values", title = "Boxplot of Standardized Residuals")
 
-        data_for_plot$outlier <- data_for_plot$z < outlier_threshold_lower | data_for_plot$z > outlier_threshold_upper
+    print(boxplot)
 
-        ggplot(data_for_plot, aes(x = "", y = z)) +
-            geom_boxplot() +
-            geom_text(data = dplyr::filter(data_for_plot, outlier), aes(label = ID), nudge_y = 0.2) +
-            theme_gray() +
-            labs(y = "Z values", title = "Boxplot with Outliers Labeled")
+    # Barplot
+    data_for_barplot <- data.frame(ID = data_for_ID$ID, Residuals = res_mod_all_ml$z)
+    barplot <- ggplot(data_for_barplot, aes(x = ID, y = Residuals)) +
+        geom_bar(stat = "identity", position = position_dodge()) +
+        coord_flip() +  # To make the barplot horizontal
+        theme_gray() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        labs(x = "ID", y = "Standardized Residuals", title = "Barplot of Standardized Residuals")
 
-    } else if (plot_type == "barplot") {
-        # Barplot code
-        data_for_barplot <- data.frame(ID = data_for_ID$ID, Residuals = res_mod_all_ml$z)
+    print(barplot)
 
-        ggplot(data_for_barplot, aes(x = ID, y = Residuals)) +
-            geom_bar(stat = "identity", position = position_dodge()) +
-            coord_flip() +  # To make the barplot horizontal
-            theme_gray() +
-            theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-            labs(x = "ID", y = "Standardized Residuals", title = "Barplot of Standardized Residuals")
-    } else {
-        stop("Invalid plot type. Choose either 'barplot' or 'boxplot'.")
-    }
-    return(invisible(res_mod_all_ml))
+    # Reset to default single plot layout
+    par(mfrow=c(1,1))
+
+    #outlier handling:
+    #outliers based on standardized residuals > multi_outlier
+    outliers_indices <- which(abs(res_mod_all_ml$z) > 2) 
+    # Extract the corresponding rows from the dataset
+    outlier_studies <- data_selected[outliers_indices, ]
+
+# outlier studies
+    print(outlier_studies) 
+    return(res_mod_all_ml)
 }
-plot_residuals(ACC= TRUE,plot_type = "boxplot" )
-head(data_RT)
+
+calculate_residuals(ACC= TRUE)
+
 ```
 
 ###outlier handling function
