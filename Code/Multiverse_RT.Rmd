@@ -568,7 +568,7 @@ print(length(unique(data_RT$ID)))
 
 ```{r}
 
-ranktest(mod_all_ml_no_outliers)
+ranktest(calculate_meta(RT = TRUE, plot =FALSE, multilevel = TRUE))
 ```
 
 #fail safe numbers w.o outlier
@@ -622,7 +622,7 @@ mod_egger_RT <- rma.mv(yi = ES_final_RT,
                     mods = ~ I(1/sqrt(ES_var_RT)), # precision as moderator
                     random = ~ 1 | ID, 
                     data = data_RT)
-summary(mod_egger)
+summary(mod_egger_RT)
 
 ```
 ##Moderation ###by dosage:low vs mid vs high
@@ -805,48 +805,3 @@ mod_egger_ACC <- rma.mv(yi = ES_final_ACC,
 summary(mod_egger)
 ```
 
-
-##moderation analysis ACC
-##Moderation ###by dosage:low vs mid vs high
-
-```{r}
-(mod <- rma.mv(yi     = ES_final_RT, # low vs mid vs high
-               V      = ES_var_RT, 
-               random = ~ 1 | ID, 
-               mods   = ~factor(dosage_cat_3), 
-               data   = data_RT))
-
-
-```
-
-###by dosage:low vs mid & high
-
-```{r}
-(mod <- rma.mv(yi     = ES_final_RT, #low vs mid&high
-               V      = ES_var_RT, 
-               random = ~ 1 | ID, 
-               mods   = ~factor(dosage_cat_3), 
-               data   = data_RT))
-
-
-```
-
-##Mdoeration: Pre vs during vs post peak
-
-```{r}
-(mod <- rma.mv(yi     = ES_final_ACC, 
-               V      = ES_var_ACC, 
-               random = ~ 1 | ID, 
-               mods   = ~factor(timing), 
-               data   = data_ACC))
-
-
-```
-
-##Mdoeration: Cognitive fucntion category
-(mod <- rma.mv(yi     = ES_final_ACC, 
-               V      = ES_var_ACC, 
-               random = ~ 1 | ID, 
-               mods   = ~factor(CognitiveFunction), 
-               data   = data_ACC))
-               ```
