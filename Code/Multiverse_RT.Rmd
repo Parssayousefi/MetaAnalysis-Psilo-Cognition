@@ -36,9 +36,9 @@ if (!require("remotes")) {
 datafile <- "Overview_Studies.xlsx"
 ```
 
-###Data Preparation
 
-```{r}
+
+```{r Data Preparation}
 # Load necessary library
 Read_Prepare <- function(datafile) {
   
@@ -85,9 +85,8 @@ data_high <- datasets$data_high
 
 ```
 
-#define pre vs post peak
 
-```{r}
+```{r pre vs post peak}
 ClassifyTiming <- function(data, start_peak, stop_peak) {
     # Ensure 'data' is a data frame
     if(!is.data.frame(data)) {
@@ -120,8 +119,8 @@ data <- ClassifyTiming(data, start_peak=120,stop_peak = 180)
 
 ```
 
-### code dosage
-```{r}
+
+```{r code dosage}
 CodeDosage <- function(data, data_low = NULL, data_mid = NULL, data_high = NULL) {
     # Check if 'data' is a data frame
     if (!is.data.frame(data)) {
@@ -157,9 +156,8 @@ CodeDosage <- function(data, data_low = NULL, data_mid = NULL, data_high = NULL)
 data <- CodeDosage(data, data_low, data_mid, data_high)
 ```
 
-#### this many unique studies in dataset
 
-```{r} 
+```{r unique studies in dataset} 
 length(unique(data$ID))
 length(data[,1])
 ```
@@ -198,7 +196,7 @@ AddCohensDVariance <- function(data) {
 
 data <- AddCohensDVariance(data)
 ```
-```{r}
+```{r Handle Microdosing}
 #Exclude/include Microdosing
 ExcludeMD <- function(data) {
     if (!is.data.frame(data)) {
@@ -218,12 +216,12 @@ ExcludeMD <- function(data) {
 ###dataset after completion
 
 ```{r}
+print(length(unique(data[,1])))
 print(length(data[,1]))
+
+
 ```
-
-#ACC & RT dataset selection
-
-```{r}
+```{r RT Selection}
 #select RT
 sel_RT  <- !is.na(data$ES_final_RT)
 data_RT <- data[sel_RT, ]
@@ -233,7 +231,7 @@ length(unique(data_RT$ID))
 table(data_RT$timing)
 ```
 
-```{r}
+```{r ACC Selection}
 
 sel_ACC  <- !is.na(data$ES_final_ACC)
 data_ACC <- data[sel_ACC, ]
@@ -261,11 +259,11 @@ table(data_ACC$timing)
 # X <- model.matrix(mod_all_ml)
 # P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
 # 100 * sum(mod_all_ml$sigma2) / (sum(mod_all_ml$sigma2) + (mod_all_ml$k-mod_all_ml$p)/sum(diag(P)))
-print(data_RT$ID)
+#print(data_RT$ID)
 ```
 
 
-```{r}
+```{r Meta analysis function}
 calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
     # Assuming data_RT, data_ACC are defined elsewhere in your script
     if(RT) {
@@ -273,18 +271,26 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
         effect_size_col <- "ES_final_RT"
         variance_col <- "ES_var_RT"
         if(multilevel) {
-            plot_title <- "Forest and Funnel plot for the multilevel model of Reaction Times"
+            forest_title <- "Forest plot for the multilevel model of Reaction Times"
+            funnel_title <- "Funnel plot for the multilevel model of Reaction Times"
+            
         } else {
-            plot_title <- "Forest and Funnel plot for the random effects model of Reaction Times"
+            forest_title <- "Forest plot for the random effects model of Reaction Times"
+            funnel_title <- "Funnel plot for the random effects model of Reaction Times"
+        
         }
     } else if (ACC) {
         data <- data_ACC
         effect_size_col <- "ES_final_ACC"
         variance_col <- "ES_var_ACC"
         if(multilevel) {
-            plot_title <- "Forest and Funnel plot for the multilevel model of Accuracy"
+            forest_title <- "Forest plot for the multilevel model of Accuracy"
+            funnel_title <- "Funnel plot for the multilevel model of Accuracy"
+        
         } else {
-            plot_title <- "Forest and Funnel plot for the random effects model of Accuracy"
+            forest_title <- "Forest plot for the random effects model of Accuracy"
+            funnel_title <- "Funnel plot for the random effects model of Accuracy"
+        
         }
     }
 
@@ -298,25 +304,31 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
                         random = ~ 1 | ID/ES_ID, 
                         data = data,
                         test = "t",
-                        method = "REML")
+                        method = "REML"
+                        )
         model_plain <- rma.mv(yi = data[[effect_size_col]], 
                         V = data[[variance_col]],
-                        random = ~ 1 | ID/ES_ID, 
+                        random = ~ 1 | ID,
                         data = data,
                         test = "t",
                         method = "REML",
-                        sigma2 =  c(0, NA))
+                        )
     
-        print(summary(model_plain))
+        #print("Model results non nested:")
+        #print(summary(model_plain))
+        print("Model results nested:")
         print(summary(model))
+
+        I2_nested <- var.comp(model)
+
+        print(I2_nested)
+        print(I2_nested$totalI2)
+        print("model comparison nested vs non-nested:")
         print(anova(model,model_plain))
-        I2 <- var.comp(model)
-        print(I2$results)
-        
         if(plot) {
             source("transform_functions.r")
             par(mfrow=c(2,1))
-            I2_plot <- print(I2$plot)
+            I2_plot <- print(I2_nested$plot)
 
             data$cluster_change <- c(0, diff(data$ID))  
             data$cluster_change[data$cluster_change > 0] <- 1
@@ -333,51 +345,47 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
                    header = TRUE,
                    rows = rows,
                    ylim = c(0.5, max(rows) + 4),
-                   main = plot_title)
+                   main = forest_title)
 
             abline(h = rows[data$cluster_change == 1] - 0.5, lty = 2)
 
             par(op)
-            funnel(model, main = plot_title)
+            funnel(model, main = funnel_title)
         }
 
     } else {
         library(metafor)
 
-        model <- rma(yi = data[[effect_size_col]], 
-                     vi = data[[variance_col]], 
-                     data = data,
-                     method = "DL")
+        model<- rma.mv(yi = data[[effect_size_col]], 
+                        V = data[[variance_col]],
+                        random = ~ 1 | ID,
+                        data = data,
+                        test = "t",
+                        method = "REML",
+                        )                    
         print(summary(model))
+
         if(plot) {
             par(mfrow=c(2,1))
             forest(model, 
                    slab = data$PlotLabel, 
                    ilab = cbind(data$N_final, data$DoseLabel),
-                   main = plot_title)
-            funnel(model, main = plot_title)
+                   main = forest_title)
+             
+            funnel(model, main = funnel_title)
         }
     }
-    par(mfrow=c(1,1))  # Reset to default single plot layout
+    par(mfrow=c(1,1))  
 
     return(invisible(model))
 }
-
-
-# Calculate the updated I^2 statistic
-  #W <- diag(1/model$vi)
-  #X <- model.matrix(model)
-  #P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
-  #I2 <- 100 * sum(model$sigma2) / (sum(model$sigma2) + (model$k-model$p)/sum(diag(P)))
-calculate_meta(ACC= TRUE, plot =TRUE, multilevel= TRUE)
-#print(data_ACC$ES_final_ACC, sort = TRUE)
 ```
 
 ```{r}
-
+calculate_meta(RT= TRUE, plot =TRUE, multilevel= TRUE)
 ```
-##moderation
-```{r}
+
+```{r moderation}
 #library(metafor)
 
 moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
@@ -427,8 +435,8 @@ moderation_analysis( ACC = TRUE, moderation_var = "timing")
 
 ```
 
-#outlier inspection function
-```{r}
+
+```{r outlier inspection}
 calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) {
     # Ensure that either RT or ACC is TRUE, but not both
     if (RT == TRUE && ACC == TRUE) {
@@ -491,9 +499,6 @@ calculate_residuals(ACC= TRUE, outlier_threshold = 2)
 ```
 
 
-```{r}
-
-```
 
 ```{r}
 
@@ -502,8 +507,9 @@ calculate_residuals(ACC= TRUE, outlier_threshold = 2)
 mod_all_ml_no_outliers <- rma.mv(yi     = ES_final_RT,
                                  V      = ES_var_RT,
                                  random = ~ 1 | ID, 
-                                 data   = data_RT_no_outliers)
-summary(mod_all_ml_no_outliers)
+                                 data   = data_RT)
+print(mod_all_ml_no_outliers$QE)
+?rma.mv
 ```
 
 ```{r}
