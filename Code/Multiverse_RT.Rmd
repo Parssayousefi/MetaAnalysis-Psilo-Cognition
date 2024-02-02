@@ -264,7 +264,7 @@ table(data_ACC$timing)
 
 
 ```{r Meta analysis function}
-calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
+calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=FALSE) {
     # Assuming data_RT, data_ACC are defined elsewhere in your script
     if(RT) {
         data <- data_RT
@@ -308,10 +308,11 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
                         )
         model_plain <- rma.mv(yi = data[[effect_size_col]], 
                         V = data[[variance_col]],
-                        random = ~ 1 | ID,
+                        random = ~ 1 | ID/ES_ID,
                         data = data,
                         test = "t",
                         method = "REML",
+                        sigma2 =  c(0, NA)
                         )
     
         #print("Model results non nested:")
@@ -382,61 +383,80 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=TRUE, multilevel=FALSE) {
 ```
 
 ```{r}
-calculate_meta(RT= TRUE, plot =TRUE, multilevel= TRUE)
+calculate_meta(RT=TRUE, multilevel=TRUE)$b
+```
+```{r }
+
 ```
 
-```{r moderation}
-#library(metafor)
-
-moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
-    # Check that either RT or ACC is TRUE
-    if (RT == TRUE && ACC == TRUE) {
-        stop("Only one of RT or ACC should be TRUE")
-    } else if (RT == FALSE && ACC == FALSE) {
-        stop("AT least of RT or ACC should be TRUE")
-    }
-
-    # Select the appropriate data and columns based on RT or ACC
-    if (RT) {
-        data <- data_RT
-        effect_size_col <- "ES_final_RT"
-        variance_col <- "ES_var_RT"
-    } else if (ACC) {
-        data <- data_ACC
-        effect_size_col <- "ES_final_ACC"
-        variance_col <- "ES_var_ACC"
-    }
-
-    # Ensure the moderation variable exists in the data
-    if (!moderation_var %in% names(data)) {
-        stop(paste("The moderation variable", moderation_var, "is not in the dataset."))
-    }
-
-    # Convert moderation variable to a factor
-    data[[moderation_var]] <- as.factor(data[[moderation_var]])
-
-    # Running the mixed-effects model with moderation
-    model <- rma.mv(yi = data[[effect_size_col]], 
-                    V = data[[variance_col]],
-                    random = ~ 1 | ID/ES_ID, 
-                    data = data,
-                    method = "REML",
-                    mods = as.formula(paste0("~", moderation_var))
-                   )
-
-    # Return the summary of the model
-    return(summary(model))
+```{r Outliers}
+identify_outliers <- function(data_type, multi=FALSE) {
+  # Validate input
+  if(data_type != "RT" && data_type != "ACC") {
+    stop("data_type must be 'RT' or 'ACC'.")
+  }
+  
+  library(ggplot2) # Ensure ggplot2 is loaded
+  
+  # Select data, call calculate_meta accordingly, and set parameters based on the input arguments
+  if(data_type == "RT") {
+    data <- as.data.frame(data_RT)  # Convert to dataframe
+    effect_size_col <- "ES_final_RT"
+    variance_col <- "ES_var_RT"
+    print("Analyzing outliers for Reaction Times")
+  } else if (data_type == "ACC") {
+    data <- as.data.frame(data_ACC)  # Convert to dataframe
+    effect_size_col <- "ES_final_ACC"
+    variance_col := "ES_var_ACC"
+    print("Analyzing outliers for Accuracy")
+  }
+  
+  model_results <- calculate_meta(RT=data_type == "RT", ACC=data_type == "ACC", multilevel=multi)
+  
+  # Assume 'calculate_meta' updates 'data' to include 'ci.lb' and 'ci.ub' for overall model results
+  overall_ci_lb <- model_results$ci.lb
+  overall_ci_ub <- model_results$ci.ub
+  
+  # Adjust 'd' to match your effect size column
+  data$d <- data[[effect_size_col]]
+  
+  # Calculate CI for all observed effect sizes and identify outliers
+  data$upperci <- data$d + 1.96 * sqrt(data[[variance_col]])
+  data$lowerci <- data$d - 1.96 * sqrt(data[[variance_col]])
+  data$outlier <- with(data, upperci < overall_ci_lb | lowerci > overall_ci_ub)
+  
+  # Assuming 'calculate_meta' returns a pooled effect size, which needs to be defined
+  # For this example, let's use a simple mean of 'd' as a placeholder
+  pooled_effect <- mean(data$d, na.rm = TRUE)
+  
+  # Plot
+  plot <- ggplot(data = data, aes(x = d, colour = outlier, fill = outlier)) +
+    geom_histogram(alpha = .2, position = "identity", bins = 20, binwidth = .3) + 
+    geom_vline(xintercept = pooled_effect, linetype="dashed", color="blue") +
+    theme_bw() +
+    labs(title="Effect Size Distribution", x="Effect Size", y="Frequency") +
+    scale_fill_manual(values = c("FALSE" = "grey", "TRUE" = "red")) +
+    scale_colour_manual(values = c("FALSE" = "black", "TRUE" = "red"))
+  print(plot)
+  # Print and return outliers
+  outliers <- data[data$outlier, ]
+  if(nrow(outliers) > 0) {
+    print(outliers)
+  } else {
+    cat("No outliers identified.\n")
+  }
+  
+  return(outliers)
 }
-#possible moderators: CognitiveFunction. dosage_cat_3, dosage_cat_2, timing
-moderation_analysis( ACC = TRUE, moderation_var = "CognitiveFunction")
-moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_3")#low vs mid vs high
-moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_2")#low vs mid & high
-moderation_analysis( ACC = TRUE, moderation_var = "timing")
+
+identify_outliers("RT", multi = FALSE)
+```
+```{r}
+
 
 ```
 
-
-```{r outlier inspection}
+```{r Residual inspection}
 calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) {
     # Ensure that either RT or ACC is TRUE, but not both
     if (RT == TRUE && ACC == TRUE) {
@@ -497,7 +517,55 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
 calculate_residuals(ACC= TRUE, outlier_threshold = 2)
 
 ```
+```{r moderation}
+#library(metafor)
 
+moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
+    # Check that either RT or ACC is TRUE
+    if (RT == TRUE && ACC == TRUE) {
+        stop("Only one of RT or ACC should be TRUE")
+    } else if (RT == FALSE && ACC == FALSE) {
+        stop("AT least of RT or ACC should be TRUE")
+    }
+
+    # Select the appropriate data and columns based on RT or ACC
+    if (RT) {
+        data <- data_RT
+        effect_size_col <- "ES_final_RT"
+        variance_col <- "ES_var_RT"
+    } else if (ACC) {
+        data <- data_ACC
+        effect_size_col <- "ES_final_ACC"
+        variance_col <- "ES_var_ACC"
+    }
+
+    # Ensure the moderation variable exists in the data
+    if (!moderation_var %in% names(data)) {
+        stop(paste("The moderation variable", moderation_var, "is not in the dataset."))
+    }
+
+    # Convert moderation variable to a factor
+    data[[moderation_var]] <- as.factor(data[[moderation_var]])
+
+    # Running the mixed-effects model with moderation
+    model <- rma.mv(yi = data[[effect_size_col]], 
+                    V = data[[variance_col]],
+                    random = ~ 1 | ID/ES_ID, 
+                    data = data,
+                    method = "REML",
+                    mods = as.formula(paste0("~", moderation_var))
+                   )
+
+    # Return the summary of the model
+    return(summary(model))
+}
+#possible moderators: CognitiveFunction. dosage_cat_3, dosage_cat_2, timing
+moderation_analysis( ACC = TRUE, moderation_var = "CognitiveFunction")
+moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_3")#low vs mid vs high
+moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_2")#low vs mid & high
+moderation_analysis( ACC = TRUE, moderation_var = "timing")
+
+```
 
 
 ```{r}
@@ -656,6 +724,7 @@ summary(mod_egger_RT)
 ```
 ```{r}
 print(unique(data_RT_no_outliers$CognitiveFunction))
+
 ```
 
 ##Mdoeration RT: Pre vs during vs post peak
