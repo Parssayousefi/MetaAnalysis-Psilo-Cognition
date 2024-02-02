@@ -264,8 +264,8 @@ table(data_ACC$timing)
 
 
 ```{r Meta analysis function}
-calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=FALSE) {
-    # Assuming data_RT, data_ACC are defined elsewhere in your script
+calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
+    
     if(RT) {
         data <- data_RT
         effect_size_col <- "ES_final_RT"
@@ -383,41 +383,42 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=FALSE) {
 ```
 
 ```{r}
-calculate_meta(RT=TRUE, multilevel=TRUE)$b
-```
-```{r }
 
+calculate_meta(RT=TRUE, multilevel=TRUE)$ci.ub
 ```
 
-```{r Outliers}
+```{r Extreme cases}
 identify_outliers <- function(data_type, multi=FALSE) {
   # Validate input
   if(data_type != "RT" && data_type != "ACC") {
     stop("data_type must be 'RT' or 'ACC'.")
   }
   
-  library(ggplot2) # Ensure ggplot2 is loaded
+  library(ggplot2) 
   
   # Select data, call calculate_meta accordingly, and set parameters based on the input arguments
   if(data_type == "RT") {
-    data <- as.data.frame(data_RT)  # Convert to dataframe
+    data <- as.data.frame(data_RT) 
     effect_size_col <- "ES_final_RT"
     variance_col <- "ES_var_RT"
+    plottitle= "Reaction Time Effect Size Distribution"
     print("Analyzing outliers for Reaction Times")
+
   } else if (data_type == "ACC") {
-    data <- as.data.frame(data_ACC)  # Convert to dataframe
+    data <- as.data.frame(data_ACC)  
     effect_size_col <- "ES_final_ACC"
-    variance_col := "ES_var_ACC"
+    variance_col <- "ES_var_ACC"
+    plottitle= "Accuracy Effect Size Distribution"
     print("Analyzing outliers for Accuracy")
   }
   
   model_results <- calculate_meta(RT=data_type == "RT", ACC=data_type == "ACC", multilevel=multi)
   
-  # Assume 'calculate_meta' updates 'data' to include 'ci.lb' and 'ci.ub' for overall model results
+
   overall_ci_lb <- model_results$ci.lb
   overall_ci_ub <- model_results$ci.ub
   
-  # Adjust 'd' to match your effect size column
+
   data$d <- data[[effect_size_col]]
   
   # Calculate CI for all observed effect sizes and identify outliers
@@ -425,34 +426,132 @@ identify_outliers <- function(data_type, multi=FALSE) {
   data$lowerci <- data$d - 1.96 * sqrt(data[[variance_col]])
   data$outlier <- with(data, upperci < overall_ci_lb | lowerci > overall_ci_ub)
   
-  # Assuming 'calculate_meta' returns a pooled effect size, which needs to be defined
-  # For this example, let's use a simple mean of 'd' as a placeholder
-  pooled_effect <- mean(data$d, na.rm = TRUE)
+  
+
+  pooled_effect <- model_results$beta
   
   # Plot
   plot <- ggplot(data = data, aes(x = d, colour = outlier, fill = outlier)) +
     geom_histogram(alpha = .2, position = "identity", bins = 20, binwidth = .3) + 
     geom_vline(xintercept = pooled_effect, linetype="dashed", color="blue") +
     theme_bw() +
-    labs(title="Effect Size Distribution", x="Effect Size", y="Frequency") +
+    labs(title=plottitle, x="Effect Size", y="Frequency") +
     scale_fill_manual(values = c("FALSE" = "grey", "TRUE" = "red")) +
     scale_colour_manual(values = c("FALSE" = "black", "TRUE" = "red"))
+
   print(plot)
-  # Print and return outliers
+
   outliers <- data[data$outlier, ]
   if(nrow(outliers) > 0) {
-    print(outliers)
+    print("Nr of outliers:")
+    print(nrow(outliers))
   } else {
     cat("No outliers identified.\n")
   }
-  
-  return(outliers)
-}
+    filtered_data <- data[!data$outlier, ]
+    model_no_outlier <- rma.mv(yi = filtered_data[[effect_size_col]], 
+        V = filtered_data[[variance_col]],
+        random = ~ 1 | ID/ES_ID, 
+        data = filtered_data, 
+        test = "t",
+        method = "REML"
+        )
 
-identify_outliers("RT", multi = FALSE)
+        cat("Model results with outliers:", "G = ", round(model_results$b[1], 2),
+        ", 95% CI [", round(model_results$ci.lb, 2),
+        ", ", round(model_results$ci.ub, 2), "]" , sep = "")
+
+        cat("Model results No outlier:","G = ", round(model_no_outlier$b[1], 2),
+        ", 95% CI [", round(model_no_outlier$ci.lb, 2),
+        ", ", round(model_no_outlier$ci.ub, 2), "]", sep = "")
+  return(invisible(outliers))
+}
 ```
 ```{r}
 
+identify_outliers("RT", multi = TRUE)
+```
+```{r sensitivity analysis}
+calculate_meta_no_outliers <- function(RT=FALSE, ACC=FALSE, multilevel=TRUE) {
+    
+    if(RT) {
+        data <- data_RT
+        effect_size_col <- "ES_final_RT"
+        variance_col <- "ES_var_RT"
+    } else if (ACC) {
+        data <- data_ACC
+        effect_size_col <- "ES_final_ACC"
+        variance_col <- "ES_var_ACC"      
+    }
+
+    data <- data[order(data$ID), ]
+    
+    if(multilevel) {
+        library(metafor)
+
+        model <- rma.mv(yi = data[[effect_size_col]], 
+                        V = data[[variance_col]],
+                        random = ~ 1 | ID/ES_ID, 
+                        data = data,
+                        test = "t",
+                        method = "REML"
+                        )
+        model_plain <- rma.mv(yi = data[[effect_size_col]], 
+                        V = data[[variance_col]],
+                        random = ~ 1 | ID/ES_ID,
+                        data = data,
+                        test = "t",
+                        method = "REML",
+                        sigma2 =  c(0, NA)
+                        )
+        overall_ci_lb <- model$ci.lb
+        overall_ci_ub <- model$ci.ub
+  
+
+        data$d <- data[[effect_size_col]]
+  
+        # Calculate CI for all observed effect sizes and identify outliers
+        data$upperci <- data$d + 1.96 * sqrt(data[[variance_col]])
+        data$lowerci <- data$d - 1.96 * sqrt(data[[variance_col]])
+        data$outlier <- with(data, upperci < overall_ci_lb | lowerci > overall_ci_ub)
+        
+        filtered_data <- data[!data$outlier, ]
+
+        model_no_outlier <- rma.mv(yi = filtered_data[[effect_size_col]], 
+                V = filtered_data[[variance_col]],
+                random = ~ 1 | ID/ES_ID, 
+                data = filtered_data, 
+                test = "t",
+                method = "REML"
+                )
+        print("Model results with outliers:")
+        print(summary(model))
+        print("Model results No outlier:")
+        print(summary(model_no_outlier))
+
+        print("model comparison nested vs non-nested:")
+        print(anova(model,model_no_outlier))
+
+    } else {
+        library(metafor)
+
+        model<- rma.mv(yi = data[[effect_size_col]], 
+                        V = data[[variance_col]],
+                        random = ~ 1 | ID,
+                        data = data,
+                        test = "t",
+                        method = "REML",
+                        )                    
+        print(summary(model))
+
+       
+    }
+
+    return(invisible(outliers))
+}
+```
+```{r}
+calculate_meta_no_outliers(RT = TRUE, multilevel = TRUE)
 
 ```
 
@@ -467,9 +566,13 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
 
     # Select the appropriate data based on RT or ACC
     data_selected <- if (RT) {
+        plottitle = "Reaction Time"
         calculate_meta(RT = TRUE, plot = FALSE, multilevel = TRUE)
+        
     } else if (ACC) {
+        plottitle = "Accuracy"
         calculate_meta(ACC = TRUE, plot = FALSE, multilevel = TRUE)
+        
     }
     
     # Standardized residuals
@@ -487,10 +590,7 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
     boxplot <- ggplot(data_for_boxplot, aes(x = "", y = z)) +
         geom_boxplot() +
         theme_gray() +
-        labs(y = "Z values", title = "Boxplot of Standardized Residuals")
-
-
-
+        labs(y = "Z values", title = paste("Boxplot of Standardized Residuals for", plottitle))
     # Barplot
     data_for_barplot <- data.frame(ID = data_for_ID$ID, Residuals = res_mod_all_ml$z)
     barplot <- ggplot(data_for_barplot, aes(x = ID, y = Residuals)) +
@@ -498,11 +598,11 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
         coord_flip() +  # To make the barplot horizontal
         theme_gray() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        labs(x = "ID", y = "Standardized Residuals", title = "Barplot of Standardized Residuals")
+        labs(x = "ID", y = "Standardized Residuals", title = paste("Barplot of Standardized Residuals for", plottitle))
     #display
     library(gridExtra)
-    grid_arrangement <- grid.arrange(boxplot, barplot, ncol = 1)
-    print(grid_arrangement)
+    grid.arrange(boxplot, barplot, ncol = 1)
+
     #outlier handling:
     #outliers based on standardized residuals > multi_outlier
     outliers_indices <- which(abs(res_mod_all_ml$z) > outlier_threshold) 
@@ -514,7 +614,7 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
     return(invisible(res_mod_all_ml))
 }
 
-calculate_residuals(ACC= TRUE, outlier_threshold = 2)
+calculate_residuals(RT= TRUE, outlier_threshold = 3)
 
 ```
 ```{r moderation}
