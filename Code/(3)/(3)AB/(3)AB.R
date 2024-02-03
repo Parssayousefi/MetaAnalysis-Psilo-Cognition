@@ -4,12 +4,12 @@ library(readxl)
 
 # Load the data from the file
 
-AB_Placebo <- read.csv("(3)AB_Placebo_comb.csv")
+AB_Placebo <- read.csv("Code/(3)/(3)AB/(3)AB_Placebo_comb.csv")
 
 
-AB_Psilo <- read.csv("(3)AB_Psilo_comb.csv")
+AB_Psilo <- read.csv("Code/(3)/(3)AB/(3)AB_Psilo_comb.csv")
 
-head(AB_Psilo)
+head(AB_Placebo)
 
 
 #1.Psilo group
@@ -20,7 +20,7 @@ names(AB_Psilo)[1] <- "Subject"
 # Define the number of times to repeat the operation
 num_repeats <- 31 #because there are 31 subjects in this gouprp, see folder!
 
-# Define the number of rows to change at a time
+# Define the number of rows (trials) to change at a time
 rows_at_a_time <- 140
 
 # Loop over the number of repeats
@@ -33,6 +33,9 @@ for (i in 1:num_repeats) {
   AB_Psilo[start_row:end_row, "Subject"] <- i
 }
 
+#only looking at lags 2,3 and 4
+AB_Psilo <- AB_Psilo %>%
+  filter(Lag %in% c(2, 3, 4))
 
 #1.2 calculate the accuracy (Number of correct T2 detections when T1 was correctly detected) / 140 trials)
 
@@ -52,7 +55,7 @@ acc_per_subj_psilo <- data.frame(
 )
 
 
-
+print(acc_per_subj_psilo)
 
 #2.1. sort data Placebo group
 names(AB_Placebo)[1] <- "Subject"
@@ -72,6 +75,9 @@ for (i in 1:num_repeats) {
   # Change the value in the specified rows of the "Subject" column
   AB_Placebo[start_row:end_row, "Subject"] <- i
 }
+#just taking lag 2,3 and 4
+AB_Placebo <- AB_Placebo %>%
+  filter(Lag %in% c(2, 3, 4))
 
 #2.2 calculate the accuracy (Number of correct T2 detections when T1 was correctly detected) / 140 trials)
 
