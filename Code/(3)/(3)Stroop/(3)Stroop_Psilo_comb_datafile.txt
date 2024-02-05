@@ -48,7 +48,7 @@ amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;0.7854153000516817;down;S01;Ma
 azul;blue;1;up;azul;verde;amarillo;rojo;1;1.0246580000966787;up;S01;Masculino
 amarillo;blue;0;up;azul;amarillo;rojo;verde;1;1.6584798999829218;up;S01;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 verde;green;1;left;azul;amarillo;verde;rojo;1;1.2693482000613585;left;S02;Masculino
 amarillo;yellow;1;down;verde;amarillo;rojo;azul;1;2.054177000070922;down;S02;Masculino
 rojo;red;1;left;verde;azul;rojo;amarillo;1;1.0294474000111222;left;S02;Masculino
@@ -98,7 +98,7 @@ amarillo;green;0;right;rojo;azul;amarillo;verde;1;1.4636531000724062;right;S02;M
 azul;yellow;0;down;verde;amarillo;azul;rojo;1;1.5700901000527665;down;S02;Masculino
 amarillo;blue;0;up;azul;amarillo;verde;rojo;0;1.2128265999490395;down;S02;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;yellow;1;left;verde;azul;amarillo;rojo;1;1.0471894999500364;left;s3-stroop-condb;Masculino
 rojo;blue;0;up;azul;verde;rojo;amarillo;1;1.5229270999552682;up;s3-stroop-condb;Masculino
 azul;red;0;left;amarillo;verde;rojo;azul;1;1.9057065999368206;left;s3-stroop-condb;Masculino
@@ -148,107 +148,107 @@ verde;green;1;right;azul;amarillo;rojo;verde;1;1.0886864999774843;right;s3-stroo
 amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;1.510950900032185;down;s3-stroop-condb;Masculino
 azul;yellow;0;down;verde;amarillo;azul;rojo;1;1.8524281999561936;down;s3-stroop-condb;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
-verde;blue;0;up;azul;verde;rojo;amarillo;1;1.1019504999999299;up;s04-stroop-condB;Masculino
-rojo;yellow;0;down;rojo;amarillo;verde;azul;1;1.4659081000000924;down;s04-stroop-condB;Masculino
-amarillo;red;0;left;amarillo;azul;rojo;verde;1;0.9655469000000494;left;s04-stroop-condB;Masculino
-verde;blue;0;up;azul;verde;rojo;amarillo;1;0.81680080000001;up;s04-stroop-condB;Masculino
-rojo;red;1;right;amarillo;azul;verde;rojo;1;1.7849654000000328;right;s04-stroop-condB;Masculino
-azul;green;0;right;rojo;azul;amarillo;verde;1;1.629066899999998;right;s04-stroop-condB;Masculino
-azul;blue;1;up;azul;verde;amarillo;rojo;1;0.969725599999947;up;s04-stroop-condB;Masculino
-rojo;red;1;down;amarillo;rojo;azul;verde;1;0.9251839000000928;down;s04-stroop-condB;Masculino
-rojo;red;1;up;rojo;azul;amarillo;verde;1;1.3465436000000182;up;s04-stroop-condB;Masculino
-rojo;red;1;left;verde;amarillo;rojo;azul;1;1.1709377999999333;left;s04-stroop-condB;Masculino
-rojo;blue;0;up;azul;rojo;verde;amarillo;1;1.2454735999999684;up;s04-stroop-condB;Masculino
-amarillo;yellow;1;right;verde;rojo;azul;amarillo;1;0.9601910000000089;right;s04-stroop-condB;Masculino
-amarillo;yellow;1;left;verde;azul;amarillo;rojo;1;0.8643815000000359;left;s04-stroop-condB;Masculino
-azul;blue;1;left;amarillo;rojo;azul;verde;1;1.0928427000000056;left;s04-stroop-condB;Masculino
-verde;yellow;0;down;rojo;amarillo;verde;azul;1;2.4568126000000348;down;s04-stroop-condB;Masculino
-verde;yellow;0;down;verde;amarillo;rojo;azul;1;1.4351391000000149;down;s04-stroop-condB;Masculino
-amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;0.9177230999999892;down;s04-stroop-condB;Masculino
-verde;red;0;left;amarillo;azul;rojo;verde;1;0.9349788999999191;left;s04-stroop-condB;Masculino
-verde;green;1;left;azul;amarillo;verde;rojo;1;1.2352153000000499;left;s04-stroop-condB;Masculino
-verde;green;1;up;verde;rojo;azul;amarillo;1;0.9338721999999962;up;s04-stroop-condB;Masculino
-amarillo;green;0;right;amarillo;azul;rojo;verde;1;1.3729099999999335;right;s04-stroop-condB;Masculino
-azul;green;0;right;rojo;azul;amarillo;verde;1;1.458197200000086;right;s04-stroop-condB;Masculino
-azul;yellow;0;down;azul;amarillo;verde;rojo;1;1.1790351999999302;down;s04-stroop-condB;Masculino
-rojo;red;1;left;verde;azul;rojo;amarillo;1;1.0371757000000343;left;s04-stroop-condB;Masculino
-amarillo;blue;0;up;azul;amarillo;verde;rojo;1;1.906552300000044;up;s04-stroop-condB;Masculino
-rojo;green;0;right;azul;amarillo;rojo;verde;1;1.0110005999999885;right;s04-stroop-condB;Masculino
-azul;blue;1;up;azul;amarillo;verde;rojo;1;0.9257255999999643;up;s04-stroop-condB;Masculino
-azul;red;0;left;amarillo;verde;rojo;azul;1;0.8484707999999728;left;s04-stroop-condB;Masculino
-amarillo;yellow;1;down;verde;amarillo;rojo;azul;1;0.9905977000000803;down;s04-stroop-condB;Masculino
-rojo;green;0;right;amarillo;azul;rojo;verde;1;2.4013689999999315;right;s04-stroop-condB;Masculino
-azul;blue;1;right;rojo;verde;amarillo;azul;1;1.146658499999944;right;s04-stroop-condB;Masculino
-verde;green;1;right;amarillo;rojo;azul;verde;1;1.3502435999999989;right;s04-stroop-condB;Masculino
-azul;yellow;0;down;verde;amarillo;azul;rojo;1;1.0744098999999778;down;s04-stroop-condB;Masculino
-amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;0.907393500000012;down;s04-stroop-condB;Masculino
-rojo;yellow;0;down;azul;amarillo;rojo;verde;1;0.9079552000000604;down;s04-stroop-condB;Masculino
-verde;red;0;left;verde;azul;rojo;amarillo;1;1.5200340000000097;left;s04-stroop-condB;Masculino
-azul;red;0;left;amarillo;azul;rojo;verde;1;1.8801327999999558;left;s04-stroop-condB;Masculino
-amarillo;blue;0;up;azul;amarillo;rojo;verde;1;3.0023418000000675;up;s04-stroop-condB;Masculino
-amarillo;yellow;1;up;amarillo;rojo;amarillo;verde;1;2.3008092000000033;up;s04-stroop-condB;Masculino
-amarillo;green;0;right;rojo;azul;amarillo;verde;1;1.7180115999999543;right;s04-stroop-condB;Masculino
-rojo;blue;0;up;azul;verde;rojo;amarillo;1;1.8997018000000025;up;s04-stroop-condB;Masculino
-verde;green;1;right;rojo;azul;amarillo;verde;1;2.265922400000022;right;s04-stroop-condB;Masculino
-rojo;red;1;left;amarillo;azul;rojo;verde;1;0.9106962000000749;left;s04-stroop-condB;Masculino
-amarillo;red;0;left;verde;azul;rojo;amarillo;1;1.1625612000000274;left;s04-stroop-condB;Masculino
-azul;blue;1;down;amarillo;azul;verde;rojo;1;1.340273600000046;down;s04-stroop-condB;Masculino
-azul;blue;1;up;azul;amarillo;rojo;verde;1;1.4185467999999446;up;s04-stroop-condB;Masculino
-verde;green;1;right;azul;amarillo;rojo;verde;1;2.234779099999969;right;s04-stroop-condB;Masculino
-verde;green;1;down;rojo;verde;azul;amarillo;1;1.2545198999999911;down;s04-stroop-condB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
-rojo;green;0;right;azul;amarillo;rojo;verde;1;2.80459509999946;right;s05-stroop-condA;Masculino
-verde;green;1;right;rojo;azul;amarillo;verde;1;1.167007700000795;right;s05-stroop-condA;Masculino
-amarillo;red;0;left;verde;azul;rojo;amarillo;1;1.8571258000001762;left;s05-stroop-condA;Masculino
-azul;red;0;left;amarillo;verde;rojo;azul;1;1.0539324000001216;left;s05-stroop-condA;Masculino
-azul;blue;1;down;amarillo;azul;verde;rojo;1;1.1088029999991704;down;s05-stroop-condA;Masculino
-amarillo;yellow;1;left;verde;azul;amarillo;rojo;1;0.8565539000001081;left;s05-stroop-condA;Masculino
-azul;yellow;0;down;verde;amarillo;azul;rojo;1;1.32309449999957;down;s05-stroop-condA;Masculino
-rojo;yellow;0;down;azul;amarillo;rojo;verde;1;1.0726071999997657;down;s05-stroop-condA;Masculino
-verde;yellow;0;down;rojo;amarillo;verde;azul;1;0.9846025000006193;down;s05-stroop-condA;Masculino
-rojo;red;1;left;verde;amarillo;rojo;azul;1;0.8860674999996263;left;s05-stroop-condA;Masculino
-verde;blue;0;up;azul;verde;rojo;amarillo;1;1.5841529999997874;up;s05-stroop-condA;Masculino
-verde;blue;0;up;azul;verde;rojo;amarillo;1;0.930210999999872;up;s05-stroop-condA;Masculino
-azul;green;0;right;rojo;azul;amarillo;verde;1;1.421490900000208;right;s05-stroop-condA;Masculino
-rojo;blue;0;up;azul;rojo;verde;amarillo;1;1.9647050000003219;up;s05-stroop-condA;Masculino
-amarillo;red;0;left;amarillo;azul;rojo;verde;1;2.264125900000181;left;s05-stroop-condA;Masculino
-azul;blue;1;left;amarillo;rojo;azul;verde;1;1.2455314999997427;left;s05-stroop-condA;Masculino
-azul;blue;1;up;azul;verde;amarillo;rojo;1;0.970922900000005;up;s05-stroop-condA;Masculino
-verde;green;1;right;azul;amarillo;rojo;verde;1;1.2596142000002146;right;s05-stroop-condA;Masculino
-rojo;red;1;right;amarillo;azul;verde;rojo;1;1.4336733000000095;right;s05-stroop-condA;Masculino
-amarillo;yellow;1;up;amarillo;rojo;amarillo;verde;1;0.9325614999997924;up;s05-stroop-condA;Masculino
-verde;red;0;left;verde;azul;rojo;amarillo;1;1.30906799999957;left;s05-stroop-condA;Masculino
-azul;blue;1;right;rojo;verde;amarillo;azul;1;0.7931774999997288;right;s05-stroop-condA;Masculino
-verde;green;1;right;amarillo;rojo;azul;verde;1;0.9671843000005538;right;s05-stroop-condA;Masculino
-rojo;red;1;left;verde;azul;rojo;amarillo;1;1.3455101999998078;left;s05-stroop-condA;Masculino
-verde;green;1;up;verde;rojo;azul;amarillo;1;1.135977400000229;up;s05-stroop-condA;Masculino
-amarillo;blue;0;up;azul;amarillo;rojo;verde;1;1.8092172999995455;up;s05-stroop-condA;Masculino
-azul;blue;1;up;azul;amarillo;verde;rojo;1;0.7700181000000157;up;s05-stroop-condA;Masculino
-amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;1.3493924999993396;down;s05-stroop-condA;Masculino
-verde;red;0;left;amarillo;azul;rojo;verde;1;1.3876997999996092;left;s05-stroop-condA;Masculino
-amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;0.8873886000001221;down;s05-stroop-condA;Masculino
-amarillo;blue;0;up;azul;amarillo;verde;rojo;0;1.0834421999998085;down;s05-stroop-condA;Masculino
-amarillo;yellow;1;right;verde;rojo;azul;amarillo;1;1.1660403999994742;right;s05-stroop-condA;Masculino
-amarillo;green;0;right;rojo;azul;amarillo;verde;1;1.210646700000325;right;s05-stroop-condA;Masculino
-amarillo;green;0;right;amarillo;azul;rojo;verde;1;1.073298600000271;right;s05-stroop-condA;Masculino
-verde;green;1;down;rojo;verde;azul;amarillo;1;1.2393253999998706;down;s05-stroop-condA;Masculino
-rojo;green;0;right;amarillo;azul;rojo;verde;1;1.9744702999996662;right;s05-stroop-condA;Masculino
-azul;green;0;right;rojo;azul;amarillo;verde;1;1.2444615000003978;right;s05-stroop-condA;Masculino
-rojo;blue;0;up;azul;verde;rojo;amarillo;1;1.7072810999998183;up;s05-stroop-condA;Masculino
-verde;green;1;left;azul;amarillo;verde;rojo;1;1.1835442000001422;left;s05-stroop-condA;Masculino
-verde;yellow;0;down;verde;amarillo;rojo;azul;1;1.5230661999994481;down;s05-stroop-condA;Masculino
-rojo;red;1;up;rojo;azul;amarillo;verde;1;1.280516599999828;up;s05-stroop-condA;Masculino
-azul;red;0;left;amarillo;azul;rojo;verde;1;1.1302832000001217;left;s05-stroop-condA;Masculino
-rojo;yellow;0;down;rojo;amarillo;verde;azul;1;1.0216661000004024;down;s05-stroop-condA;Masculino
-azul;yellow;0;down;azul;amarillo;verde;rojo;1;1.1035744000000705;down;s05-stroop-condA;Masculino
-rojo;red;1;down;amarillo;rojo;azul;verde;1;0.9362123000000793;down;s05-stroop-condA;Masculino
-amarillo;yellow;1;down;verde;amarillo;rojo;azul;1;0.9027445000001535;down;s05-stroop-condA;Masculino
-rojo;red;1;left;amarillo;azul;rojo;verde;1;1.1905893999992259;left;s05-stroop-condA;Masculino
-azul;blue;1;up;azul;amarillo;rojo;verde;1;0.9330251000001226;up;s05-stroop-condA;Masculino
+verde;blue;0;up;azul;verde;rojo;amarillo;1;1.1019504999999299;up;s04;Masculino
+rojo;yellow;0;down;rojo;amarillo;verde;azul;1;1.4659081000000924;down;s04;Masculino
+amarillo;red;0;left;amarillo;azul;rojo;verde;1;0.9655469000000494;left;s04;Masculino
+verde;blue;0;up;azul;verde;rojo;amarillo;1;0.81680080000001;up;s04;Masculino
+rojo;red;1;right;amarillo;azul;verde;rojo;1;1.7849654000000328;right;s04;Masculino
+azul;green;0;right;rojo;azul;amarillo;verde;1;1.629066899999998;right;s04;Masculino
+azul;blue;1;up;azul;verde;amarillo;rojo;1;0.969725599999947;up;s04;Masculino
+rojo;red;1;down;amarillo;rojo;azul;verde;1;0.9251839000000928;down;s04;Masculino
+rojo;red;1;up;rojo;azul;amarillo;verde;1;1.3465436000000182;up;s04;Masculino
+rojo;red;1;left;verde;amarillo;rojo;azul;1;1.1709377999999333;left;s04;Masculino
+rojo;blue;0;up;azul;rojo;verde;amarillo;1;1.2454735999999684;up;s04;Masculino
+amarillo;yellow;1;right;verde;rojo;azul;amarillo;1;0.9601910000000089;right;s04;Masculino
+amarillo;yellow;1;left;verde;azul;amarillo;rojo;1;0.8643815000000359;left;s04;Masculino
+azul;blue;1;left;amarillo;rojo;azul;verde;1;1.0928427000000056;left;s04;Masculino
+verde;yellow;0;down;rojo;amarillo;verde;azul;1;2.4568126000000348;down;s04;Masculino
+verde;yellow;0;down;verde;amarillo;rojo;azul;1;1.4351391000000149;down;s04;Masculino
+amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;0.9177230999999892;down;s04;Masculino
+verde;red;0;left;amarillo;azul;rojo;verde;1;0.9349788999999191;left;s04;Masculino
+verde;green;1;left;azul;amarillo;verde;rojo;1;1.2352153000000499;left;s04;Masculino
+verde;green;1;up;verde;rojo;azul;amarillo;1;0.9338721999999962;up;s04;Masculino
+amarillo;green;0;right;amarillo;azul;rojo;verde;1;1.3729099999999335;right;s04;Masculino
+azul;green;0;right;rojo;azul;amarillo;verde;1;1.458197200000086;right;s04;Masculino
+azul;yellow;0;down;azul;amarillo;verde;rojo;1;1.1790351999999302;down;s04;Masculino
+rojo;red;1;left;verde;azul;rojo;amarillo;1;1.0371757000000343;left;s04;Masculino
+amarillo;blue;0;up;azul;amarillo;verde;rojo;1;1.906552300000044;up;s04;Masculino
+rojo;green;0;right;azul;amarillo;rojo;verde;1;1.0110005999999885;right;s04;Masculino
+azul;blue;1;up;azul;amarillo;verde;rojo;1;0.9257255999999643;up;s04;Masculino
+azul;red;0;left;amarillo;verde;rojo;azul;1;0.8484707999999728;left;s04;Masculino
+amarillo;yellow;1;down;verde;amarillo;rojo;azul;1;0.9905977000000803;down;s04;Masculino
+rojo;green;0;right;amarillo;azul;rojo;verde;1;2.4013689999999315;right;s04;Masculino
+azul;blue;1;right;rojo;verde;amarillo;azul;1;1.146658499999944;right;s04;Masculino
+verde;green;1;right;amarillo;rojo;azul;verde;1;1.3502435999999989;right;s04;Masculino
+azul;yellow;0;down;verde;amarillo;azul;rojo;1;1.0744098999999778;down;s04;Masculino
+amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;0.907393500000012;down;s04;Masculino
+rojo;yellow;0;down;azul;amarillo;rojo;verde;1;0.9079552000000604;down;s04;Masculino
+verde;red;0;left;verde;azul;rojo;amarillo;1;1.5200340000000097;left;s04;Masculino
+azul;red;0;left;amarillo;azul;rojo;verde;1;1.8801327999999558;left;s04;Masculino
+amarillo;blue;0;up;azul;amarillo;rojo;verde;1;3.0023418000000675;up;s04;Masculino
+amarillo;yellow;1;up;amarillo;rojo;amarillo;verde;1;2.3008092000000033;up;s04;Masculino
+amarillo;green;0;right;rojo;azul;amarillo;verde;1;1.7180115999999543;right;s04;Masculino
+rojo;blue;0;up;azul;verde;rojo;amarillo;1;1.8997018000000025;up;s04;Masculino
+verde;green;1;right;rojo;azul;amarillo;verde;1;2.265922400000022;right;s04;Masculino
+rojo;red;1;left;amarillo;azul;rojo;verde;1;0.9106962000000749;left;s04;Masculino
+amarillo;red;0;left;verde;azul;rojo;amarillo;1;1.1625612000000274;left;s04;Masculino
+azul;blue;1;down;amarillo;azul;verde;rojo;1;1.340273600000046;down;s04;Masculino
+azul;blue;1;up;azul;amarillo;rojo;verde;1;1.4185467999999446;up;s04;Masculino
+verde;green;1;right;azul;amarillo;rojo;verde;1;2.234779099999969;right;s04;Masculino
+verde;green;1;down;rojo;verde;azul;amarillo;1;1.2545198999999911;down;s04;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
+rojo;green;0;right;azul;amarillo;rojo;verde;1;2.80459509999946;right;s05;Masculino
+verde;green;1;right;rojo;azul;amarillo;verde;1;1.167007700000795;right;s05;Masculino
+amarillo;red;0;left;verde;azul;rojo;amarillo;1;1.8571258000001762;left;s05;Masculino
+azul;red;0;left;amarillo;verde;rojo;azul;1;1.0539324000001216;left;s05;Masculino
+azul;blue;1;down;amarillo;azul;verde;rojo;1;1.1088029999991704;down;s05;Masculino
+amarillo;yellow;1;left;verde;azul;amarillo;rojo;1;0.8565539000001081;left;s05;Masculino
+azul;yellow;0;down;verde;amarillo;azul;rojo;1;1.32309449999957;down;s05;Masculino
+rojo;yellow;0;down;azul;amarillo;rojo;verde;1;1.0726071999997657;down;s05;Masculino
+verde;yellow;0;down;rojo;amarillo;verde;azul;1;0.9846025000006193;down;s05;Masculino
+rojo;red;1;left;verde;amarillo;rojo;azul;1;0.8860674999996263;left;s05;Masculino
+verde;blue;0;up;azul;verde;rojo;amarillo;1;1.5841529999997874;up;s05;Masculino
+verde;blue;0;up;azul;verde;rojo;amarillo;1;0.930210999999872;up;s05;Masculino
+azul;green;0;right;rojo;azul;amarillo;verde;1;1.421490900000208;right;s05;Masculino
+rojo;blue;0;up;azul;rojo;verde;amarillo;1;1.9647050000003219;up;s05;Masculino
+amarillo;red;0;left;amarillo;azul;rojo;verde;1;2.264125900000181;left;s05;Masculino
+azul;blue;1;left;amarillo;rojo;azul;verde;1;1.2455314999997427;left;s05;Masculino
+azul;blue;1;up;azul;verde;amarillo;rojo;1;0.970922900000005;up;s05;Masculino
+verde;green;1;right;azul;amarillo;rojo;verde;1;1.2596142000002146;right;s05;Masculino
+rojo;red;1;right;amarillo;azul;verde;rojo;1;1.4336733000000095;right;s05;Masculino
+amarillo;yellow;1;up;amarillo;rojo;amarillo;verde;1;0.9325614999997924;up;s05;Masculino
+verde;red;0;left;verde;azul;rojo;amarillo;1;1.30906799999957;left;s05;Masculino
+azul;blue;1;right;rojo;verde;amarillo;azul;1;0.7931774999997288;right;s05;Masculino
+verde;green;1;right;amarillo;rojo;azul;verde;1;0.9671843000005538;right;s05;Masculino
+rojo;red;1;left;verde;azul;rojo;amarillo;1;1.3455101999998078;left;s05;Masculino
+verde;green;1;up;verde;rojo;azul;amarillo;1;1.135977400000229;up;s05;Masculino
+amarillo;blue;0;up;azul;amarillo;rojo;verde;1;1.8092172999995455;up;s05;Masculino
+azul;blue;1;up;azul;amarillo;verde;rojo;1;0.7700181000000157;up;s05;Masculino
+amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;1.3493924999993396;down;s05;Masculino
+verde;red;0;left;amarillo;azul;rojo;verde;1;1.3876997999996092;left;s05;Masculino
+amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;0.8873886000001221;down;s05;Masculino
+amarillo;blue;0;up;azul;amarillo;verde;rojo;0;1.0834421999998085;down;s05;Masculino
+amarillo;yellow;1;right;verde;rojo;azul;amarillo;1;1.1660403999994742;right;s05;Masculino
+amarillo;green;0;right;rojo;azul;amarillo;verde;1;1.210646700000325;right;s05;Masculino
+amarillo;green;0;right;amarillo;azul;rojo;verde;1;1.073298600000271;right;s05;Masculino
+verde;green;1;down;rojo;verde;azul;amarillo;1;1.2393253999998706;down;s05;Masculino
+rojo;green;0;right;amarillo;azul;rojo;verde;1;1.9744702999996662;right;s05;Masculino
+azul;green;0;right;rojo;azul;amarillo;verde;1;1.2444615000003978;right;s05;Masculino
+rojo;blue;0;up;azul;verde;rojo;amarillo;1;1.7072810999998183;up;s05;Masculino
+verde;green;1;left;azul;amarillo;verde;rojo;1;1.1835442000001422;left;s05;Masculino
+verde;yellow;0;down;verde;amarillo;rojo;azul;1;1.5230661999994481;down;s05;Masculino
+rojo;red;1;up;rojo;azul;amarillo;verde;1;1.280516599999828;up;s05;Masculino
+azul;red;0;left;amarillo;azul;rojo;verde;1;1.1302832000001217;left;s05;Masculino
+rojo;yellow;0;down;rojo;amarillo;verde;azul;1;1.0216661000004024;down;s05;Masculino
+azul;yellow;0;down;azul;amarillo;verde;rojo;1;1.1035744000000705;down;s05;Masculino
+rojo;red;1;down;amarillo;rojo;azul;verde;1;0.9362123000000793;down;s05;Masculino
+amarillo;yellow;1;down;verde;amarillo;rojo;azul;1;0.9027445000001535;down;s05;Masculino
+rojo;red;1;left;amarillo;azul;rojo;verde;1;1.1905893999992259;left;s05;Masculino
+azul;blue;1;up;azul;amarillo;rojo;verde;1;0.9330251000001226;up;s05;Masculino
+
+
 verde;yellow;0;down;rojo;amarillo;verde;azul;1;1.4571895999833941;down;S06_stroop_condA;Masculino
 verde;green;1;left;azul;amarillo;verde;rojo;1;1.2533864000579342;left;S06_stroop_condA;Masculino
 amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;1.1748968999600038;down;S06_stroop_condA;Masculino
@@ -298,7 +298,7 @@ rojo;green;0;right;azul;amarillo;rojo;verde;1;1.17951579997316;right;S06_stroop_
 verde;green;1;right;azul;amarillo;rojo;verde;1;0.9901708000106737;right;S06_stroop_condA;Masculino
 rojo;red;1;left;verde;azul;rojo;amarillo;1;1.0745058000320569;left;S06_stroop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;blue;0;up;azul;amarillo;rojo;verde;1;1.6194907999999941;up;S07_stroop_condA;Masculino
 verde;green;1;down;rojo;verde;azul;amarillo;1;0.9372768000000633;down;S07_stroop_condA;Masculino
 rojo;blue;0;up;azul;rojo;verde;amarillo;0;1.74282600000015;down;S07_stroop_condA;Masculino
@@ -348,7 +348,7 @@ verde;yellow;0;down;rojo;amarillo;verde;azul;1;0.9444782999999006;down;S07_stroo
 azul;red;0;left;amarillo;verde;rojo;azul;1;1.029284700000062;left;S07_stroop_condA;Masculino
 rojo;red;1;left;amarillo;azul;rojo;verde;1;0.8999085999998897;left;S07_stroop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 verde;green;1;right;rojo;azul;amarillo;verde;1;1.9954640000360087;right;S08_stroop_condB;Masculino
 azul;red;0;left;amarillo;verde;rojo;azul;1;0.9998297999845818;left;S08_stroop_condB;Masculino
 azul;blue;1;right;rojo;verde;amarillo;azul;1;0.8916243000421673;right;S08_stroop_condB;Masculino
@@ -398,7 +398,7 @@ rojo;red;1;left;verde;amarillo;rojo;azul;1;0.9917551999678835;left;S08_stroop_co
 amarillo;blue;0;up;azul;amarillo;verde;rojo;1;1.3640235000057146;up;S08_stroop_condB;Masculino
 amarillo;green;0;right;rojo;azul;amarillo;verde;1;1.6829711999744177;right;S08_stroop_condB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;yellow;1;left;verde;azul;amarillo;rojo;1;1.1111886999569833;left;S09_stroop_CondA;Masculino
 rojo;red;1;left;verde;azul;rojo;amarillo;1;1.2290228001074865;left;S09_stroop_CondA;Masculino
 rojo;red;1;right;amarillo;azul;verde;rojo;1;1.3560451000230387;right;S09_stroop_CondA;Masculino
@@ -448,7 +448,7 @@ verde;green;1;right;azul;amarillo;rojo;verde;1;1.8205945000518113;right;S09_stro
 rojo;red;1;up;rojo;azul;amarillo;verde;1;0.9202805999666452;up;S09_stroop_CondA;Masculino
 azul;blue;1;right;rojo;verde;amarillo;azul;1;1.0632282999577;right;S09_stroop_CondA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 azul;blue;1;up;azul;amarillo;rojo;verde;1;0.8981985999998869;up;S10_stoop_condA;Masculino
 azul;green;0;right;rojo;azul;amarillo;verde;1;1.3936930999989272;right;S10_stoop_condA;Masculino
 verde;blue;0;up;azul;verde;rojo;amarillo;1;1.6653727000011713;up;S10_stoop_condA;Masculino
@@ -498,7 +498,7 @@ verde;red;0;left;verde;azul;rojo;amarillo;1;1.1557318999985;left;S10_stoop_condA
 rojo;red;1;up;rojo;azul;amarillo;verde;1;1.0966797000000952;up;S10_stoop_condA;Masculino
 rojo;blue;0;up;azul;rojo;verde;amarillo;1;1.511396900001273;up;S10_stoop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;yellow;1;down;verde;amarillo;rojo;azul;1;1.3615543000632897;down;S11_stroop_CondA;Masculino
 amarillo;blue;0;up;azul;amarillo;verde;rojo;1;1.6028889999724925;up;S11_stroop_CondA;Masculino
 verde;red;0;left;verde;azul;rojo;amarillo;1;1.1300482999067754;left;S11_stroop_CondA;Masculino
@@ -548,7 +548,7 @@ amarillo;yellow;1;right;verde;rojo;azul;amarillo;1;0.69925519998651;right;S11_st
 verde;blue;0;up;azul;verde;rojo;amarillo;1;1.1472921000095084;up;S11_stroop_CondA;Masculino
 azul;yellow;0;down;azul;amarillo;verde;rojo;1;1.0608555999351665;down;S11_stroop_CondA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 azul;blue;1;down;amarillo;azul;verde;rojo;1;1.1593665999998848;down;S12_stroop_condB;Masculino
 rojo;yellow;0;down;rojo;amarillo;verde;azul;1;1.4015140999999858;down;S12_stroop_condB;Masculino
 azul;blue;1;up;azul;verde;amarillo;rojo;1;1.7271353000001;up;S12_stroop_condB;Masculino
@@ -598,7 +598,7 @@ rojo;green;0;right;azul;amarillo;rojo;verde;1;2.0887829000000693;right;S12_stroo
 rojo;green;0;right;amarillo;azul;rojo;verde;1;1.514073499999995;right;S12_stroop_condB;Masculino
 amarillo;yellow;1;down;verde;amarillo;rojo;azul;1;1.1803224000000228;down;S12_stroop_condB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 rojo;yellow;0;down;rojo;amarillo;verde;azul;1;1.4485687000001235;down;S13_stoop_condB;Masculino
 verde;green;1;right;amarillo;rojo;azul;verde;1;1.2324378999999226;right;S13_stoop_condB;Masculino
 rojo;red;1;left;verde;amarillo;rojo;azul;1;0.9549019999999473;left;S13_stoop_condB;Masculino
@@ -648,7 +648,7 @@ rojo;red;1;up;rojo;azul;amarillo;verde;1;1.182211400000142;up;S13_stoop_condB;Ma
 verde;green;1;down;rojo;verde;azul;amarillo;1;2.785598800000116;down;S13_stoop_condB;Masculino
 amarillo;green;0;right;rojo;azul;amarillo;verde;1;1.319003500000008;right;S13_stoop_condB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;yellow;1;right;verde;rojo;azul;amarillo;1;1.329988699988462;right;s14_stroop_condB;Masculino
 verde;green;1;up;verde;rojo;azul;amarillo;1;1.1302101999754086;up;s14_stroop_condB;Masculino
 verde;green;1;right;azul;amarillo;rojo;verde;1;1.4162055000197142;right;s14_stroop_condB;Masculino
@@ -698,7 +698,7 @@ azul;blue;1;right;rojo;verde;amarillo;azul;1;0.8072581000160426;right;s14_stroop
 verde;red;0;left;verde;azul;rojo;amarillo;1;1.2718401000020094;left;s14_stroop_condB;Masculino
 azul;blue;1;up;azul;amarillo;rojo;verde;1;1.429260200005956;up;s14_stroop_condB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 azul;blue;1;up;azul;amarillo;rojo;verde;1;2.6485262000001057;up;S15_stroop_CondB;Masculino
 amarillo;green;0;right;rojo;azul;amarillo;verde;1;1.8374866999999995;right;S15_stroop_CondB;Masculino
 azul;blue;1;down;amarillo;azul;verde;rojo;1;2.363746499999934;down;S15_stroop_CondB;Masculino
@@ -748,7 +748,7 @@ azul;green;0;right;rojo;azul;amarillo;verde;1;1.512874199999942;right;S15_stroop
 verde;blue;0;up;azul;verde;rojo;amarillo;1;1.7405965000000378;up;S15_stroop_CondB;Masculino
 amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;1.3548239999997804;down;S15_stroop_CondB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 azul;red;0;left;amarillo;verde;rojo;azul;1;1.003826799998933;left;S16_stoop_condA;Masculino
 amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;2.1744351999986975;down;S16_stoop_condA;Masculino
 rojo;green;0;right;amarillo;azul;rojo;verde;1;1.2488828000005014;right;S16_stoop_condA;Masculino
@@ -798,7 +798,7 @@ rojo;red;1;down;amarillo;rojo;azul;verde;1;1.2226475000006758;down;S16_stoop_con
 azul;blue;1;up;azul;amarillo;verde;rojo;1;1.0007875000010245;up;S16_stoop_condA;Masculino
 amarillo;green;0;right;amarillo;azul;rojo;verde;1;1.6640354999999545;right;S16_stoop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 rojo;red;1;left;verde;amarillo;rojo;azul;1;1.3988640999999973;left;S17_stroop_condB;Masculino
 amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;1.4778603000000032;down;S17_stroop_condB;Masculino
 rojo;red;1;left;amarillo;azul;rojo;verde;1;1.6782398;left;S17_stroop_condB;Masculino
@@ -848,7 +848,7 @@ rojo;green;0;right;amarillo;azul;rojo;verde;1;1.4420597999999814;right;S17_stroo
 rojo;yellow;0;down;rojo;amarillo;verde;azul;1;1.3226060999999731;down;S17_stroop_condB;Masculino
 azul;green;0;right;rojo;azul;amarillo;verde;1;1.3458402999999635;right;S17_stroop_condB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;green;0;right;rojo;azul;amarillo;verde;1;1.0520804000007047;right;S18_stroop_CondB;Masculino
 verde;green;1;right;rojo;azul;amarillo;verde;1;1.0314776000013808;right;S18_stroop_CondB;Masculino
 amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;0.8703138000018953;down;S18_stroop_CondB;Masculino
@@ -898,7 +898,7 @@ amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;0.8142253000005439;down;S18_st
 verde;red;0;left;verde;azul;rojo;amarillo;1;0.8722909000025538;left;S18_stroop_CondB;Masculino
 rojo;red;1;left;verde;azul;rojo;amarillo;1;0.8031393999990541;left;S18_stroop_CondB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 azul;blue;1;up;azul;amarillo;rojo;verde;1;1.471372699999847;up;s19_stroop_condA;Masculino
 verde;red;0;left;amarillo;azul;rojo;verde;1;1.098875899999257;left;s19_stroop_condA;Masculino
 verde;green;1;right;amarillo;rojo;azul;verde;1;1.726282399999036;right;s19_stroop_condA;Masculino
@@ -948,7 +948,7 @@ rojo;red;1;right;amarillo;azul;verde;rojo;1;0.9876843000001827;right;s19_stroop_
 rojo;green;0;right;azul;amarillo;rojo;verde;1;1.6432270999994216;right;s19_stroop_condA;Masculino
 rojo;blue;0;up;azul;verde;rojo;amarillo;1;0.9604004000011628;up;s19_stroop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;red;0;left;verde;azul;rojo;amarillo;1;2.0183403000010003;left;S20_stroop_condA;Masculino
 verde;green;1;right;azul;amarillo;rojo;verde;1;2.424876500001119;right;S20_stroop_condA;Masculino
 rojo;blue;0;up;azul;rojo;verde;amarillo;1;1.5020727999999508;up;S20_stroop_condA;Masculino
@@ -998,7 +998,7 @@ rojo;green;0;right;azul;amarillo;rojo;verde;1;1.613199800000075;right;S20_stroop
 rojo;red;1;left;amarillo;azul;rojo;verde;1;0.9612557000000379;left;S20_stroop_condA;Masculino
 verde;green;1;right;rojo;azul;amarillo;verde;1;1.9209068000000116;right;S20_stroop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;yellow;1;right;verde;rojo;azul;amarillo;1;0.8067470999994839;right;S21_stroop_CondA;Masculino
 rojo;red;1;left;verde;amarillo;rojo;azul;1;1.2027555000022403;left;S21_stroop_CondA;Masculino
 amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;1.3051092000023345;down;S21_stroop_CondA;Masculino
@@ -1048,7 +1048,7 @@ rojo;red;1;down;amarillo;rojo;azul;verde;1;1.3661820000015723;down;S21_stroop_Co
 rojo;red;1;up;rojo;azul;amarillo;verde;1;1.052532900001097;up;S21_stroop_CondA;Masculino
 azul;blue;1;up;azul;verde;amarillo;rojo;1;1.5068018999991182;up;S21_stroop_CondA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 verde;green;1;right;rojo;azul;amarillo;verde;1;1.4548753000017314;right;s22_stroop_condA;Masculino
 rojo;blue;0;up;azul;verde;rojo;amarillo;1;1.4934395000018412;up;s22_stroop_condA;Masculino
 azul;blue;1;right;rojo;verde;amarillo;azul;1;1.435158299998875;right;s22_stroop_condA;Masculino
@@ -1098,7 +1098,7 @@ rojo;yellow;0;down;rojo;amarillo;verde;azul;1;1.3061805999968783;down;s22_stroop
 verde;yellow;0;down;rojo;amarillo;verde;azul;1;1.2635287000011886;down;s22_stroop_condA;Masculino
 verde;red;0;left;amarillo;azul;rojo;verde;1;0.8672065000027942;left;s22_stroop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;red;0;left;amarillo;azul;rojo;verde;1;1.6373683999991044;left;s23_stroop_condA;Masculino
 rojo;red;1;down;amarillo;rojo;azul;verde;1;6.1743691000010585;down;s23_stroop_condA;Masculino
 verde;green;1;right;rojo;azul;amarillo;verde;1;1.6784085000035702;right;s23_stroop_condA;Masculino
@@ -1148,7 +1148,7 @@ rojo;red;1;left;verde;azul;rojo;amarillo;1;2.5957190000044648;left;s23_stroop_co
 azul;blue;1;down;amarillo;azul;verde;rojo;1;1.5591779000023962;down;s23_stroop_condA;Masculino
 azul;red;0;left;amarillo;azul;rojo;verde;1;1.3808435999962967;left;s23_stroop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;2.7820341999999982;down;-s24_stroop_CondA;Masculino
 amarillo;yellow;1;right;verde;rojo;azul;amarillo;1;1.4459463999999116;right;-s24_stroop_CondA;Masculino
 verde;green;1;right;azul;amarillo;rojo;verde;1;1.705974999999853;right;-s24_stroop_CondA;Masculino
@@ -1198,7 +1198,7 @@ azul;green;0;right;rojo;azul;amarillo;verde;0;2.056487000000061;down;-s24_stroop
 amarillo;yellow;1;down;verde;amarillo;rojo;azul;1;2.1224276000000373;down;-s24_stroop_CondA;Masculino
 azul;green;0;right;rojo;azul;amarillo;verde;1;3.9866355999999996;right;-s24_stroop_CondA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 verde;green;1;right;rojo;azul;amarillo;verde;1;1.1150949000002583;right;S25_stroop_condB;Masculino
 rojo;green;0;right;azul;amarillo;rojo;verde;1;1.4272620999981882;right;S25_stroop_condB;Masculino
 amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;1.1531054000006407;down;S25_stroop_condB;Masculino
@@ -1248,7 +1248,7 @@ rojo;green;0;right;amarillo;azul;rojo;verde;1;1.162181799998507;right;S25_stroop
 verde;green;1;right;amarillo;rojo;azul;verde;1;1.2335156999979517;right;S25_stroop_condB;Masculino
 amarillo;yellow;1;right;verde;rojo;azul;amarillo;1;1.4892519999993965;right;S25_stroop_condB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 azul;red;0;left;amarillo;azul;rojo;verde;1;1.121187300013844;left;S26_stroop_condA;Masculino
 amarillo;red;0;left;verde;azul;rojo;amarillo;1;0.9515220999892335;left;S26_stroop_condA;Masculino
 rojo;yellow;0;down;rojo;amarillo;verde;azul;1;0.9055846999981441;down;S26_stroop_condA;Masculino
@@ -1298,7 +1298,7 @@ amarillo;blue;0;up;azul;amarillo;verde;rojo;1;1.2406173000053968;up;S26_stroop_c
 azul;blue;1;left;amarillo;rojo;azul;verde;1;1.6735214000218548;left;S26_stroop_condA;Masculino
 amarillo;blue;0;up;azul;amarillo;rojo;verde;0;1.5931889999774285;left;S26_stroop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 rojo;blue;0;up;azul;rojo;verde;amarillo;1;1.5884220999432728;up;S27_stroop_condB;Masculino
 verde;blue;0;up;azul;verde;rojo;amarillo;1;1.8719882000004873;up;S27_stroop_condB;Masculino
 verde;green;1;up;verde;rojo;azul;amarillo;1;1.4963912999955937;up;S27_stroop_condB;Masculino
@@ -1348,7 +1348,7 @@ rojo;red;1;left;verde;amarillo;rojo;azul;1;1.3540688999928534;left;S27_stroop_co
 rojo;red;1;down;amarillo;rojo;azul;verde;1;1.5444320999085903;down;S27_stroop_condB;Masculino
 azul;yellow;0;down;azul;amarillo;verde;rojo;1;1.785484499996528;down;S27_stroop_condB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;blue;0;up;azul;amarillo;rojo;verde;1;1.4958323000464588;up;S28_stroop_CondB;Masculino
 azul;blue;1;right;rojo;verde;amarillo;azul;1;1.1610536000225693;right;S28_stroop_CondB;Masculino
 azul;yellow;0;down;azul;amarillo;verde;rojo;1;1.536995599977672;down;S28_stroop_CondB;Masculino
@@ -1398,7 +1398,7 @@ rojo;red;1;left;amarillo;azul;rojo;verde;1;0.9849153000395745;left;S28_stroop_Co
 rojo;yellow;0;down;rojo;amarillo;verde;azul;1;1.1852240001317114;down;S28_stroop_CondB;Masculino
 rojo;red;1;up;rojo;azul;amarillo;verde;1;1.7868395000696182;up;S28_stroop_CondB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 rojo;red;1;left;amarillo;azul;rojo;verde;1;1.8209718000143766;left;s29_stroop_condA;Masculino
 amarillo;red;0;left;amarillo;azul;rojo;verde;0;0.9288335000164807;up;s29_stroop_condA;Masculino
 verde;green;1;up;verde;rojo;azul;amarillo;1;1.2978146000532433;up;s29_stroop_condA;Masculino
@@ -1448,7 +1448,7 @@ azul;blue;1;left;amarillo;rojo;azul;verde;1;0.953166599967517;left;s29_stroop_co
 azul;blue;1;up;azul;verde;amarillo;rojo;1;0.9459428999107331;up;s29_stroop_condA;Masculino
 azul;blue;1;up;azul;amarillo;rojo;verde;1;0.9930489000398666;up;s29_stroop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 azul;blue;1;right;rojo;verde;amarillo;azul;1;1.4430958000011742;right;S30_stroop_condA;Masculino
 amarillo;yellow;1;down;azul;amarillo;verde;rojo;1;1.6412929000798613;down;S30_stroop_condA;Masculino
 azul;blue;1;up;azul;verde;amarillo;rojo;1;1.2662273000460118;up;S30_stroop_condA;Masculino
@@ -1498,7 +1498,7 @@ verde;blue;0;up;azul;verde;rojo;amarillo;1;1.9054704001173377;up;S30_stroop_cond
 rojo;green;0;right;azul;amarillo;rojo;verde;1;1.4418079999741167;right;S30_stroop_condA;Masculino
 amarillo;green;0;right;amarillo;azul;rojo;verde;1;2.369821200147271;right;S30_stroop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 verde;red;0;left;verde;azul;rojo;amarillo;1;0.9907381999946665;left;S31_stroop_condB;Masculino
 verde;blue;0;up;azul;verde;rojo;amarillo;1;0.8497998999955598;up;S31_stroop_condB;Masculino
 amarillo;yellow;1;right;verde;rojo;azul;amarillo;1;0.898123899998609;right;S31_stroop_condB;Masculino
@@ -1548,7 +1548,7 @@ rojo;red;1;down;amarillo;rojo;azul;verde;1;1.0251721999957226;down;S31_stroop_co
 rojo;green;0;right;amarillo;azul;rojo;verde;1;1.2733918000012636;right;S31_stroop_condB;Masculino
 amarillo;red;0;left;amarillo;azul;rojo;verde;1;1.034071000001859;left;S31_stroop_condB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 verde;green;1;up;verde;rojo;azul;amarillo;1;1.256846199999984;up;s32_stroop_condA;Masculino
 azul;red;0;left;amarillo;azul;rojo;verde;1;1.313834799999995;left;s32_stroop_condA;Masculino
 verde;green;1;left;azul;amarillo;verde;rojo;1;1.0019828999999731;left;s32_stroop_condA;Masculino
@@ -1598,7 +1598,7 @@ azul;blue;1;right;rojo;verde;amarillo;azul;1;0.9054699000000141;right;s32_stroop
 rojo;blue;0;up;azul;verde;rojo;amarillo;1;1.1054836000000137;up;s32_stroop_condA;Masculino
 amarillo;yellow;1;up;amarillo;rojo;amarillo;verde;1;1.0899579000000017;up;s32_stroop_condA;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 amarillo;blue;0;up;azul;amarillo;verde;rojo;1;1.7775931999785826;up;s33_stroop_condB;Masculino
 amarillo;red;0;left;verde;azul;rojo;amarillo;1;1.3694766000844538;left;s33_stroop_condB;Masculino
 azul;blue;1;up;azul;amarillo;rojo;verde;1;1.0416820999234915;up;s33_stroop_condB;Masculino
@@ -1648,7 +1648,7 @@ azul;red;0;left;amarillo;verde;rojo;azul;1;1.3138839999446645;left;s33_stroop_co
 rojo;green;0;right;azul;amarillo;rojo;verde;1;1.4823734000092372;right;s33_stroop_condB;Masculino
 verde;yellow;0;down;verde;amarillo;rojo;azul;1;1.161835499922745;down;s33_stroop_condB;Masculino
 
-stimulus;colour;congruent;correctresponse;alt1;alt2;alt3;alt4;Accuracy;RT;Response;Sub_id;Gènero
+
 rojo;green;0;right;amarillo;azul;rojo;verde;1;1.1811327000614256;right;S34_stroop_condB;Masculino
 azul;blue;1;up;azul;amarillo;verde;rojo;1;1.337636400014162;up;S34_stroop_condB;Masculino
 rojo;red;1;right;amarillo;azul;verde;rojo;1;0.8739357000449672;right;S34_stroop_condB;Masculino

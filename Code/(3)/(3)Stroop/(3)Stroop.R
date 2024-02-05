@@ -5,11 +5,10 @@
 library(dplyr)
 
 # Load the data from the file
-file_path1 <- "(3)Stroop_Placebo_comb_datafile.txt"
+file_path1 <- "Code/(3)/(3)Stroop/(3)Stroop_Placebo_comb_datafile.txt"
 StroopPlacebo <- read.table(file_path1, sep = ";", header = TRUE)
 
-
-file_path2 <- "(3)Stroop_Psilo_comb_datafile.txt"
+file_path2 <- "Code/(3)/(3)Stroop/(3)Stroop_Psilo_comb_datafile.txt"
 StroopPsilo <- read.table(file_path2, sep = ";", header = TRUE)
 
 
@@ -91,6 +90,7 @@ cat("Cohen's d RT:",dRT)
 
 dACC <- (meanACCPsilo-meanACCPlacebo)/((SDACCPlacebo+SDACCPsilo)/2)
 cat("Cohen's d ACC:",dACC)
+
 
 
 
