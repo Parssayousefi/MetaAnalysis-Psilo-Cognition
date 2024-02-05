@@ -18,7 +18,7 @@ head(AB_Placebo)
 names(AB_Psilo)[1] <- "Subject"
 
 # Define the number of times to repeat the operation
-num_repeats <- 31 #because there are 31 subjects in this gouprp, see folder!
+num_repeats <- 31 #because there are 31 subjects, see folder!
 
 # Define the number of rows (trials) to change at a time
 rows_at_a_time <- 140
@@ -43,7 +43,10 @@ AB_Psilo <- AB_Psilo %>%
 df_subset_psilo <- AB_Psilo[AB_Psilo$Correcto.T1 == 1, ]
 
 # Calculate the number of correct T2 detections per subject
+# the sum of Correcto.T2 for each Subject,
 correct_detections_psilo <- with(df_subset_psilo, tapply(Correcto.T2, Subject, sum))
+
+print(correct_detections_psilo)
 
 # Calculate the accuracy per subject
 accuracy_psilo <- correct_detections_psilo / 140
@@ -53,9 +56,8 @@ acc_per_subj_psilo <- data.frame(
   Subject = names(accuracy_psilo),
   Accuracy = accuracy_psilo
 )
-
-
 print(acc_per_subj_psilo)
+
 
 #2.1. sort data Placebo group
 names(AB_Placebo)[1] <- "Subject"
@@ -63,7 +65,7 @@ names(AB_Placebo)[1] <- "Subject"
 # Define the number of times to repeat the operation
 num_repeats <- 31 #because there are 31 subjects in this gouprp, see folder!
 
-# Define the number of rows to change at a time
+# Define the number of rows (nr of trials) to change at a time
 rows_at_a_time <- 140
 
 # Loop over the number of repeats
@@ -89,30 +91,36 @@ correct_detections_placebo <- with(df_subset_placebo, tapply(Correcto.T2, Subjec
 
 # Calculate the accuracy per subject
 accuracy_placebo <- correct_detections_placebo / 140
-
+print(accuracy_placebo)
 # Create a new data frame with the subject IDs and their accuracies
 acc_per_subj_placebo <- data.frame(
   Subject = names(accuracy_placebo),
-  Accuracy = accuracy_placebo
+  Accuracy = as.numeric(accuracy_placebo)
+  
 )
 
+print(acc_per_subj_placebo)
 
-#3. t-test for accuracy 
+# difference scores:
 
-# Perform paired t-test
-result <- t.test(acc_per_subj_psilo$Accuracy, acc_per_subj_placebo$Accuracy, paired = TRUE)
+merged_data <- merge(acc_per_subj_psilo, acc_per_subj_placebo, by="Subject", suffixes = c("_psilo", "_placebo"))
 
-# Print the t-test results
-print(result)
+# Calculate the difference scores between Accuracy_psilo and Accuracy_placebo
+merged_data$diff_scores_acc <- merged_data$Accuracy_psilo - merged_data$Accuracy_placebo
 
+print(merged_data$diff_scores_acc)
 
-#4. Effect size ACC
-mean_diff <- mean(acc_per_subj_psilo$Accuracy - acc_per_subj_placebo$Accuracy)
-pooled_sd <- sqrt((sd(acc_per_subj_psilo$Accuracy)^2 + sd(acc_per_subj_placebo$Accuracy)^2) / 2)
-cohens_d <- mean_diff / pooled_sd
+#3. Effect size ACC
+# Calculate mean and standard deviation of the difference scores
+mean_diff <- mean(merged_data$diff_scores_acc)
+sd_diff <- sd(merged_data$diff_scores_acc)
 
-# (Cohen's d ACC)
+# Calculate Cohen's d
+cohens_d <- mean_diff / sd_diff
+
+# Print Cohen's d
 print(cohens_d)
+
 
 
 
@@ -129,6 +137,7 @@ rt_per_subj_psilo <- data.frame(
   MeanRT_T1T2_psilo= (mean_rt_t1_psilo +  mean_rt_t2_psilo) /2
 )
 
+
 # Calculate the mean reaction time for T1 and T2 per subject for the Placebo group
 mean_rt_t1_placebo <- with(AB_Placebo[AB_Placebo$Correcto.T1 == 1 & AB_Placebo$Correcto.T2 == 1, ], tapply(Reaction.Time.T1, Subject, mean))
 mean_rt_t2_placebo <- with(AB_Placebo[AB_Placebo$Correcto.T1 == 1 & AB_Placebo$Correcto.T2 == 1, ], tapply(Reaction.Time.T2, Subject, mean))
@@ -140,6 +149,9 @@ rt_per_subj_placebo <- data.frame(
   MeanRT_T2 = mean_rt_t2_placebo,
   MeanRT_T1T2_placebo= (mean_rt_t1_placebo +  mean_rt_t2_placebo) /2
 )
+
+
+
 
 # Perform  t-tests for T1 and T2
 result_t1 <- t.test(rt_per_subj_psilo$MeanRT_T1, rt_per_subj_placebo$MeanRT_T1, paired = TRUE)

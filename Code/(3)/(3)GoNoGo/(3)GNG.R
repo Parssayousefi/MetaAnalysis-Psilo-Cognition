@@ -4,11 +4,10 @@ library(effsize)
 
 
 # Load the data from the file
-file_path1 <- "(3)GoNoGo_Placebo_comb_datafile.txt"
+file_path1 <- "Code/(3)/(3)GoNoGo/(3)GoNoGo_Placebo_comb_datafile.txt"
 GoNoGoPlacebo <- read.table(file_path1, sep = "\t", header = TRUE, fill = TRUE)
 
-
-file_path2 <- "(3)GoNoGo_Psilo_comb_datafile.txt"
+file_path2 <- "Code/(3)/(3)GoNoGo/(3)GoNoGo_Psilo_comb_datafile.txt"
 GoNoGoPsilo <- read.table(file_path2, sep = "\t", header = TRUE, fill = TRUE)
 
 
@@ -20,6 +19,16 @@ GoNoGoPsilo$ACCURACY <- as.numeric(GoNoGoPsilo$ACCURACY)
 GoNoGoPsilo$RT_REL_STIM_ONSET <- as.numeric(GoNoGoPsilo$RT_REL_STIM_ONSET)
 
 
+GoNoGoPlacebo_NG <- GoNoGoPlacebo[GoNoGoPlacebo$CURRENT_TRIAL == "NG", ]
+GoNoGoPlacebo_NG <- GoNoGoPlacebo[GoNoGoPlacebo$ACCURACY == 1, ]
+
+
+head(GoNoGoPlacebo_NG)
+
+GoNoGoPsilo_NG <- GoNoGoPsilo[GoNoGoPsilo$CURRENT_TRIAL == "NG", ]
+GoNoGoPsilo_NG <- GoNoGoPsilo[GoNoGoPsilo$ACCURACY == 1, ]
+head(GoNoGoPsilo_NG)
+#print(GoNoGoPsilo)
 # +remove outliers in a specific column of a data frame based on IQR
 remove_outliers_df <- function(data, column_name, factor = 1.5) {
   # Check if the column_name exists in the data frame
@@ -45,8 +54,8 @@ remove_outliers_df <- function(data, column_name, factor = 1.5) {
 }
 
 #exclude outliers
-GoNoGoPlacebo <- remove_outliers_df(GoNoGoPlacebo, "RT_REL_STIM_ONSET")
-GoNoGoPsilo <- remove_outliers_df(GoNoGoPsilo, "RT_REL_STIM_ONSET")
+GoNoGoPlacebo_NG <- remove_outliers_df(GoNoGoPlacebo, "RT_REL_STIM_ONSET")
+GoNoGoPsilo_NG <- remove_outliers_df(GoNoGoPsilo, "RT_REL_STIM_ONSET")
 
 #calculate mean RT and ACC + SD
 meanRtPlacebo = mean(GoNoGoPlacebo$RT_REL_STIM_ONSET, na.rm = TRUE)
