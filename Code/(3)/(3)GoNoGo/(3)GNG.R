@@ -1,6 +1,7 @@
 library(dplyr)
 library(readr)
 library(effsize)
+library(stringr)
 
 
 # Load the data from the file
@@ -11,57 +12,29 @@ file_path2 <- "Code/(3)/(3)GoNoGo/(3)GoNoGo_Psilo_comb_datafile.txt"
 GoNoGoPsilo <- read.table(file_path2, sep = "\t", header = TRUE, fill = TRUE)
 
 # Count rows with specific text in a column
-count <- nrow(GoNoGoPlacebo[GoNoGoPlacebo$PARTICIPANT == "s3", ])
+print(nrow(GoNoGoPsilo))
 
-print(count)
-head(GoNoGoPlacebo)
-# Extract subject numbers for the placebo dataset
-GoNoGoPlacebo$SubjectNumber <- gsub("^([A-Za-z0-9]+).*", "\\1", GoNoGoPlacebo$PARTICIPANT)
 
-GoNoGoPsilo$SubjectNumber <- gsub("^([A-Za-z0-9]+).*", "\\1", GoNoGoPsilo$PARTICIPANT)
+# Clean the SubjectNumber for GoNoGoPlacebo
+GoNoGoPlacebo$SubjectNumber <- as.integer(str_extract(GoNoGoPlacebo$PARTICIPANT, "[0-9]+"))
+
+# Clean the SubjectNumber for GoNoGoPsilo
+GoNoGoPsilo$SubjectNumber <- as.integer(str_extract(GoNoGoPsilo$PARTICIPANT, "[0-9]+"))
 
 print(length(unique(GoNoGoPlacebo$SubjectNumber)))
 print(length(unique(GoNoGoPsilo$SubjectNumber)))
 
 
+
 #make the values nummeric
 GoNoGoPlacebo$ACCURACY <- as.numeric(GoNoGoPlacebo$ACCURACY)
 GoNoGoPlacebo$RT_REL_STIM_ONSET <- as.numeric(GoNoGoPlacebo$RT_REL_STIM_ONSET)
-
-
-# For Placebo No-Go trials
-GoNoGoPlacebo_NG <- GoNoGoPlacebo[GoNoGoPlacebo$CURRENT_TRIAL == "NG", ]
-subject_means_placebo <- GoNoGoPlacebo_NG %>%
-  group_by(PARTICIPANT) %>%
-  summarise(
-    MeanRT = mean(RT_REL_STIM_ONSET, na.rm = TRUE),
-    MeanACC = mean(ACCURACY, na.rm = TRUE)
-  )
-
-# For Psilocybin No-Go trials
-GoNoGoPsilo_NG <- GoNoGoPsilo[GoNoGoPsilo$CURRENT_TRIAL == "NG", ]
-subject_means_psilo <- GoNoGoPsilo_NG %>%
-  group_by(PARTICIPANT) %>%
-  summarise(
-    MeanRT = mean(RT_REL_STIM_ONSET, na.rm = TRUE),
-    MeanACC = mean(ACCURACY, na.rm = TRUE)
-  )
+GoNoGoPsilo$ACCURACY <- as.numeric(GoNoGoPsilo$ACCURACY)
+GoNoGoPsilo$RT_REL_STIM_ONSET <- as.numeric(GoNoGoPsilo$RT_REL_STIM_ONSET)
 
 
 
-# Extract subject numbers for the placebo dataset
-GoNoGoPlacebo$SubjectNumber <- as.numeric(sub("S([0-9]+)_.*", "\\1", GoNoGoPlacebo$PARTICIPANT))
-# Extract subject numbers for the psilocybin dataset
-GoNoGoPsilo$SubjectNumber <- as.numeric(sub("S([0-9]+)_.*", "\\1", GoNoGoPsilo$PARTICIPANT))
-
-GoNoGoPlacebo_NG <- GoNoGoPlacebo[GoNoGoPlacebo$CURRENT_TRIAL == "NG" & GoNoGoPlacebo$ACCURACY == 1, ]
-GoNoGoPsilo_NG <- GoNoGoPsilo[GoNoGoPsilo$CURRENT_TRIAL == "NG" & GoNoGoPsilo$ACCURACY == 1, ]
-
-
-
-
-#print(GoNoGoPsilo)
-# +remove outliers in a specific column of a data frame based on IQR
+# remove outliers in a specific column of a data frame based on IQR
 remove_outliers_df <- function(data, column_name, factor = 1.5) {
   # Check if the column_name exists in the data frame
   if (!column_name %in% colnames(data)) {
@@ -80,67 +53,64 @@ remove_outliers_df <- function(data, column_name, factor = 1.5) {
   upper_bound <- Q3 + factor * IQR
   
   # Filter out the outliers
+  outliers <- data[data[[column_name]] < lower_bound | data[[column_name]] > upper_bound, ]
   cleaned_data <- data[data[[column_name]] >= lower_bound & data[[column_name]] <= upper_bound, ]
+  cat("Number of outliers:", nrow(outliers), "\n")
   
   return(cleaned_data)
 }
 
 #exclude outliers
-GoNoGoPlacebo_NG <- remove_outliers_df(GoNoGoPlacebo_NG, "RT_REL_STIM_ONSET")
-GoNoGoPsilo_NG <- remove_outliers_df(GoNoGoPsilo_NG, "RT_REL_STIM_ONSET")
-
-# Explicitly remove rows with NA values in key columns
-GoNoGoPlacebo_NG <- na.omit(GoNoGoPlacebo_NG)
-GoNoGoPsilo_NG <- na.omit(GoNoGoPsilo_NG)
-
-print(GoNoGoPsilo_NG)
-# Identify subject numbers present in both datasets
-common_subjects <- intersect(GoNoGoPlacebo_NG$SubjectNumber, GoNoGoPsilo_NG$SubjectNumber)
-
-# Filter both datasets to only include these common subjects
-GoNoGoPlacebo_NG <- GoNoGoPlacebo_NG[GoNoGoPlacebo_NG$SubjectNumber %in% common_subjects, ]
-GoNoGoPsilo_NG <- GoNoGoPsilo_NG[GoNoGoPsilo_NG$SubjectNumber %in% common_subjects, ]
+GoNoGoPlacebo <- remove_outliers_df(GoNoGoPlacebo, "RT_REL_STIM_ONSET")
+GoNoGoPsilo <- remove_outliers_df(GoNoGoPsilo, "RT_REL_STIM_ONSET")
 
 
 
+# only No-Go trials
+GoNoGoPlacebo_NG <- GoNoGoPlacebo[GoNoGoPlacebo$CURRENT_TRIAL == "NG", ]
+subject_means_placebo <- GoNoGoPlacebo_NG %>%
+  group_by(SubjectNumber) %>%
+  summarise(
+    MeanRT = mean(RT_REL_STIM_ONSET, na.rm = TRUE),
+    SDRT = sd(RT_REL_STIM_ONSET, na.rm = TRUE),
+    MeanACC = mean(ACCURACY, na.rm = TRUE),
+    SDACC = sd(ACCURACY, na.rm = TRUE)
+  )
+print(subject_means_placebo, n = 34)
 
+# only No-Go trials
+GoNoGoPsilo_NG <- GoNoGoPsilo[GoNoGoPsilo$CURRENT_TRIAL == "NG", ]
 
+subject_means_psilo <- GoNoGoPsilo_NG %>%
+  group_by(SubjectNumber) %>%
+  summarise(
+    MeanRT = mean(RT_REL_STIM_ONSET, na.rm = TRUE),
+    SDRT = sd(RT_REL_STIM_ONSET, na.rm = TRUE),
+    MeanACC = mean(ACCURACY, na.rm = TRUE),
+    SDACC = sd(ACCURACY, na.rm = TRUE) )
 
-#calculate mean RT and ACC + SD
-meanRtPlacebo = mean(GoNoGoPlacebo$RT_REL_STIM_ONSET, na.rm = TRUE)
-SDRtPlacebo = sd(GoNoGoPlacebo$RT_REL_STIM_ONSET, na.rm = TRUE)
+print(subject_means_psilo, n=34)
 
-meanACCPlacebo = mean(GoNoGoPlacebo$ACCURACY,na.rm = TRUE)
-SDACCPlacebo = sd(GoNoGoPlacebo$ACCURACY,na.rm = TRUE)
+# Merge the datasets by SubjectNumber
+merged_data <- merge(subject_means_placebo, subject_means_psilo, by = "SubjectNumber", suffixes = c("_Placebo", "_Psilo"))
 
-meanRtPsilo = mean(GoNoGoPsilo$RT_REL_STIM_ONSET, na.rm = TRUE)
-SDRtPsilo = sd(GoNoGoPsilo$RT_REL_STIM_ONSET, na.rm = TRUE)
+print(merged_data$Diff_MeanRT)
+print(merged_data$Diff_MeanACC)
 
-meanACCPsilo = mean(GoNoGoPsilo$ACCURACY,na.rm = TRUE)
-SDACCPsilo = sd(GoNoGoPsilo$RT_REL_STIM_ONSET, na.rm = TRUE)
+# Calculate difference scores
+merged_data$Diff_MeanRT <- merged_data$MeanRT_Psilo - merged_data$MeanRT_Placebo
+merged_data$Diff_MeanACC <- merged_data$MeanACC_Psilo - merged_data$MeanACC_Placebo
 
+# Calculate mean and SD for difference scores
+mean_diff_rt <- mean(merged_data$Diff_MeanRT, na.rm = TRUE)
+sd_diff_rt <- sd(merged_data$Diff_MeanRT, na.rm = TRUE)
 
+mean_diff_acc <- mean(merged_data$Diff_MeanACC, na.rm = TRUE)
+sd_diff_acc <- sd(merged_data$Diff_MeanACC, na.rm = TRUE)
 
-cat("mean accuracy placebo:",meanACCPlacebo, "\n")
-cat("SD accuracy placebo:",SDACCPlacebo, "\n")
-cat("mean RT placebo:",meanRtPlacebo, "\n")
-cat("SD RT placebo:",SDRtPlacebo, "\n")
+# Approximate Cohen's d for RT and ACC (not the standard method)
+cohens_d_rt_approx <- mean_diff_rt / sd_diff_rt
+cohens_d_acc_approx <- mean_diff_acc / sd_diff_acc
 
-
-
-cat("mean accuracy Psilocybin:",meanACCPsilo, "\n")
-cat("SD accuracy Psilocybin:",SDACCPsilo, "\n")
-cat("mean RT Psilocybin:",meanRtPsilo, "\n")
-cat("SD RT Psilocybin:",SDRtPsilo, "\n")
-
-
-#Cohens d
-dRT <- (meanRtPsilo-meanRtPlacebo)/((SDRtPlacebo+SDRtPsilo)/2)
-cat("Cohen's d RT:",dRT)
-
-dACC <- (meanACCPsilo-meanACCPlacebo)/((SDACCPlacebo+SDACCPsilo)/2)
-cat("Cohen's d ACC:",dACC)
-      
-      
-
-
+print(cohens_d_rt_approx)
+print(cohens_d_acc_approx)
