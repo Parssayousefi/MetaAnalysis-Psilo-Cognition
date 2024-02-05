@@ -10,24 +10,56 @@ GoNoGoPlacebo <- read.table(file_path1, sep = "\t", header = TRUE, fill = TRUE)
 file_path2 <- "Code/(3)/(3)GoNoGo/(3)GoNoGo_Psilo_comb_datafile.txt"
 GoNoGoPsilo <- read.table(file_path2, sep = "\t", header = TRUE, fill = TRUE)
 
+# Count rows with specific text in a column
+count <- nrow(GoNoGoPlacebo[GoNoGoPlacebo$PARTICIPANT == "s3", ])
+
+print(count)
+head(GoNoGoPlacebo)
+# Extract subject numbers for the placebo dataset
+GoNoGoPlacebo$SubjectNumber <- gsub("^([A-Za-z0-9]+).*", "\\1", GoNoGoPlacebo$PARTICIPANT)
+
+GoNoGoPsilo$SubjectNumber <- gsub("^([A-Za-z0-9]+).*", "\\1", GoNoGoPsilo$PARTICIPANT)
+
+print(length(unique(GoNoGoPlacebo$SubjectNumber)))
+print(length(unique(GoNoGoPsilo$SubjectNumber)))
+
 
 #make the values nummeric
 GoNoGoPlacebo$ACCURACY <- as.numeric(GoNoGoPlacebo$ACCURACY)
-GoNoGoPlacebo$RT <- as.numeric(GoNoGoPlacebo$RT_REL_STIM_ONSET)
-
-GoNoGoPsilo$ACCURACY <- as.numeric(GoNoGoPsilo$ACCURACY)
-GoNoGoPsilo$RT_REL_STIM_ONSET <- as.numeric(GoNoGoPsilo$RT_REL_STIM_ONSET)
+GoNoGoPlacebo$RT_REL_STIM_ONSET <- as.numeric(GoNoGoPlacebo$RT_REL_STIM_ONSET)
 
 
+# For Placebo No-Go trials
 GoNoGoPlacebo_NG <- GoNoGoPlacebo[GoNoGoPlacebo$CURRENT_TRIAL == "NG", ]
-GoNoGoPlacebo_NG <- GoNoGoPlacebo[GoNoGoPlacebo$ACCURACY == 1, ]
+subject_means_placebo <- GoNoGoPlacebo_NG %>%
+  group_by(PARTICIPANT) %>%
+  summarise(
+    MeanRT = mean(RT_REL_STIM_ONSET, na.rm = TRUE),
+    MeanACC = mean(ACCURACY, na.rm = TRUE)
+  )
 
-
-head(GoNoGoPlacebo_NG)
-
+# For Psilocybin No-Go trials
 GoNoGoPsilo_NG <- GoNoGoPsilo[GoNoGoPsilo$CURRENT_TRIAL == "NG", ]
-GoNoGoPsilo_NG <- GoNoGoPsilo[GoNoGoPsilo$ACCURACY == 1, ]
-head(GoNoGoPsilo_NG)
+subject_means_psilo <- GoNoGoPsilo_NG %>%
+  group_by(PARTICIPANT) %>%
+  summarise(
+    MeanRT = mean(RT_REL_STIM_ONSET, na.rm = TRUE),
+    MeanACC = mean(ACCURACY, na.rm = TRUE)
+  )
+
+
+
+# Extract subject numbers for the placebo dataset
+GoNoGoPlacebo$SubjectNumber <- as.numeric(sub("S([0-9]+)_.*", "\\1", GoNoGoPlacebo$PARTICIPANT))
+# Extract subject numbers for the psilocybin dataset
+GoNoGoPsilo$SubjectNumber <- as.numeric(sub("S([0-9]+)_.*", "\\1", GoNoGoPsilo$PARTICIPANT))
+
+GoNoGoPlacebo_NG <- GoNoGoPlacebo[GoNoGoPlacebo$CURRENT_TRIAL == "NG" & GoNoGoPlacebo$ACCURACY == 1, ]
+GoNoGoPsilo_NG <- GoNoGoPsilo[GoNoGoPsilo$CURRENT_TRIAL == "NG" & GoNoGoPsilo$ACCURACY == 1, ]
+
+
+
+
 #print(GoNoGoPsilo)
 # +remove outliers in a specific column of a data frame based on IQR
 remove_outliers_df <- function(data, column_name, factor = 1.5) {
@@ -54,8 +86,25 @@ remove_outliers_df <- function(data, column_name, factor = 1.5) {
 }
 
 #exclude outliers
-GoNoGoPlacebo_NG <- remove_outliers_df(GoNoGoPlacebo, "RT_REL_STIM_ONSET")
-GoNoGoPsilo_NG <- remove_outliers_df(GoNoGoPsilo, "RT_REL_STIM_ONSET")
+GoNoGoPlacebo_NG <- remove_outliers_df(GoNoGoPlacebo_NG, "RT_REL_STIM_ONSET")
+GoNoGoPsilo_NG <- remove_outliers_df(GoNoGoPsilo_NG, "RT_REL_STIM_ONSET")
+
+# Explicitly remove rows with NA values in key columns
+GoNoGoPlacebo_NG <- na.omit(GoNoGoPlacebo_NG)
+GoNoGoPsilo_NG <- na.omit(GoNoGoPsilo_NG)
+
+print(GoNoGoPsilo_NG)
+# Identify subject numbers present in both datasets
+common_subjects <- intersect(GoNoGoPlacebo_NG$SubjectNumber, GoNoGoPsilo_NG$SubjectNumber)
+
+# Filter both datasets to only include these common subjects
+GoNoGoPlacebo_NG <- GoNoGoPlacebo_NG[GoNoGoPlacebo_NG$SubjectNumber %in% common_subjects, ]
+GoNoGoPsilo_NG <- GoNoGoPsilo_NG[GoNoGoPsilo_NG$SubjectNumber %in% common_subjects, ]
+
+
+
+
+
 
 #calculate mean RT and ACC + SD
 meanRtPlacebo = mean(GoNoGoPlacebo$RT_REL_STIM_ONSET, na.rm = TRUE)
