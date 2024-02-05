@@ -384,7 +384,7 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
 
 ```{r}
 
-calculate_meta(RT=TRUE, multilevel=TRUE)$ci.ub
+calculate_meta(RT=TRUE, plot = TRUE,  multilevel=TRUE)
 ```
 
 ```{r Extreme cases}
@@ -471,89 +471,7 @@ identify_outliers <- function(data_type, multi=FALSE) {
 
 identify_outliers("RT", multi = TRUE)
 ```
-```{r sensitivity analysis}
-calculate_meta_no_outliers <- function(RT=FALSE, ACC=FALSE, multilevel=TRUE) {
-    
-    if(RT) {
-        data <- data_RT
-        effect_size_col <- "ES_final_RT"
-        variance_col <- "ES_var_RT"
-    } else if (ACC) {
-        data <- data_ACC
-        effect_size_col <- "ES_final_ACC"
-        variance_col <- "ES_var_ACC"      
-    }
 
-    data <- data[order(data$ID), ]
-    
-    if(multilevel) {
-        library(metafor)
-
-        model <- rma.mv(yi = data[[effect_size_col]], 
-                        V = data[[variance_col]],
-                        random = ~ 1 | ID/ES_ID, 
-                        data = data,
-                        test = "t",
-                        method = "REML"
-                        )
-        model_plain <- rma.mv(yi = data[[effect_size_col]], 
-                        V = data[[variance_col]],
-                        random = ~ 1 | ID/ES_ID,
-                        data = data,
-                        test = "t",
-                        method = "REML",
-                        sigma2 =  c(0, NA)
-                        )
-        overall_ci_lb <- model$ci.lb
-        overall_ci_ub <- model$ci.ub
-  
-
-        data$d <- data[[effect_size_col]]
-  
-        # Calculate CI for all observed effect sizes and identify outliers
-        data$upperci <- data$d + 1.96 * sqrt(data[[variance_col]])
-        data$lowerci <- data$d - 1.96 * sqrt(data[[variance_col]])
-        data$outlier <- with(data, upperci < overall_ci_lb | lowerci > overall_ci_ub)
-        
-        filtered_data <- data[!data$outlier, ]
-
-        model_no_outlier <- rma.mv(yi = filtered_data[[effect_size_col]], 
-                V = filtered_data[[variance_col]],
-                random = ~ 1 | ID/ES_ID, 
-                data = filtered_data, 
-                test = "t",
-                method = "REML"
-                )
-        print("Model results with outliers:")
-        print(summary(model))
-        print("Model results No outlier:")
-        print(summary(model_no_outlier))
-
-        print("model comparison nested vs non-nested:")
-        print(anova(model,model_no_outlier))
-
-    } else {
-        library(metafor)
-
-        model<- rma.mv(yi = data[[effect_size_col]], 
-                        V = data[[variance_col]],
-                        random = ~ 1 | ID,
-                        data = data,
-                        test = "t",
-                        method = "REML",
-                        )                    
-        print(summary(model))
-
-       
-    }
-
-    return(invisible(outliers))
-}
-```
-```{r}
-calculate_meta_no_outliers(RT = TRUE, multilevel = TRUE)
-
-```
 
 ```{r Residual inspection}
 calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) {
@@ -616,6 +534,12 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
 
 calculate_residuals(RT= TRUE, outlier_threshold = 3)
 
+
+```
+
+```{r }
+
+
 ```
 ```{r moderation}
 #library(metafor)
@@ -669,34 +593,14 @@ moderation_analysis( ACC = TRUE, moderation_var = "timing")
 
 
 ```{r}
-
-###Analysis w.o outliers
-#nested
-mod_all_ml_no_outliers <- rma.mv(yi     = ES_final_RT,
-                                 V      = ES_var_RT,
-                                 random = ~ 1 | ID, 
-                                 data   = data_RT)
-print(mod_all_ml_no_outliers$QE)
-?rma.mv
 ```
 
 ```{r}
-#nonnested 
-mod_all_plain_no_outliers <- rma(yi     = ES_final_RT, 
-                     vi     = ES_var_RT, 
-                     data   = data_RT_no_outliers,
-                     method = "DL")
-summary(mod_all_plain_no_outliers)
 ```
 
 ### UPDATED I\^2 wo outliers
 
 ```{r}
-W <- diag(1/mod_all_ml_no_outliers$vi)
-X <- model.matrix(mod_all_ml_no_outliers)
-P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
-100 * sum(mod_all_ml_no_outliers$sigma2) / (sum(mod_all_ml_no_outliers$sigma2) + (mod_all_ml_no_outliers$k-mod_all_ml_no_outliers$p)/sum(diag(P)))
-
 ```
 
 ##Forestplot

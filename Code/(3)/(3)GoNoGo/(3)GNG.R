@@ -94,8 +94,6 @@ print(subject_means_psilo, n=34)
 # Merge the datasets by SubjectNumber
 merged_data <- merge(subject_means_placebo, subject_means_psilo, by = "SubjectNumber", suffixes = c("_Placebo", "_Psilo"))
 
-print(merged_data$Diff_MeanRT)
-print(merged_data$Diff_MeanACC)
 
 # Calculate difference scores
 merged_data$Diff_MeanRT <- merged_data$MeanRT_Psilo - merged_data$MeanRT_Placebo

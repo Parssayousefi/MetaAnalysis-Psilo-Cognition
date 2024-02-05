@@ -1,18 +1,18 @@
-# Figure 3F: Part A (median, 1st quartile, 3rd quartile)
-# Psilo:   19.83, 17.85, 24.79
-# Placebo: 17.52,  16.53, 21.16
+# Figure 3F: Part B (median, 1st quartile, 3rd quartile)
+# Psilo:   42.13, 36.71, 48.31
+# Placebo: 35.17,  32.08, 45.22
 
 
 
-
+#---RT---#
 n_psilo <- 34  
 n_placebo <- 34
 
-median_psilo <- 19.83
-iqr_psilo <- 24.79 - 17.85
+median_psilo <- 42.13
+iqr_psilo <- 48.31 - 36.71
 
-median_placebo <- 17.52
-iqr_placebo <- 21.16 - 16.53
+median_placebo <- 35.17
+iqr_placebo <- 45.22 - 32.08
 
 # standard deviations
 sd_psilo <- iqr_psilo / 1.35
@@ -27,3 +27,4 @@ cohens_d <- (median_psilo - median_placebo) / pooled_sd
 
 # Output Cohen's d
 cohens_d
+
