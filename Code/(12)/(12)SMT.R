@@ -1,3 +1,4 @@
+#Spatial memory test#
 #--- Response Time (RT) ----#
 # n = 19
 # Data from Table S3 for Response Time: 
@@ -18,10 +19,9 @@ sem_rt_psilo <- 142.36
 # pooled SEM for response time
 pooled_sem_rt <- sqrt((sem_rt_placebo^2 + sem_rt_psilo^2) / 2)
 
-# Cohen's d for response time
-cohens_d_rt <- (mean_rt_psilo - mean_rt_placebo) / pooled_sem_rt
 
 
+print(cohens_d_rt)
 #---- Accuracy (Acc) ----#
 # Data from Table S3 for Accuracy: 
 

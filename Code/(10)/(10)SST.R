@@ -1,4 +1,4 @@
-# data extracted from Fig4
+# data extracted from Fig4: Spatial span length
 # Assumptions:
 # Standard Error to Standard Deviation: We used the provided standard errors to estimate the standard deviations of the differences between conditions.
 # Combining Standard Errors: We combined the standard errors from the two conditions to estimate the standard error of the mean differences.
