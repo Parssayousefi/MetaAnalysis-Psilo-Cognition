@@ -1,4 +1,4 @@
-# Data from Fig2:
+# Data from Fig3:
 predrug_means <- c(LVF_100 = 55.319, RVF_100 = 42.553, LVF_800 = 19.149, RVF_800 = 36.170)
 predrug_whiskers <- c(LVF_100 = 87.234, RVF_100 = 82.979, LVF_800 = 74.468, RVF_800 = 89.362)
 postdrug_means <- c(LVF_100 = 113.380, RVF_100 = 107.042, LVF_800 = 3.521, RVF_800 = 39.437)

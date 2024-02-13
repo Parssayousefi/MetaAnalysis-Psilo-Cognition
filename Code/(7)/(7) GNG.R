@@ -17,6 +17,8 @@ print(cohen_d_result_RT)
 
 #---Error rates---#
 eta_squared_ErrorRate= 0.5381
-cohen_d_result_ErrorRate <- -1*(convert_eta2_to_cohen_d(eta_squared_ErrorRate))
+
 #multiply with -1 to account for the fact that 1-error rate = accuracy
+cohen_d_result_ErrorRate <- -1*(convert_eta2_to_cohen_d(eta_squared_ErrorRate))
+
 print(cohen_d_result_ErrorRate)
