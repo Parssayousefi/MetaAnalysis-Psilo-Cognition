@@ -1,4 +1,5 @@
 #Spatial memory test#
+#--- not accounted for within subejcts design#
 #--- Response Time (RT) ----#
 # n = 19
 # Data from Table S3 for Response Time: 
@@ -16,12 +17,18 @@ mean_rt_psilo <- 1352.71
 sem_rt_placebo <- 131.59
 sem_rt_psilo <- 142.36
 
-# pooled SEM for response time
-pooled_sem_rt <- sqrt((sem_rt_placebo^2 + sem_rt_psilo^2) / 2)
+# Calculate standard deviations for RT, assuming SEM = SD / sqrt(n)
+sd_rt_placebo <- sem_rt_placebo * sqrt(n_rt)
+sd_rt_psilo <- sem_rt_psilo * sqrt(n_rt)
 
+# Calculate pooled standard deviation for RT
+sd_pooled_rt <- sqrt((sd_rt_placebo^2 + sd_rt_psilo^2) / 2)
 
+# Calculate Cohen's d for response time
+cohens_d_rt <- (mean_rt_psilo - mean_rt_placebo) / sd_pooled_rt
 
 print(cohens_d_rt)
+
 #---- Accuracy (Acc) ----#
 # Data from Table S3 for Accuracy: 
 
@@ -55,5 +62,8 @@ sd_pooled_acc <- sqrt((sd_acc_psilo^2 + sd_acc_placebo^2) / 2)
 # Calculate Cohen's d for accuracy
 cohens_d_acc <- (accuracy_psilo - accuracy_placebo) / sd_pooled_acc
 
-# Output Cohen's d for both RT and Acc
-list(cohens_d_rt = cohens_d_rt, cohens_d_acc = cohens_d_acc)
+print(cohens_d_acc)
+print(cohens_d_rt)
+
+
+
