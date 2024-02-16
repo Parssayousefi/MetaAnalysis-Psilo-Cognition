@@ -46,7 +46,6 @@ df_subset_psilo <- AB_Psilo[AB_Psilo$Correcto.T1 == 1, ]
 # the sum of Correcto.T2 for each Subject,
 correct_detections_psilo <- with(df_subset_psilo, tapply(Correcto.T2, Subject, sum))
 
-print(correct_detections_psilo)
 
 # Calculate the accuracy per subject
 accuracy_psilo <- correct_detections_psilo / 140
