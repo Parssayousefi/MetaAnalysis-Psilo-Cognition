@@ -384,7 +384,7 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
 
 ```{r}
 
-calculate_meta(ACC=TRUE, plot = TRUE,  multilevel=TRUE)
+calculate_meta(ACC=TRUE, plot = TRUE,  multilevel=FALSE)
 ```
 
 ```{r Extreme cases}
