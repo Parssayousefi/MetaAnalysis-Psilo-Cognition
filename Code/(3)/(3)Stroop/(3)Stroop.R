@@ -1,6 +1,6 @@
 
 #---Original Data from the authors used---#
-#---- Calculations are only for incongruent trials--#
+#---- Calculations are only for incongruent -congruent trials--#
 
 library(dplyr)
 library(stringr)
@@ -63,49 +63,50 @@ remove_outliers_df <- function(data, column_name, factor = 1.5) {
 StroopPlacebo <- remove_outliers_df(StroopPlacebo, "RT")
 StroopPsilo <- remove_outliers_df(StroopPsilo, "RT")
 
-
-#only incongruent trials
-StroopPlacebo_Incongruent <- StroopPlacebo[StroopPlacebo$congruent == 0, ]
-subject_means_Placebo <- StroopPlacebo_Incongruent %>%
+# Calculate the mean and SD for RT and ACC for the placebo group
+placebo_diff_scores <- StroopPlacebo %>%
   group_by(SubjectNumber) %>%
   summarise(
-    MeanRT = mean(RT, na.rm = TRUE),
-    SDRT = sd(RT, na.rm = TRUE),
-    MeanACC = mean(Accuracy, na.rm = TRUE),
-    SDACC = sd(Accuracy, na.rm = TRUE)
+    MeanRT_Incongruent = mean(RT[congruent == 0], na.rm = TRUE),
+    MeanRT_Congruent = mean(RT[congruent == 1], na.rm = TRUE),
+    MeanACC_Incongruent = mean(Accuracy[congruent == 0], na.rm = TRUE),
+    MeanACC_Congruent = mean(Accuracy[congruent == 1], na.rm = TRUE)
+  ) %>%
+  mutate(
+    Diff_MeanRT = MeanRT_Incongruent - MeanRT_Congruent,
+    Diff_MeanACC = MeanACC_Incongruent - MeanACC_Congruent
   )
-print(subject_means_Placebo, n = 34)
 
-StroopPsilo_Incongruent <- StroopPsilo[StroopPsilo$congruent == 0, ]
-subject_means_Psilo <- StroopPsilo_Incongruent %>%
+print(placebo_diff_scores$Diff_MeanRT)
+
+# Calculate the mean and SD for RT and ACC for the psilo group
+psilo_diff_scores <- StroopPsilo %>%
   group_by(SubjectNumber) %>%
   summarise(
-    MeanRT = mean(RT, na.rm = TRUE),
-    SDRT = sd(RT, na.rm = TRUE),
-    MeanACC = mean(Accuracy, na.rm = TRUE),
-    SDACC = sd(Accuracy, na.rm = TRUE)
+    MeanRT_Incongruent = mean(RT[congruent == 0], na.rm = TRUE),
+    MeanRT_Congruent = mean(RT[congruent == 1], na.rm = TRUE),
+    MeanACC_Incongruent = mean(Accuracy[congruent == 0], na.rm = TRUE),
+    MeanACC_Congruent = mean(Accuracy[congruent == 1], na.rm = TRUE)
+  ) %>%
+  mutate(
+    Diff_MeanRT = MeanRT_Incongruent - MeanRT_Congruent,
+    Diff_MeanACC = MeanACC_Incongruent - MeanACC_Congruent
   )
-print(subject_means_Psilo$MeanRT)
-print(subject_means_Placebo$MeanRT)
-
-# Merge the datasets by SubjectNumber
-merged_data <- merge(subject_means_Placebo, subject_means_Psilo, by = "SubjectNumber", suffixes = c("_Placebo", "_Psilo"))
 
 
-# Calculate difference scores
-merged_data$Diff_MeanRT <- merged_data$MeanRT_Psilo - merged_data$MeanRT_Placebo
-merged_data$Diff_MeanACC <- merged_data$MeanACC_Psilo - merged_data$MeanACC_Placebo
 
-# Calculate mean and SD for difference scores
-mean_diff_rt <- mean(merged_data$Diff_MeanRT, na.rm = TRUE)
-sd_diff_rt <- sd(merged_data$Diff_MeanRT, na.rm = TRUE)
+# Merge the data frames
+merged_diff_scores <- merge(placebo_diff_scores, psilo_diff_scores, by = "SubjectNumber", suffixes = c("_Placebo", "_Psilo"))
 
-mean_diff_acc <- mean(merged_data$Diff_MeanACC, na.rm = TRUE)
-sd_diff_acc <- sd(merged_data$Diff_MeanACC, na.rm = TRUE)
+# Calculate Cohen's d for the difference scores
+mean_diff_rt <- mean(merged_diff_scores$Diff_MeanRT_Psilo - merged_diff_scores$Diff_MeanRT_Placebo, na.rm = TRUE)
+sd_diff_rt <- sd(merged_diff_scores$Diff_MeanRT_Psilo - merged_diff_scores$Diff_MeanRT_Placebo, na.rm = TRUE)
 
-# Approximate Cohen's d for RT and ACC (not the standard method)
-cohens_d_rt_approx <- mean_diff_rt / sd_diff_rt
-cohens_d_acc_approx <- mean_diff_acc / sd_diff_acc
+mean_diff_acc <- mean(merged_diff_scores$Diff_MeanACC_Psilo - merged_diff_scores$Diff_MeanACC_Placebo, na.rm = TRUE)
+sd_diff_acc <- sd(merged_diff_scores$Diff_MeanACC_Psilo - merged_diff_scores$Diff_MeanACC_Placebo, na.rm = TRUE)
 
-print(cohens_d_rt_approx)
-print(cohens_d_acc_approx)
+cohens_d_rt <- mean_diff_rt / sd_diff_rt
+cohens_d_acc <- mean_diff_acc / sd_diff_acc
+
+print(cohens_d_rt)
+print(cohens_d_acc)
