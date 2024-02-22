@@ -65,50 +65,50 @@ GoNoGoPlacebo <- remove_outliers_df(GoNoGoPlacebo, "RT_REL_STIM_ONSET")
 GoNoGoPsilo <- remove_outliers_df(GoNoGoPsilo, "RT_REL_STIM_ONSET")
 
 
-
-# only No-Go trials
-GoNoGoPlacebo_NG <- GoNoGoPlacebo[GoNoGoPlacebo$CURRENT_TRIAL == "NG", ]
-subject_means_placebo <- GoNoGoPlacebo_NG %>%
+# Calculate difference scores for the Placebo group
+placebo_diff_scores <- GoNoGoPlacebo %>%
   group_by(SubjectNumber) %>%
   summarise(
-    MeanRT = mean(RT_REL_STIM_ONSET, na.rm = TRUE),
-    SDRT = sd(RT_REL_STIM_ONSET, na.rm = TRUE),
-    MeanACC = mean(ACCURACY, na.rm = TRUE),
-    SDACC = sd(ACCURACY, na.rm = TRUE)
+    MeanRT_NoGo = mean(RT_REL_STIM_ONSET[CURRENT_TRIAL == "NG"], na.rm = TRUE),
+    MeanRT_Go = mean(RT_REL_STIM_ONSET[CURRENT_TRIAL == "G"], na.rm = TRUE),
+    MeanACC_NoGo = mean(ACCURACY[CURRENT_TRIAL == "NG"], na.rm = TRUE),
+    MeanACC_Go = mean(ACCURACY[CURRENT_TRIAL == "G"], na.rm = TRUE)
+  ) %>%
+  mutate(
+    Diff_MeanRT = MeanRT_NoGo - MeanRT_Go,
+    Diff_MeanACC = MeanACC_NoGo - MeanACC_Go
   )
-print(subject_means_placebo, n = 34)
+print(placebo_diff_scores, n = 34)
 
-# only No-Go trials
-GoNoGoPsilo_NG <- GoNoGoPsilo[GoNoGoPsilo$CURRENT_TRIAL == "NG", ]
-
-subject_means_psilo <- GoNoGoPsilo_NG %>%
+# Calculate difference scores for the Psilo group
+psilo_diff_scores <- GoNoGoPsilo %>%
   group_by(SubjectNumber) %>%
   summarise(
-    MeanRT = mean(RT_REL_STIM_ONSET, na.rm = TRUE),
-    SDRT = sd(RT_REL_STIM_ONSET, na.rm = TRUE),
-    MeanACC = mean(ACCURACY, na.rm = TRUE),
-    SDACC = sd(ACCURACY, na.rm = TRUE) )
+    MeanRT_NoGo = mean(RT_REL_STIM_ONSET[CURRENT_TRIAL == "NG"], na.rm = TRUE),
+    MeanRT_Go = mean(RT_REL_STIM_ONSET[CURRENT_TRIAL == "G"], na.rm = TRUE),
+    MeanACC_NoGo = mean(ACCURACY[CURRENT_TRIAL == "NG"], na.rm = TRUE),
+    MeanACC_Go = mean(ACCURACY[CURRENT_TRIAL == "G"], na.rm = TRUE)
+  ) %>%
+  mutate(
+    Diff_MeanRT = MeanRT_NoGo - MeanRT_Go,
+    Diff_MeanACC = MeanACC_NoGo - MeanACC_Go
+  )
+print(psilo_diff_scores, n=34)
 
-print(subject_means_psilo, n=34)
+# Merge the difference scores by SubjectNumber
+merged_diff_scores <- merge(placebo_diff_scores, psilo_diff_scores, by = "SubjectNumber", suffixes = c("_Placebo", "_Psilo"))
 
-# Merge the datasets by SubjectNumber
-merged_data <- merge(subject_means_placebo, subject_means_psilo, by = "SubjectNumber", suffixes = c("_Placebo", "_Psilo"))
+# Calculate Cohen's d for the difference scores (Psilo - Placebo)
+merged_diff_scores$Diff_MeanRT_Psilo_Placebo <- merged_diff_scores$Diff_MeanRT_Psilo - merged_diff_scores$Diff_MeanRT_Placebo
+merged_diff_scores$Diff_MeanACC_Psilo_Placebo <- merged_diff_scores$Diff_MeanACC_Psilo - merged_diff_scores$Diff_MeanACC_Placebo
 
+# Calculate the standard deviation of the difference scores for accuracy
+sd_diff_acc <- sd(merged_diff_scores$Diff_MeanACC_Psilo_Placebo, na.rm = TRUE)
 
-# Calculate difference scores
-merged_data$Diff_MeanRT <- merged_data$MeanRT_Psilo - merged_data$MeanRT_Placebo
-merged_data$Diff_MeanACC <- merged_data$MeanACC_Psilo - merged_data$MeanACC_Placebo
+# Calculate the mean of the difference scores for accuracy
+mean_diff_acc <- mean(merged_diff_scores$Diff_MeanACC_Psilo_Placebo, na.rm = TRUE)
 
-# Calculate mean and SD for difference scores
-mean_diff_rt <- mean(merged_data$Diff_MeanRT, na.rm = TRUE)
-sd_diff_rt <- sd(merged_data$Diff_MeanRT, na.rm = TRUE)
+# Compute Cohen's d for within-subjects design
+cohens_d_acc_within <- mean_diff_acc / sd_diff_acc
 
-mean_diff_acc <- mean(merged_data$Diff_MeanACC, na.rm = TRUE)
-sd_diff_acc <- sd(merged_data$Diff_MeanACC, na.rm = TRUE)
-
-# Approximate Cohen's d for RT and ACC (not the standard method)
-cohens_d_rt_approx <- mean_diff_rt / sd_diff_rt
-cohens_d_acc_approx <- mean_diff_acc / sd_diff_acc
-
-print(cohens_d_rt_approx)
-print(cohens_d_acc_approx)
+print(cohens_d_acc_within)
