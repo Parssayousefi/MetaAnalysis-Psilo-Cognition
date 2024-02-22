@@ -50,7 +50,7 @@ Read_Prepare <- function(datafile) {
   # Columns to select
   cols_to_select <- c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", 
                       "ES_final_other", "Timepoint (min)", "Dose range (Hi, Mid, Low, MD)", 
-                      "PlotLabel", "DoseLabel")
+                      "PlotLabel", "DoseLabel", "EF sensitivity (1-3)")
 
   # Combine datasets
   data <- rbind(data_low[, cols_to_select],
@@ -84,8 +84,9 @@ data_mid <- datasets$data_mid
 data_high <- datasets$data_high
 
 ```
+```{r}
 
-
+```
 ```{r pre vs post peak}
 ClassifyTiming <- function(data, start_peak, stop_peak) {
     # Ensure 'data' is a data frame
@@ -160,6 +161,8 @@ data <- CodeDosage(data, data_low, data_mid, data_high)
 ```{r unique studies in dataset} 
 length(unique(data$ID))
 length(data[,1])
+
+
 ```
 
 ###add varaince of cohens d  to the dataset
@@ -584,21 +587,32 @@ moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
     return(summary(model))
 }
 #possible moderators: CognitiveFunction. dosage_cat_3, dosage_cat_2, timing
-moderation_analysis( ACC = TRUE, moderation_var = "CognitiveFunction")
-moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_3")#low vs mid vs high
-moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_2")#low vs mid & high
-moderation_analysis( ACC = TRUE, moderation_var = "timing")
+#moderation_analysis( ACC = TRUE, moderation_var = "CognitiveFunction")
+#moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_3")#low vs mid vs high
+#moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_2")#low vs mid & high
+#moderation_analysis( ACC = TRUE, moderation_var = "timing")
+
+
+
 
 ```
 
 
 ```{r}
+#moderation_analysis( ACC = TRUE, moderation_var = )
+model <- rma.mv(yi = data$ES_final_ACC, 
+                V = data$ES_var_ACC,
+                random = ~ 1 | factor(ID)/factor(ES_ID), 
+                data = data,
+                method = "REML",
+                mods = as.formula("~ `EF sensitivity (1-3)`"))
+summary(model)
 ```
 
 ```{r}
 ```
 
-### UPDATED I\^2 wo outliers
+
 
 ```{r}
 ```
