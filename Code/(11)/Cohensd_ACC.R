@@ -1,53 +1,49 @@
-
-
-#Raw Data from authors
-
-library(readxl)  # For reading Excel files
-library(dplyr)   # For data manipulation
+# Load the required libraries
+library(readxl)
+library(dplyr)
+library(stringr)
+library(effsize)
 
 # Load the data from Excel files
 df_placebo <- read_excel("Code/(11)/Acc_final_Placebo.xlsx")
 df_psilo <- read_excel("Code/(11)/Acc_final_Psilo.xlsx")
 
-
-# Select only the NoGo trial columns for each condition
+# Define NoGo and Go trial columns
 nogo_columns <- c("NeutralFear", "NeutralSad", "NeutralHappy", "NeutralAngry")
+go_columns <- c("FearNeut", "SadNeut", "HappyNeut", "AngryNeut")
 
-# We assume the NoGo columns have the same names in both datasets and represent the NoGo trials
-df_placebo_nogo <- df_placebo %>% select(participant, all_of(nogo_columns))
-df_psilo_nogo <- df_psilo %>% select(participant, all_of(nogo_columns))
+# Select and merge the relevant columns for both conditions
+df_placebo_trials <- df_placebo %>% select(participant, all_of(nogo_columns), all_of(go_columns))
+df_psilo_trials <- df_psilo %>% select(participant, all_of(nogo_columns), all_of(go_columns))
+df_merged_trials <- merge(df_placebo_trials, df_psilo_trials, by = "participant", suffixes = c("_placebo", "_psilo"))
 
-# Merge the NoGo datasets by participant number
-df_merged_nogo <- merge(df_placebo_nogo, df_psilo_nogo, by = "participant", suffixes = c("_placebo", "_psilo"))
-
-# Calculate the average NoGo trial accuracy for Placebo and Psilocybin
-df_merged_nogo <- df_merged_nogo %>%
+# Calculate the average NoGo and Go trial accuracy for Placebo and Psilocybin
+df_diffs <- df_merged_trials %>%
   rowwise() %>%
   mutate(
     avg_nogo_placebo = mean(c_across(ends_with("_placebo"))),
-    avg_nogo_psilo = mean(c_across(ends_with("_psilo")))
+    avg_go_placebo = mean(c_across(str_c(go_columns, "_placebo"))),
+    avg_nogo_psilo = mean(c_across(ends_with("_psilo"))),
+    avg_go_psilo = mean(c_across(str_c(go_columns, "_psilo"))),
+    diff_nogo_go_placebo = avg_nogo_placebo - avg_go_placebo,
+    diff_nogo_go_psilo = avg_nogo_psilo - avg_go_psilo,
+    acc_diff_nogo_go = diff_nogo_go_psilo - diff_nogo_go_placebo
   ) %>%
   ungroup()
 
-# Calculate the difference in NoGo trial accuracy for each participant
-df_merged_nogo <- df_merged_nogo %>%
-  mutate(
-    acc_diff_nogo = avg_nogo_psilo - avg_nogo_placebo
-  )
+# Print the first few rows to check the output
+print(head(df_diffs))
 
 # Function to calculate Cohen's d for paired samples
 cohens_d <- function(data_diff) {
-  # Calculate the mean of the differences
   mean_diff <- mean(data_diff)
-  # Calculate the standard deviation of the differences
   sd_diff <- sd(data_diff)
-  # Calculate the effect size
   d <- mean_diff / sd_diff
   return(d)
 }
 
-# Calculate Cohen's d for NoGo trials using the difference scores
-d_nogo <- cohens_d(df_merged_nogo$acc_diff_nogo)
+# Calculate Cohen's d for the NoGo - Go trial differences between the conditions
+d_nogo_go <- cohens_d(df_diffs$acc_diff_nogo_go)
 
 # Output the result
-print(d_nogo)
+print(d_nogo_go)

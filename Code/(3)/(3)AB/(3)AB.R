@@ -1,115 +1,104 @@
+
+
+#Attentional Blink Task, cohens d for accuracy and reaction time
+#raw data is in the form of 2 separate files, one for the placebo group and one for the psilocybin group
+
 library(dplyr)
 library(readxl)
+library(tidyr) 
+library(effsize)
 
-
-# Load the data from the file
-
+# Load the data from the files
 AB_Placebo <- read.csv("Code/(3)/(3)AB/(3)AB_Placebo_comb.csv")
-
-
 AB_Psilo <- read.csv("Code/(3)/(3)AB/(3)AB_Psilo_comb.csv")
 
+# Function to preprocess dataset
+preprocess_dataset <- function(data, num_subjects, rows_per_subject, lags_to_include) {
+  # Rename the first column to "Subject"
+  names(data)[1] <- "Subject"
+  names(data) <- as.character(names(data))
+  # Assign subject IDs
+  data$Subject <- rep(1:num_subjects, each = rows_per_subject)
+  # Filter based on specified Lag values
+  data <- data %>%
+    filter(Lag %in% lags_to_include)
+  return(data)
+}
+num_subjects <- 31
+rows_per_subject <- 140
+lags_to_include <- c(2, 3,4, 7)
+
+AB_Psilo <- preprocess_dataset(AB_Psilo, num_subjects, rows_per_subject, lags_to_include)
+AB_Placebo <- preprocess_dataset(AB_Placebo, num_subjects, rows_per_subject, lags_to_include)
+
+# Display the head of the processed Placebo group as an example
 head(AB_Placebo)
+names(AB_Psilo)
+names(AB_Placebo)
+
+str(AB_Psilo)
 
 
-#1.Psilo group
+acc_per_subj_psilo <- AB_Psilo %>%
+  filter(Correcto.T1 == 1) %>%  # Filter rows where Correcto.T1 is 1
+  group_by(Subject) %>%  # Group data by Subject
+  summarize(
+    Correct_T2_Count = sum(Correcto.T2, na.rm = TRUE),  # Sum Correcto.T2 for each group
+    Accuracy = Correct_T2_Count / 140  # Calculate accuracy
+  ) %>%
+  rename(Accuracy_Per_Subject = Accuracy)  # Rename column for clarity
 
-#1.1 sort data
-names(AB_Psilo)[1] <- "Subject"
+# Print the resulting dataframe
+print(acc_per_subj_psilo, n=31)
 
-# Define the number of times to repeat the operation
-num_repeats <- 31 #because there are 31 subjects, see folder!
 
-# Define the number of rows (trials) to change at a time
-rows_at_a_time <- 140
+acc_per_subj_placebo <- AB_Placebo %>%
+  filter(Correcto.T1 == 1) %>%  # Filter rows where Correcto.T1 is 1
+  group_by(Subject) %>%  # Group data by Subject
+  summarize(
+    Correct_T2_Count = sum(Correcto.T2, na.rm = TRUE),  # Sum Correcto.T2 for each group
+    Accuracy = Correct_T2_Count / 140  # Calculate accuracy
+  ) %>%
+  rename(Accuracy_Per_Subject = Accuracy)  # Rename column for clarity
 
-# Loop over the number of repeats
-for (i in 1:num_repeats) {
-  # Calculate the start and end row indices for each repeat
-  start_row <- (i - 1) * rows_at_a_time + 1
-  end_row <- i * rows_at_a_time
-  
-  # Change the value in the specified rows of the "Subject" column
-  AB_Psilo[start_row:end_row, "Subject"] <- i
+print(mean(acc_per_subj_placebo$Accuracy_Per_Subject))
+print(mean(acc_per_subj_psilo$Accuracy_Per_Subject))
+
+
+
+calculate_accuracy_difference <- function(data) {
+  data %>%
+    filter(Correcto.T1 == 1) %>%
+    group_by(Subject, Lag) %>%
+    summarize(
+      Accuracy = sum(Correcto.T2, na.rm = TRUE) / 140,
+      .groups = 'drop'
+    ) %>%
+    pivot_wider(names_from = Lag, values_from = Accuracy) %>%
+    mutate(
+      Mean_Acc_234 = rowMeans(select(., c(`2`, `3`, `4` )), na.rm = TRUE),
+      Acc_7 = `7`,
+      Diff =   Acc_7 - Mean_Acc_234
+    ) %>%
+    select(Subject, Mean_Acc_234, Acc_7, Diff)
 }
 
-#only looking at lags 2,3 and 4
-AB_Psilo <- AB_Psilo %>%
-  filter(Lag %in% c(2, 3, 4))
+# Apply the function to both the Psilocybin and Placebo datasets
+acc_diff_psilo <- calculate_accuracy_difference(AB_Psilo)
+acc_diff_placebo <- calculate_accuracy_difference(AB_Placebo)
 
-#1.2 calculate the accuracy (Number of correct T2 detections when T1 was correctly detected) / 140 trials)
+# Print the results
+print(mean(acc_diff_psilo$Diff))
+print(mean(acc_diff_placebo$Diff))
 
-# Subset the data frame to include only the rows where Correcto.T1 is 1
-df_subset_psilo <- AB_Psilo[AB_Psilo$Correcto.T1 == 1, ]
+# Merge the data for difference score calculation
+merged_data <- merge(acc_diff_psilo, acc_diff_placebo, by="Subject", suffixes = c("_psilo", "_placebo"))
 
-# Calculate the number of correct T2 detections per subject
-# the sum of Correcto.T2 for each Subject,
-correct_detections_psilo <- with(df_subset_psilo, tapply(Correcto.T2, Subject, sum))
+head(merged_data)
 
+# Calculate the difference scores for the accuracy differences
+merged_data$diff_scores_acc <- merged_data$Diff_psilo - merged_data$Diff_placebo
 
-# Calculate the accuracy per subject
-accuracy_psilo <- correct_detections_psilo / 140
-
-# Create a new data frame with the subject IDs and their accuracies
-acc_per_subj_psilo <- data.frame(
-  Subject = names(accuracy_psilo),
-  Accuracy = accuracy_psilo
-)
-print(acc_per_subj_psilo)
-
-
-#2.1. sort data Placebo group
-names(AB_Placebo)[1] <- "Subject"
-
-# Define the number of times to repeat the operation
-num_repeats <- 31 #because there are 31 subjects in this gouprp, see folder!
-
-# Define the number of rows (nr of trials) to change at a time
-rows_at_a_time <- 140
-
-# Loop over the number of repeats
-for (i in 1:num_repeats) {
-  # Calculate the start and end row indices for each repeat
-  start_row <- (i - 1) * rows_at_a_time + 1
-  end_row <- i * rows_at_a_time
-  
-  # Change the value in the specified rows of the "Subject" column
-  AB_Placebo[start_row:end_row, "Subject"] <- i
-}
-#just taking lag 2,3 and 4
-AB_Placebo <- AB_Placebo %>%
-  filter(Lag %in% c(2, 3, 4))
-
-#2.2 calculate the accuracy (Number of correct T2 detections when T1 was correctly detected) / 140 trials)
-
-# Subset the data frame to include only the rows where Correcto.T1 is 1
-df_subset_placebo <- AB_Placebo[AB_Placebo$Correcto.T1 == 1, ]
-
-# Calculate the number of correct T2 detections per subject
-correct_detections_placebo <- with(df_subset_placebo, tapply(Correcto.T2, Subject, sum))
-
-# Calculate the accuracy per subject
-accuracy_placebo <- correct_detections_placebo / 140
-print(accuracy_placebo)
-# Create a new data frame with the subject IDs and their accuracies
-acc_per_subj_placebo <- data.frame(
-  Subject = names(accuracy_placebo),
-  Accuracy = as.numeric(accuracy_placebo)
-  
-)
-
-print(acc_per_subj_placebo)
-
-# difference scores:
-
-merged_data <- merge(acc_per_subj_psilo, acc_per_subj_placebo, by="Subject", suffixes = c("_psilo", "_placebo"))
-
-# Calculate the difference scores between Accuracy_psilo and Accuracy_placebo
-merged_data$diff_scores_acc <- merged_data$Accuracy_psilo - merged_data$Accuracy_placebo
-
-print(merged_data$diff_scores_acc)
-
-#3. Effect size ACC
 # Calculate mean and standard deviation of the difference scores
 mean_diff <- mean(merged_data$diff_scores_acc)
 sd_diff <- sd(merged_data$diff_scores_acc)
@@ -120,90 +109,47 @@ cohens_d <- mean_diff / sd_diff
 # Print Cohen's d
 print(cohens_d)
 
-
-
-
 #--------RT------
-# Calculate the mean reaction time for T1 and T2 per subject for the Psilo group
-mean_rt_t1_psilo <- with(AB_Psilo[AB_Psilo$Correcto.T1 == 1 & AB_Psilo$Correcto.T2 == 1, ], tapply(Reaction.Time.T1, Subject, mean))
-mean_rt_t2_psilo <- with(AB_Psilo[AB_Psilo$Correcto.T1 == 1 & AB_Psilo$Correcto.T2 == 1, ], tapply(Reaction.Time.T2, Subject, mean))
-
-# Create a new data frame with the subject IDs and their mean reaction times
-rt_per_subj_psilo <- data.frame(
-  Subject = names(mean_rt_t1_psilo),
-  MeanRT_T1 = mean_rt_t1_psilo,
-  MeanRT_T2 = mean_rt_t2_psilo,
-  MeanRT_T1T2_psilo= (mean_rt_t1_psilo +  mean_rt_t2_psilo) /2
-)
-
-
-# Calculate the mean reaction time for T1 and T2 per subject for the Placebo group
-mean_rt_t1_placebo <- with(AB_Placebo[AB_Placebo$Correcto.T1 == 1 & AB_Placebo$Correcto.T2 == 1, ], tapply(Reaction.Time.T1, Subject, mean))
-mean_rt_t2_placebo <- with(AB_Placebo[AB_Placebo$Correcto.T1 == 1 & AB_Placebo$Correcto.T2 == 1, ], tapply(Reaction.Time.T2, Subject, mean))
-
-# Create a new data frame with the subject IDs and their mean reaction times
-rt_per_subj_placebo <- data.frame(
-  Subject = names(mean_rt_t1_placebo),
-  MeanRT_T1 = mean_rt_t1_placebo,
-  MeanRT_T2 = mean_rt_t2_placebo,
-  MeanRT_T1T2_placebo= (mean_rt_t1_placebo +  mean_rt_t2_placebo) /2
-)
+calculate_rt_difference_t2 <- function(data) {
+  data %>%
+    filter(Correcto.T1 == 1 & Correcto.T2 ==1) %>% 
+    group_by(Subject, Lag) %>%
+    summarize(MeanRT_T2 = mean(Reaction.Time.T2, na.rm = TRUE)) %>% 
+    pivot_wider(names_from = Lag, values_from = MeanRT_T2) %>%
+    mutate(Mean_RT_234 = ifelse(is.na(`2`) | is.na(`3`) | is.na(`4`), NA_real_, 
+                                rowMeans(select(., c(2, 3, 4)), na.rm = TRUE)),
+           RT_Diff = `7` - Mean_RT_234) %>%
+    select(Subject, Mean_RT_234, `7`, RT_Diff) 
+}
 
 
+# Apply the function to both the Psilocybin and Placebo datasets
+RT_diff_psilo <- calculate_rt_difference_t2(AB_Psilo)
+RT_diff_placebo <- calculate_rt_difference_t2(AB_Placebo)
+
+print(mean(RT_diff_psilo$RT_Diff))
+print(mean(RT_diff_placebo$RT_Diff))
+mean(RT_diff_psilo$Mean_RT_234)
+mean(RT_diff_placebo$Mean_RT_234)
+mean(RT_diff_psilo$`7`)
+mean(RT_diff_placebo$`7`)
 
 
-# Perform  t-tests for T1 and T2
-result_t1 <- t.test(rt_per_subj_psilo$MeanRT_T1, rt_per_subj_placebo$MeanRT_T1, paired = TRUE)
-result_t2 <- t.test(rt_per_subj_psilo$MeanRT_T2, rt_per_subj_placebo$MeanRT_T2, paired = TRUE)
+# Calculate squared deviations from the mean
+RT_diff_psilo$sq_dev = (RT_diff_psilo$RT_Diff - mean_rt_diff_psilo)^2
+RT_diff_placebo$sq_dev = (RT_diff_placebo$RT_Diff - mean_rt_diff_placebo)^2
 
-# Print the t-test results
-print(result_t1)
-print(result_t2)
+# Calculate sums of squared deviations
+sum_sq_dev_psilo = sum(RT_diff_psilo$sq_dev, na.rm = TRUE)
+sum_sq_dev_placebo = sum(RT_diff_placebo$sq_dev, na.rm = TRUE)
 
-# Calculate Cohen's d for T1
-mean_diff_t1 <- mean(rt_per_subj_psilo$MeanRT_T1 - rt_per_subj_placebo$MeanRT_T1)
-pooled_sd_t1 <- sqrt((sd(rt_per_subj_psilo$MeanRT_T1)^2 + sd(rt_per_subj_placebo$MeanRT_T1)^2) / 2)
-cohens_d_t1 <- mean_diff_t1 / pooled_sd_t1
+# Calculate degrees of freedom
+df_psilo = length(RT_diff_psilo$RT_Diff) - 1
+df_placebo = length(RT_diff_placebo$RT_Diff) - 1 
 
-# Calculate Cohen's d for T2
-mean_diff_t2 <- mean(rt_per_subj_psilo$MeanRT_T2 - rt_per_subj_placebo$MeanRT_T2)
-pooled_sd_t2 <- sqrt((sd(rt_per_subj_psilo$MeanRT_T2)^2 + sd(rt_per_subj_placebo$MeanRT_T2)^2) / 2)
-cohens_d_t2 <- mean_diff_t2 / pooled_sd_t2
+# Calculate pooled standard deviation
+pooled_sd = sqrt(((sum_sq_dev_psilo + sum_sq_dev_placebo) / (df_psilo + df_placebo)))
 
-# Print Cohen's d
-print(cohens_d_t1)
-print(cohens_d_t2)
-
-# Perform  t-tests for Mean of T1 & T2
-result_t1t2 <- t.test(rt_per_subj_psilo$MeanRT_T1T2_psilo, rt_per_subj_placebo$MeanRT_T1T2_placebo, paired = TRUE)
-print(result_t1t2)
-# Calculate Cohen's d for mean of T1 & T2
-mean_diff_meanT1T2 <- mean(rt_per_subj_psilo$MeanRT_T1T2_psilo - rt_per_subj_placebo$MeanRT_T1T2_placebo)
-pooled_sd_t1t2 <- sqrt((sd(rt_per_subj_psilo$MeanRT_T1T2_psilo)^2 + sd(rt_per_subj_placebo$MeanRT_T1T2_placebo)^2) / 2)
-cohens_d_t1t2 <- mean_diff_meanT1T2 / pooled_sd_t1t2
-
-print(cohens_d_t1t2)
-
-#----extra---#
-# Calculate the overall mean and SD for accuracy and RT for the Psilocybin group
-overall_mean_acc_psilo <- mean(acc_per_subj_psilo$Accuracy, na.rm = TRUE)
-overall_sd_acc_psilo <- sd(acc_per_subj_psilo$Accuracy, na.rm = TRUE)
-overall_mean_rt_psilo <- mean(rt_per_subj_psilo$MeanRT_T1T2_psilo, na.rm = TRUE)
-overall_sd_rt_psilo <- sd(rt_per_subj_psilo$MeanRT_T1T2_psilo, na.rm = TRUE)
-
-cat("Psilocybin Group - Mean Accuracy:", overall_mean_acc_psilo, "\n")
-cat("Psilocybin Group - SD Accuracy:", overall_sd_acc_psilo, "\n")
-cat("Psilocybin Group - Mean RT:", overall_mean_rt_psilo, "\n")
-cat("Psilocybin Group - SD RT:", overall_sd_rt_psilo, "\n")
-
-# Calculate the overall mean and SD for accuracy and RT for the Placebo group
-overall_mean_acc_placebo <- mean(acc_per_subj_placebo$Accuracy, na.rm = TRUE)
-overall_sd_acc_placebo <- sd(acc_per_subj_placebo$Accuracy, na.rm = TRUE)
-overall_mean_rt_placebo <- mean(rt_per_subj_placebo$MeanRT_T1T2_placebo, na.rm = TRUE)
-overall_sd_rt_placebo <- sd(rt_per_subj_placebo$MeanRT_T1T2_placebo, na.rm = TRUE)
-
-cat("Placebo Group - Mean Accuracy:", overall_mean_acc_placebo, "\n")
-cat("Placebo Group - SD Accuracy:", overall_sd_acc_placebo, "\n")
-cat("Placebo Group - Mean RT:", overall_mean_rt_placebo, "\n")
-cat("Placebo Group - SD RT:", overall_sd_rt_placebo, "\n")
-
+# Calculate Cohen's d
+cohens_d = (mean_rt_diff_psilo - mean_rt_diff_placebo) / pooled_sd 
+print(cohens_d)
