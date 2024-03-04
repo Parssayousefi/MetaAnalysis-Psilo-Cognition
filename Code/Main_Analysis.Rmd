@@ -387,7 +387,7 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
 
 ```{r}
 
-calculate_meta(ACC=TRUE, plot = TRUE,  multilevel=TRUE)
+calculate_meta(ACC=TRUE, plot = TRUE,  multilevel=FALSE)
 ```
 
 ```{r Extreme cases}
@@ -472,7 +472,99 @@ identify_outliers <- function(data_type, multi=FALSE) {
 ```
 ```{r}
 
-identify_outliers("RT", multi = TRUE)
+identify_outliers("ACC", multi = TRUE)
+```
+
+```{r test, continue here!}
+identify_outliers <- function(data_type, multi=FALSE) {
+  # Validate input
+  if(data_type != "RT" && data_type != "ACC") {
+    stop("data_type must be 'RT' or 'ACC'.")
+  }
+  
+  library(ggplot2) 
+  
+  # Select data, call calculate_meta accordingly, and set parameters based on the input arguments
+  if(data_type == "RT") {
+    data <- as.data.frame(data_RT) 
+    effect_size_col <- "ES_final_RT"
+    variance_col <- "ES_var_RT"
+    plottitle= "Reaction Time Effect Size Distribution"
+    print("Analyzing outliers for Reaction Times")
+
+  } else if (data_type == "ACC") {
+    data <- as.data.frame(data_ACC)  
+    effect_size_col <- "ES_final_ACC"
+    variance_col <- "ES_var_ACC"
+    plottitle= "Accuracy Effect Size Distribution"
+    print("Analyzing outliers for Accuracy")
+  }
+  
+  # Assuming calculate_meta is a predefined function that you have access to
+  model_results <- calculate_meta(RT=data_type == "RT", ACC=data_type == "ACC", multilevel=multi)
+  
+  overall_ci_lb <- model_results$ci.lb
+  overall_ci_ub <- model_results$ci.ub
+
+  data$d <- data[[effect_size_col]]
+  
+  # Calculate CI for all observed effect sizes and identify outliers
+  data$upperci <- data$d + 1.96 * sqrt(data[[variance_col]])
+  data$lowerci <- data$d - 1.96 * sqrt(data[[variance_col]])
+  data$outlier <- with(data, upperci < overall_ci_lb | lowerci > overall_ci_ub)
+  
+  pooled_effect <- model_results$beta
+  
+  # Plot
+  plot <- ggplot(data = data, aes(x = d, colour = outlier, fill = outlier)) +
+    geom_histogram(alpha = .2, position = "identity", bins = 20, binwidth = .3) + 
+    geom_vline(xintercept = pooled_effect, linetype="dashed", color="blue") +
+    theme_bw() +
+    labs(title=plottitle, x="Effect Size", y="Frequency") +
+    scale_fill_manual(values = c("FALSE" = "grey", "TRUE" = "red")) +
+    scale_colour_manual(values = c("FALSE" = "black", "TRUE" = "red"))
+
+  print(plot)
+
+  # Adjusted to include additional columns
+  outliers <- data[data$outlier, c("ID", "PlotLabel", "DoseLabel", "Cognitive measure", "Timepoint (min)", effect_size_col, variance_col, "d", "upperci", "lowerci", "outlier")]
+  
+  if(nrow(outliers) > 0) {
+    print("Nr of outliers:")
+    print(nrow(outliers))
+    print("Outliers details:")
+    print(outliers)
+  } else {
+    cat("No outliers identified.\n")
+  }
+
+  # Assuming rma.mv is from the 'metafor' package and you have previously defined and loaded it
+  filtered_data <- data[!data$outlier, ]
+  model_no_outlier <- rma.mv(yi = filtered_data[[effect_size_col]], 
+                             V = filtered_data[[variance_col]],
+                             random = ~ 1 | ID/ES_ID, 
+                             data = filtered_data, 
+                             test = "t",
+                             method = "REML"
+                             )
+
+  cat("Model results with outliers:", "G = ", round(model_results$b[1], 2),
+      ", 95% CI [", round(model_results$ci.lb, 2),
+      ", ", round(model_results$ci.ub, 2), "]" , sep = "")
+
+  cat("Model results No outlier:", "G = ", round(model_no_outlier$b[1], 2),
+      ", 95% CI [", round(model_no_outlier$ci.lb, 2),
+      ", ", round(model_no_outlier$ci.ub, 2), "]", sep = "")
+
+  return(invisible(outliers))
+}
+
+# Note: Ensure that the column names "ID", "PlotLabel", "DoseLabel", "Cognitive measure", and "Timepoint (min)"
+# exactly match those in your data_RT and data_ACC datasets.
+# Also, ensure that the `calculate_meta` and `rma.mv` functions are defined and accessible in your environment.
+
+
+identify_outliers("ACC", multi = TRUE)
 ```
 
 
@@ -535,7 +627,7 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
     return(invisible(res_mod_all_ml))
 }
 
-calculate_residuals(RT= TRUE, outlier_threshold = 3)
+calculate_residuals(ACC= TRUE, outlier_threshold = 3)
 
 
 ```
@@ -587,10 +679,10 @@ moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
     return(summary(model))
 }
 #possible moderators: CognitiveFunction. dosage_cat_3, dosage_cat_2, timing
-#moderation_analysis( ACC = TRUE, moderation_var = "CognitiveFunction")
-#moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_3")#low vs mid vs high
-#moderation_analysis( ACC = TRUE, moderation_var = "dosage_cat_2")#low vs mid & high
-#moderation_analysis( ACC = TRUE, moderation_var = "timing")
+moderation_analysis( RT = TRUE, moderation_var = "CognitiveFunction")
+moderation_analysis( RT = TRUE, moderation_var = "dosage_cat_3")#low vs mid vs high
+moderation_analysis( RT = TRUE, moderation_var = "dosage_cat_2")#low vs mid & high
+moderation_analysis( RT = TRUE, moderation_var = "timing")
 
 
 

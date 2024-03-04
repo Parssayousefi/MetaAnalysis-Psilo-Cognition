@@ -104,52 +104,43 @@ mean_diff <- mean(merged_data$diff_scores_acc)
 sd_diff <- sd(merged_data$diff_scores_acc)
 
 # Calculate Cohen's d
-cohens_d <- mean_diff / sd_diff
+cohens_d_ACC <- mean_diff / sd_diff
 
 # Print Cohen's d
-print(cohens_d)
+print(cohens_d_ACC)
 
 #--------RT------
+# Define the function to calculate reaction time differences
 calculate_rt_difference_t2 <- function(data) {
   data %>%
-    filter(Correcto.T1 == 1 & Correcto.T2 ==1) %>% 
+    filter(Correcto.T1 == 1 & Correcto.T2 == 1) %>% 
     group_by(Subject, Lag) %>%
-    summarize(MeanRT_T2 = mean(Reaction.Time.T2, na.rm = TRUE)) %>% 
+    summarize(MeanRT_T2 = mean(Reaction.Time.T2, na.rm = TRUE), .groups = 'drop') %>% 
     pivot_wider(names_from = Lag, values_from = MeanRT_T2) %>%
     mutate(Mean_RT_234 = ifelse(is.na(`2`) | is.na(`3`) | is.na(`4`), NA_real_, 
-                                rowMeans(select(., c(2, 3, 4)), na.rm = TRUE)),
+                                rowMeans(cbind(`2`, `3`, `4`), na.rm = TRUE)),
            RT_Diff = `7` - Mean_RT_234) %>%
     select(Subject, Mean_RT_234, `7`, RT_Diff) 
 }
 
-
-# Apply the function to both the Psilocybin and Placebo datasets
+# Apply the function to both datasets
 RT_diff_psilo <- calculate_rt_difference_t2(AB_Psilo)
 RT_diff_placebo <- calculate_rt_difference_t2(AB_Placebo)
 
-print(mean(RT_diff_psilo$RT_Diff))
-print(mean(RT_diff_placebo$RT_Diff))
-mean(RT_diff_psilo$Mean_RT_234)
-mean(RT_diff_placebo$Mean_RT_234)
-mean(RT_diff_psilo$`7`)
-mean(RT_diff_placebo$`7`)
+# Calculate the mean RT differences for both groups
+mean_rt_diff_psilo <- mean(RT_diff_psilo$RT_Diff, na.rm = TRUE)
+mean_rt_diff_placebo <- mean(RT_diff_placebo$RT_Diff, na.rm = TRUE)
 
+print(mean_rt_diff_psilo)
+print(mean_rt_diff_placebo)
 
-# Calculate squared deviations from the mean
+# Calculate squared deviations from the mean for each dataset
 RT_diff_psilo$sq_dev = (RT_diff_psilo$RT_Diff - mean_rt_diff_psilo)^2
 RT_diff_placebo$sq_dev = (RT_diff_placebo$RT_Diff - mean_rt_diff_placebo)^2
 
-# Calculate sums of squared deviations
-sum_sq_dev_psilo = sum(RT_diff_psilo$sq_dev, na.rm = TRUE)
-sum_sq_dev_placebo = sum(RT_diff_placebo$sq_dev, na.rm = TRUE)
 
-# Calculate degrees of freedom
-df_psilo = length(RT_diff_psilo$RT_Diff) - 1
-df_placebo = length(RT_diff_placebo$RT_Diff) - 1 
+# Calculate Cohen's d using the effectsize package
+cohens_d_result <- cohen.d(RT_diff_psilo$RT_Diff, RT_diff_placebo$RT_Diff)
 
-# Calculate pooled standard deviation
-pooled_sd = sqrt(((sum_sq_dev_psilo + sum_sq_dev_placebo) / (df_psilo + df_placebo)))
-
-# Calculate Cohen's d
-cohens_d = (mean_rt_diff_psilo - mean_rt_diff_placebo) / pooled_sd 
-print(cohens_d)
+# Print the result
+print(cohens_d_result)
