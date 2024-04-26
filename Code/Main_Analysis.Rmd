@@ -15,6 +15,7 @@ output: html_document
 #install.packages("gridExtra")
 
 library("rmarkdown")
+library(stringr)
 library('readxl')
 library('metafor')
 library("meta")
@@ -39,53 +40,71 @@ datafile <- "Overview_Studies.xlsx"
 
 
 ```{r Data Preparation}
-# Load necessary library
+
+
 Read_Prepare <- function(datafile) {
-  
-  # Read and prepare data
-  data_low <- as.data.frame(read_excel(datafile, sheet = "Low Dose"))
-  data_mid <- as.data.frame(read_excel(datafile, sheet = "Mid Dose"))
-  data_high <- as.data.frame(read_excel(datafile, sheet = "High Dose"))
+    # Read the overview sheet
+    data <- as.data.frame(read_excel(datafile, sheet = "Overview"))
 
-  # Columns to select
-  cols_to_select <- c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", 
-                      "ES_final_other", "Timepoint (min)", "Dose range (Hi, Mid, Low, MD)", 
-                      "PlotLabel", "DoseLabel", "EF sensitivity (1-3)")
+    # Define columns to select using all_of() for safe selection
+    cols_to_select <- c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", 
+                        "ES_final_other", "Timepoint (min)", "PlotLabel", "DoseLabel", "EF sensitivity (1-3)")
 
-  # Combine datasets
-  data <- rbind(data_low[, cols_to_select],
-                data_mid[, cols_to_select],
-                data_high[, cols_to_select])
+    # Select the columns using all_of() to avoid tidyselect warning
+    data <- select(data, all_of(cols_to_select))
 
-  # preprocessing
-  data$ES_ID <- seq_along(data[,1])
-  numeric_cols <- c("ES_ID","N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)")
-  for (col in numeric_cols) {
-    if (col %in% colnames(data)) {
-      data[, col] <- as.numeric(data[, col])
+    # Preprocessing: Assign numeric IDs and convert numeric columns
+    data$ES_ID <- seq_along(data$ID)
+    numeric_cols <- c("ID","ES_ID", "N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)")
+    data[numeric_cols] <- lapply(data[numeric_cols], function(x) {
+        as.numeric(as.character(x))
+    })
+
+    # Handle potential NA introduction by coercion
+    if (any(sapply(data[numeric_cols], is.na))) {
+        warning("NA values were introduced by coercion.")
     }
-  }
-    for (col in names(data)) {
-        # Check if the column is of type character
-        if (is.character(data[[col]])) {
-            # Remove carriage return characters
-            data[[col]] <- gsub("\r", "", data[[col]])
-        }
-    }
-    
-  
 
-  return(list(data = data, data_low = data_low, data_mid = data_mid, data_high = data_high))
+    # Clean up text data
+    text_cols <- setdiff(names(data), numeric_cols)
+    data[text_cols] <- lapply(data[text_cols], gsub, pattern = "\r\n|\r|\n", replacement = "")
+
+    # Filter data by dose categories
+    data_micro <- filter(data, DoseLabel == "Micro")
+    data_low <- filter(data, DoseLabel == "Low")
+    data_mid <- filter(data, DoseLabel == "Medium")
+    data_high <- filter(data, DoseLabel == "High")
+
+    # Combine all the filtered data back into one dataframe in the correct order
+    data_combined <- bind_rows(data_micro, data_low, data_mid, data_high)
+
+    # Ensure all necessary dose data frames are correctly combined
+    if (!is.null(data_combined) && nrow(data_combined) == nrow(data)) {
+        # Assign dosage categories
+        data_combined$dosage_cat_all <- c(rep(0, nrow(data_micro)),
+                                          rep(1, nrow(data_low)),
+                                          rep(2, nrow(data_mid)),
+                                          rep(3, nrow(data_high)))
+        data_combined$dosage_cat_micro <- c(rep(1, nrow(data_micro)),
+                                            rep(0, nrow(data_low) + nrow(data_mid) + nrow(data_high)))
+        data_combined$dosage_cat_microlow_vs_midhigh <- c(rep(1, nrow(data_low)+ nrow(data_micro)),
+                                                     rep(2, nrow(data_mid) + nrow(data_high)))
+    } else {
+        stop("Row counts do not match after combining data subsets. Check the filtering criteria.")
+    }
+
+    # Replace original data with combined data
+    return(data_combined)
 }
-datasets <- Read_Prepare(datafile)
-data <- datasets$data
-data_low <- datasets$data_low
-data_mid <- datasets$data_mid
-data_high <- datasets$data_high
+
+
+data <- Read_Prepare(datafile)
 
 ```
 ```{r}
-
+#check data
+range(data$ES_ID)
+length(data$ID)
 ```
 ```{r pre vs post peak}
 ClassifyTiming <- function(data, start_peak, stop_peak) {
@@ -121,47 +140,23 @@ data <- ClassifyTiming(data, start_peak=120,stop_peak = 180)
 ```
 
 
-```{r code dosage}
-CodeDosage <- function(data, data_low = NULL, data_mid = NULL, data_high = NULL) {
-    # Check if 'data' is a data frame
-    if (!is.data.frame(data)) {
-        stop("The 'data' argument must be a data frame.")
-    }
+```{r}
+# Count the number of rows where at least one of the specified columns is not NA
+#num_rows <- nrow(data[!is.na(data$ES_final_RT) | !is.na(data$ES_final_ACC), ])
+#print(data[is.na(data$ES_final_RT) | is.na(data$ES_final_ACC), ])
 
-    # Assign default values to data_low, data_mid, and data_high if they are not provided
-    if (is.null(data_low) && exists("data_low")) {
-        data_low <- get("data_low")
-    }
-    if (is.null(data_mid) && exists("data_mid")) {
-        data_mid <- get("data_mid")
-    }
-    if (is.null(data_high) && exists("data_high")) {
-        data_high <- get("data_high")
-    }
+# Print the number of rows
+#print(paste("Number of rows where 'ES_final_RT' or 'ES_final_ACC' is not NA:", num_rows))
 
-    # Code for microdosing studies
-    data$micro <- ifelse(data[,"Dose range (Hi, Mid, Low, MD)"] == "Micro", TRUE, FALSE)
-
-    # Check if dosage data frames exist before defining dosage categories
-    if (!is.null(data_low) && !is.null(data_mid) && !is.null(data_high)) {
-        data$dosage_cat_3 <- c(rep(1, times = nrow(data_low)),
-                               rep(2, times = nrow(data_mid)),
-                               rep(3, times = nrow(data_high)))
-        data$dosage_cat_2 <- c(rep(1, times = nrow(data_low)),
-                               rep(2, times = (nrow(data_mid) + nrow(data_high))))
-    }
-
-    # Remove the 'Dose range (Hi, Mid, Low, MD)' column
-    data <- dplyr::select(data, -`Dose range (Hi, Mid, Low, MD)`)
-    return(data)}
-data <- CodeDosage(data, data_low, data_mid, data_high)
+num_rows <- nrow(data[is.na(data$ES_final_RT), ])
+print(num_rows)
 ```
 
 
 ```{r unique studies in dataset} 
 length(unique(data$ID))
 length(data[,1])
-
+head(data)
 
 ```
 
@@ -212,8 +207,9 @@ ExcludeMD <- function(data) {
     # Return the dataset without microdosing
     return(data_no_md)
 }
-#data <- ExcludeMD(data)
-
+data_no_md <- ExcludeMD(data)
+dim(data)
+dim(data_no_md)
 ```
 
 ###dataset after completion
@@ -386,8 +382,11 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
 ```
 
 ```{r}
+# Print rows with EF final RT > 2.5
+# high_ef_rt_rows <- data_RT[data$ES_final_RT > 2.5, ]
+# print(high_ef_rt_rows)
+calculate_meta(RT=TRUE, plot = TRUE,  multilevel=TRUE)
 
-calculate_meta(ACC=TRUE, plot = TRUE,  multilevel=FALSE)
 ```
 
 ```{r Extreme cases}
