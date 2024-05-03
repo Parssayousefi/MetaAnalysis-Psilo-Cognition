@@ -48,7 +48,7 @@ Read_Prepare <- function(datafile) {
 
     # Define columns to select using all_of() for safe selection
     cols_to_select <- c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", 
-                        "ES_final_other", "Timepoint (min)", "PlotLabel", "DoseLabel", "EF sensitivity (1-3)")
+                        "ES_final_other", "Timepoint (min)", "PlotLabel", "DoseLabel", "EF_sensitivity")
 
     # Select the columns using all_of() to avoid tidyselect warning
     data <- select(data, all_of(cols_to_select))
@@ -85,8 +85,8 @@ Read_Prepare <- function(datafile) {
                                           rep(1, nrow(data_low)),
                                           rep(2, nrow(data_mid)),
                                           rep(3, nrow(data_high)))
-        data_combined$dosage_cat_micro <- c(rep(1, nrow(data_micro)),
-                                            rep(0, nrow(data_low) + nrow(data_mid) + nrow(data_high)))
+        data_combined$dosage_cat_micro <- c(rep(0, nrow(data_micro)),
+                                            rep(1, nrow(data_low) + nrow(data_mid) + nrow(data_high)))
         data_combined$dosage_cat_microlow_vs_midhigh <- c(rep(1, nrow(data_low)+ nrow(data_micro)),
                                                      rep(2, nrow(data_mid) + nrow(data_high)))
     } else {
@@ -101,64 +101,7 @@ Read_Prepare <- function(datafile) {
 data <- Read_Prepare(datafile)
 
 ```
-```{r}
-#check data
-range(data$ES_ID)
-length(data$ID)
-```
-```{r pre vs post peak}
-ClassifyTiming <- function(data, start_peak, stop_peak) {
-    # Ensure 'data' is a data frame
-    if(!is.data.frame(data)) {
-        stop("The 'data' argument must be a data frame.")
-    }
 
-    # Check if the "Timepoint (min)" column exists in the data frame
-    if(!"Timepoint (min)" %in% names(data)) {
-        stop("The data frame does not contain a 'Timepoint (min)' column.")
-    }
-
-    # Initialize the 'timing' column to 0
-    data$timing <- 0
-
-    # Retrieve the "Timepoint (min)" column
-    timepoint_col <- data[["Timepoint (min)"]]
-
-    # Classify as pre-peak (coded as 0)
-    data$timing[timepoint_col < start_peak] <- 0
-
-    # Classify as post-peak (coded as 2)
-    data$timing[timepoint_col > stop_peak] <- 2
-
-    # Classify as during peak (neither pre-peak nor post-peak, coded as 1)
-    data$timing[timepoint_col >= start_peak & timepoint_col <= stop_peak] <- 1
-
-    return(data)}
-
-data <- ClassifyTiming(data, start_peak=120,stop_peak = 180)
-
-```
-
-
-```{r}
-# Count the number of rows where at least one of the specified columns is not NA
-#num_rows <- nrow(data[!is.na(data$ES_final_RT) | !is.na(data$ES_final_ACC), ])
-#print(data[is.na(data$ES_final_RT) | is.na(data$ES_final_ACC), ])
-
-# Print the number of rows
-#print(paste("Number of rows where 'ES_final_RT' or 'ES_final_ACC' is not NA:", num_rows))
-
-num_rows <- nrow(data[is.na(data$ES_final_RT), ])
-print(num_rows)
-```
-
-
-```{r unique studies in dataset} 
-length(unique(data$ID))
-length(data[,1])
-head(data)
-
-```
 
 ###add varaince of cohens d  to the dataset
 ```{r}
@@ -194,32 +137,15 @@ AddCohensDVariance <- function(data) {
 
 data <- AddCohensDVariance(data)
 ```
-```{r Handle Microdosing}
-#Exclude/include Microdosing
-ExcludeMD <- function(data) {
-    if (!is.data.frame(data)) {
-        stop("The 'data' argument must be a data frame.")
-    }
-
-    # Exclude microdosing
-    data_no_md <- data[data$micro != TRUE, ]
-
-    # Return the dataset without microdosing
-    return(data_no_md)
-}
-data_no_md <- ExcludeMD(data)
-dim(data)
-dim(data_no_md)
-```
 
 ###dataset after completion
-
-```{r}
-print(length(unique(data[,1])))
-print(length(data[,1]))
-
+```{r overview studies in dataset} 
+length(unique(data$ID))
+length(data[,1])
+#head(data)
 
 ```
+
 ```{r RT Selection}
 #select RT
 sel_RT  <- !is.na(data$ES_final_RT)
@@ -227,7 +153,7 @@ data_RT <- data[sel_RT, ]
 # nr of ESs for RT measure
 nrow(data_RT)
 length(unique(data_RT$ID))
-table(data_RT$timing)
+
 ```
 
 ```{r ACC Selection}
@@ -237,30 +163,11 @@ data_ACC <- data[sel_ACC, ]
 # nr of ESs for RT measure
 nrow(data_ACC)
 length(unique(data_ACC$ID))
-table(data_ACC$timing)
 
 ```
 
 
-##Random Effect Models
-
-```{r}
-# #nested model
-# mod_all_ml <- rma.mv(yi     = ES_final_RT,
-#                      V      = ES_var_RT,
-#                      random = ~ 1 | ID, 
-#                      data   = data_RT)
-# summary(mod_all_ml)
-
-
-#  ### UPDATED I^2 here #######
-# W <- diag(1/mod_all_ml$vi)
-# X <- model.matrix(mod_all_ml)
-# P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
-# 100 * sum(mod_all_ml$sigma2) / (sum(mod_all_ml$sigma2) + (mod_all_ml$k-mod_all_ml$p)/sum(diag(P)))
-#print(data_RT$ID)
-```
-
+## Main Analysis RT
 
 ```{r Meta analysis function}
 calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
@@ -303,7 +210,8 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
                         random = ~ 1 | ID/ES_ID, 
                         data = data,
                         test = "t",
-                        method = "REML"
+                        method = "REML",
+                        slab = data$PlotLabel,
                         )
         model_plain <- rma.mv(yi = data[[effect_size_col]], 
                         V = data[[variance_col]],
@@ -311,6 +219,7 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
                         data = data,
                         test = "t",
                         method = "REML",
+                        slab = data$PlotLabel,
                         sigma2 =  c(0, NA)
                         )
     
@@ -362,6 +271,7 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
                         data = data,
                         test = "t",
                         method = "REML",
+                        slab = data$PlotLabel,
                         )                    
         print(summary(model))
 
@@ -382,13 +292,12 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
 ```
 
 ```{r}
-# Print rows with EF final RT > 2.5
-# high_ef_rt_rows <- data_RT[data$ES_final_RT > 2.5, ]
-# print(high_ef_rt_rows)
+
 calculate_meta(RT=TRUE, plot = TRUE,  multilevel=TRUE)
 
 ```
 
+## Outlier handling RT
 ```{r Extreme cases}
 identify_outliers <- function(data_type, multi=FALSE) {
   # Validate input
@@ -471,7 +380,8 @@ identify_outliers <- function(data_type, multi=FALSE) {
 ```
 ```{r}
 
-identify_outliers("ACC", multi = TRUE)
+identify_outliers("RT", multi = TRUE)
+
 ```
 
 ```{r test, continue here!}
@@ -558,10 +468,6 @@ identify_outliers <- function(data_type, multi=FALSE) {
   return(invisible(outliers))
 }
 
-# Note: Ensure that the column names "ID", "PlotLabel", "DoseLabel", "Cognitive measure", and "Timepoint (min)"
-# exactly match those in your data_RT and data_ACC datasets.
-# Also, ensure that the `calculate_meta` and `rma.mv` functions are defined and accessible in your environment.
-
 
 identify_outliers("ACC", multi = TRUE)
 ```
@@ -626,7 +532,7 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
     return(invisible(res_mod_all_ml))
 }
 
-calculate_residuals(ACC= TRUE, outlier_threshold = 3)
+calculate_residuals(RT= TRUE, outlier_threshold = 3)
 
 
 ```
@@ -635,7 +541,43 @@ calculate_residuals(ACC= TRUE, outlier_threshold = 3)
 
 
 ```
-```{r moderation}
+
+#Moderation Analysis
+
+```{r TIming: pre vs during vs post peak}
+ClassifyTiming <- function(data, start_peak, stop_peak) {
+    # Ensure 'data' is a data frame
+    if(!is.data.frame(data)) {
+        stop("The 'data' argument must be a data frame.")
+    }
+
+    # Check if the "Timepoint (min)" column exists in the data frame
+    if(!"Timepoint (min)" %in% names(data)) {
+        stop("The data frame does not contain a 'Timepoint (min)' column.")
+    }
+
+    # Initialize the 'timing' column to 0
+    data$timing <- 0
+
+    # Retrieve the "Timepoint (min)" column
+    timepoint_col <- data[["Timepoint (min)"]]
+
+    # Classify as pre-peak (coded as 1)
+    data$timing[timepoint_col < start_peak] <- 1
+
+    # Classify as post-peak (coded as 1)
+    data$timing[timepoint_col > stop_peak] <- 1
+
+    # Classify as during peak (neither pre-peak nor post-peak, coded as 0)
+    data$timing[timepoint_col >= start_peak & timepoint_col <= stop_peak] <- 0
+
+    return(data)}
+
+#ClassifyTiming(data, start_peak=120,stop_peak = 180)
+
+```
+
+```{r moderation function}
 #library(metafor)
 
 moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
@@ -678,27 +620,45 @@ moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
     return(summary(model))
 }
 #possible moderators: CognitiveFunction. dosage_cat_3, dosage_cat_2, timing
+
+
+# moderation_analysis( RT = TRUE, moderation_var = "EF_sensitivity")
+
+
+```
+```{r narrow peak window}	
+data_RT <- ClassifyTiming(data_RT, start_peak=90,stop_peak = 180)
+nrow(data_RT)
+length(unique(data_RT$ID))
+table(data_RT$timing)
+#moderation_analysis( RT = TRUE, moderation_var = "timing")
+```
+
+```{r wide  peak window}	
+data_RT <- ClassifyTiming(data_RT, start_peak=60,stop_peak = 210)
+nrow(data_RT)
+length(unique(data_RT$ID))
+table(data_RT$timing)
+#moderation_analysis( RT = TRUE, moderation_var = "timing")
+
+```
+
+```{r moderation cognitive function category}
+
+
 moderation_analysis( RT = TRUE, moderation_var = "CognitiveFunction")
-moderation_analysis( RT = TRUE, moderation_var = "dosage_cat_3")#low vs mid vs high
-moderation_analysis( RT = TRUE, moderation_var = "dosage_cat_2")#low vs mid & high
-moderation_analysis( RT = TRUE, moderation_var = "timing")
-
-
-
+table(data_RT$CognitiveFunction)
 
 ```
 
+```{r moderation EF sensitivity}
 
-```{r}
-#moderation_analysis( ACC = TRUE, moderation_var = )
-model <- rma.mv(yi = data$ES_final_ACC, 
-                V = data$ES_var_ACC,
-                random = ~ 1 | factor(ID)/factor(ES_ID), 
-                data = data,
-                method = "REML",
-                mods = as.formula("~ `EF sensitivity (1-3)`"))
-summary(model)
+
+moderation_analysis( RT = TRUE, moderation_var = "EF_sensitivity")
+#table(data_RT$EF_sensitivity)
+#head(data_RT)
 ```
+
 
 ```{r}
 #moderation_analysis( RT = TRUE, moderation_var = )
@@ -707,7 +667,7 @@ model <- rma.mv(yi = data$ES_final_RT,
                 random = ~ 1 | factor(ID)/factor(ES_ID), 
                 data = data,
                 method = "REML",
-                mods = as.formula("~ `EF sensitivity (1-3)`"))
+                mods = as.formula("~ `EF_sensitivity`"))
 summary(model)
 ```
 
@@ -716,44 +676,8 @@ summary(model)
 ```{r}
 ```
 
-##Forestplot
+##Publication Bias RT
 
-```{r}
-
-slab_vector <- paste(data_RT_no_outliers$ID, 
-                     data_RT_no_outliers$PlotLabel, 
-                     data_RT_no_outliers$CognitiveFunction, 
-                     data_RT_no_outliers$DoseLabel, 
-                     data_RT_no_outliers$`Timepoint (min)`, 
-                     sep = '   ')
-
-forest.rma(multilevel_meta(data = data_RT_no_outliers),
-           data        = data_RT_no_outliers, 
-           header      = T,
-           addfit      = T,
-           showweights = T,
-           addcrea     = T,
-           annotate    = T,
-           xlim        = c(-17, 10), 
-           col         = 'red',
-           order       = order(data_RT_no_outliers$ID),
-           slab        = slab_vector)
-
-
-```
-
-#funnelplot RT
-
-```{r}
-funnel(mod_all_ml_no_outliers,
-       yaxis            = "vi",
-       legend           = T,
-       level            = c(95, 99), 
-       shade            = c("white", "gray65"))
-
-
-print(length(unique(data_RT$ID)))
-```
 
 ##Piublication Bias #nested model w.o outlier
 
@@ -994,6 +918,64 @@ mod_egger_ACC <- rma.mv(yi = ES_final_ACC,
                     mods = ~ I(1/sqrt(ES_var_ACC)), # precision as moderator
                     random = ~ 1 | ID, 
                     data = data_ACC)
-summary(mod_egger)
+summary(mod_egger_ACC)
 ```
+
+## drapery plot
+```{r}
+
+# Run the meta-analysis using the metafor package
+
+meta_analysis_rt <- calculate_meta(RT=TRUE, plot = FALSE,  multilevel=FALSE)
+
+# Check the meta-analysis results
+summary(meta_analysis_rt)
+
+# Prepare the data for drapery function manually
+meta_analysis_rt_for_drapery <- list(
+  TE = meta_analysis_rt$yi,
+  seTE = sqrt(meta_analysis_rt$vi),
+  lower = meta_analysis_rt$yi - qt(0.975, df=meta_analysis_rt$df.residual) * sqrt(meta_analysis_rt$vi),
+  upper = meta_analysis_rt$yi + qt(0.975, df=meta_analysis_rt$df.residual) * sqrt(meta_analysis_rt$vi),
+  k = length(meta_analysis_rt$yi),
+  studlab = paste(data$ID, data$CognitiveFunction, sep="_"),
+  data = data
+)
+class(meta_analysis_rt_for_drapery) <- "meta"
+
+# Now generate the drapery plot
+drapery_plot <- drapery(
+  x = meta_analysis_rt_for_drapery,
+  type = "zvalue",
+  layout = "grayscale",
+  study.results = TRUE,
+  lty.study = 1,
+  lwd.study = 1,
+  col.study = "darkgray",
+  labels = TRUE,
+  col.labels = "black",
+  cex.labels = 0.7,
+  common = TRUE,
+  random = TRUE,
+  lty.common = 1,
+  lwd.common = 3,
+  col.common = "blue",
+  lty.random = 1,
+  lwd.random = 3,
+  col.random = "red",
+  legend = TRUE,
+  pos.legend = "topleft",
+  bty = "o",
+  plot = TRUE
+)
+
+# Print the drapery plot
+print(drapery_plot)
+
+```
+
+
+
+
+
 
