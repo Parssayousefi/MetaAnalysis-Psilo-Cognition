@@ -138,156 +138,6 @@ AddCohensDVariance <- function(data) {
 data <- AddCohensDVariance(data)
 ```
 
-###dataset after completion
-```{r overview studies in dataset} 
-length(unique(data$ID))
-length(data[,1])
-#head(data)
-
-```
-
-```{r RT Selection}
-#select RT
-sel_RT  <- !is.na(data$ES_final_RT)
-data_RT <- data[sel_RT, ]
-# nr of ESs for RT measure
-nrow(data_RT)
-length(unique(data_RT$ID))
-
-```
-
-
-
-## Main Analysis RT
-
-```{r Meta analysis function}
-calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
-    
-    if(RT) {
-        data <- data_RT
-        effect_size_col <- "ES_final_RT"
-        variance_col <- "ES_var_RT"
-        if(multilevel) {
-            forest_title <- "Forest plot for the multilevel model of Reaction Times"
-            funnel_title <- "Funnel plot for the multilevel model of Reaction Times"
-            
-        } else {
-            forest_title <- "Forest plot for the random effects model of Reaction Times"
-            funnel_title <- "Funnel plot for the random effects model of Reaction Times"
-        
-        }
-    } else if (ACC) {
-        data <- data_ACC
-        effect_size_col <- "ES_final_ACC"
-        variance_col <- "ES_var_ACC"
-        if(multilevel) {
-            forest_title <- "Forest plot for the multilevel model of Accuracy"
-            funnel_title <- "Funnel plot for the multilevel model of Accuracy"
-        
-        } else {
-            forest_title <- "Forest plot for the random effects model of Accuracy"
-            funnel_title <- "Funnel plot for the random effects model of Accuracy"
-        
-        }
-    }
-
-    data <- data[order(data$ID), ]
-    
-    if(multilevel) {
-        library(metafor)
-
-        model <- rma.mv(yi = data[[effect_size_col]], 
-                        V = data[[variance_col]],
-                        random = ~ 1 | ID/ES_ID, 
-                        data = data,
-                        test = "t",
-                        method = "REML",
-                        slab = data$PlotLabel,
-                        )
-        model_plain <- rma.mv(yi = data[[effect_size_col]], 
-                        V = data[[variance_col]],
-                        random = ~ 1 | ID/ES_ID,
-                        data = data,
-                        test = "t",
-                        method = "REML",
-                        slab = data$PlotLabel,
-                        sigma2 =  c(0, NA)
-                        )
-    
-        #print("Model results non nested:")
-        #print(summary(model_plain))
-        print("Model results nested:")
-        print(summary(model))
-
-        I2_nested <- var.comp(model)
-
-        print(I2_nested)
-        print(I2_nested$totalI2)
-        print("model comparison nested vs non-nested:")
-        print(anova(model,model_plain))
-        if(plot) {
-            source("transform_functions.r")
-            par(mfrow=c(2,1))
-            I2_plot <- print(I2_nested$plot)
-
-            data$cluster_change <- c(0, diff(data$ID))  
-            data$cluster_change[data$cluster_change > 0] <- 1
-
-            rows <- (1:nrow(data)) + cumsum(data$cluster_change * 0.3)
-
-            op <- par(tck=-.01, mgp=c(1.6, .2, 0), mar=c(3, 8, 1, 6))
-
-            forest(model,
-                   slab = data$PlotLabel,
-                   ilab = cbind(data$N_final, data$DoseLabel),
-                   ilab.xpos = c(-3, -2),
-                   cex = 0.9,
-                   header = TRUE,
-                   rows = rows,
-                   ylim = c(0.5, max(rows) + 4),
-                   main = forest_title)
-
-            abline(h = rows[data$cluster_change == 1] - 0.5, lty = 2)
-
-            par(op)
-            funnel(model, main = funnel_title)
-        }
-
-    } else {
-        library(metafor)
-
-        model<- rma.mv(yi = data[[effect_size_col]], 
-                        V = data[[variance_col]],
-                        random = ~ 1 | ID,
-                        data = data,
-                        test = "t",
-                        method = "REML",
-                        slab = data$PlotLabel,
-                        )                    
-        print(summary(model))
-
-        if(plot) {
-            par(mfrow=c(2,1))
-            forest(model, 
-                   slab = data$PlotLabel, 
-                   ilab = cbind(data$N_final, data$DoseLabel),
-                   main = forest_title)
-             
-            funnel(model, main = funnel_title)
-        }
-    }
-    par(mfrow=c(1,1))  
-
-    return(invisible(model))
-}
-```
-
-```{r}
-
-calculate_meta(RT=TRUE, plot = TRUE,  multilevel=TRUE)
-
-```
-
 ## Outlier handling RT
 
 ```{r OUtlier handling RT}
@@ -443,46 +293,167 @@ calculate_residuals(RT= TRUE, outlier_threshold = 3)
 
 ```
 
+
+#3.4 Resulst of the meta analysis
+```{r overview studies in dataset} 
+length(unique(data$ID))
+length(data[,1])
+#head(data)
+
+```
+
+#3.4.1 Reaction Times
+#3.4.1.1 Nested Model Reaction Time
+#3.4.1.2 Model comparison nested vs non-nested
+```{r RT Selection}
+#select RT
+sel_RT  <- !is.na(data$ES_final_RT)
+data_RT <- data[sel_RT, ]
+# nr of ESs for RT measure
+nrow(data_RT)
+length(unique(data_RT$ID))
+
+```
+
+
+```{r Meta analysis function}
+calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
+    
+    if(RT) {
+        data <- data_RT
+        effect_size_col <- "ES_final_RT"
+        variance_col <- "ES_var_RT"
+        if(multilevel) {
+            forest_title <- "Forest plot for the multilevel model of Reaction Times"
+            funnel_title <- "Funnel plot for the multilevel model of Reaction Times"
+            
+        } else {
+            forest_title <- "Forest plot for the random effects model of Reaction Times"
+            funnel_title <- "Funnel plot for the random effects model of Reaction Times"
+        
+        }
+    } else if (ACC) {
+        data <- data_ACC
+        effect_size_col <- "ES_final_ACC"
+        variance_col <- "ES_var_ACC"
+        if(multilevel) {
+            forest_title <- "Forest plot for the multilevel model of Accuracy"
+            funnel_title <- "Funnel plot for the multilevel model of Accuracy"
+        
+        } else {
+            forest_title <- "Forest plot for the random effects model of Accuracy"
+            funnel_title <- "Funnel plot for the random effects model of Accuracy"
+        
+        }
+    }
+
+    data <- data[order(data$ID), ]
+    
+    if(multilevel) {
+        library(metafor)
+
+        model <- rma.mv(yi = data[[effect_size_col]], 
+                        V = data[[variance_col]],
+                        random = ~ 1 | ID/ES_ID, 
+                        data = data,
+                        test = "t",
+                        method = "REML",
+                        slab = data$PlotLabel,
+                        )
+        model_plain <- rma.mv(yi = data[[effect_size_col]], 
+                        V = data[[variance_col]],
+                        random = ~ 1 | ID/ES_ID,
+                        data = data,
+                        test = "t",
+                        method = "REML",
+                        slab = data$PlotLabel,
+                        sigma2 =  c(0, NA)
+                        )
+    
+        #print("Model results non nested:")
+        #print(summary(model_plain))
+        print("Model results nested:")
+        print(summary(model))
+
+        I2_nested <- var.comp(model)
+
+        print(I2_nested)
+        print(I2_nested$totalI2)
+        print("model comparison nested vs non-nested:")
+        print(anova(model,model_plain))
+        if(plot) {
+            source("transform_functions.r")
+            par(mfrow=c(2,1))
+            I2_plot <- print(I2_nested$plot)
+
+            data$cluster_change <- c(0, diff(data$ID))  
+            data$cluster_change[data$cluster_change > 0] <- 1
+
+            rows <- (1:nrow(data)) + cumsum(data$cluster_change * 0.3)
+
+            op <- par(tck=-.01, mgp=c(1.6, .2, 0), mar=c(3, 8, 1, 6))
+
+            forest(model,
+                   slab = data$PlotLabel,
+                   ilab = cbind(data$N_final, data$DoseLabel),
+                   ilab.xpos = c(-3, -2),
+                   cex = 0.9,
+                   header = TRUE,
+                   rows = rows,
+                   ylim = c(0.5, max(rows) + 4),
+                   main = forest_title)
+
+            abline(h = rows[data$cluster_change == 1] - 0.5, lty = 2)
+
+            par(op)
+            funnel(model, main = funnel_title)
+        }
+
+    } else {
+        library(metafor)
+
+        model<- rma.mv(yi = data[[effect_size_col]], 
+                        V = data[[variance_col]],
+                        random = ~ 1 | ID,
+                        data = data,
+                        test = "t",
+                        method = "REML",
+                        slab = data$PlotLabel,
+                        )                    
+        print(summary(model))
+
+        if(plot) {
+            par(mfrow=c(2,1))
+            forest(model, 
+                   slab = data$PlotLabel, 
+                   ilab = cbind(data$N_final, data$DoseLabel),
+                   main = forest_title)
+             
+            funnel(model, main = funnel_title)
+        }
+    }
+    par(mfrow=c(1,1))  
+
+    return(invisible(model))
+}
+```
+
+
+#
+```{r}
+
+calculate_meta(RT=TRUE, plot = TRUE,  multilevel=TRUE)
+
+```
+
+
+
 ```{r }
 
 
 ```
 
-#Moderation Analysis
-
-```{r TIming: pre vs during vs post peak}
-ClassifyTiming <- function(data, start_peak, stop_peak) {
-    # Ensure 'data' is a data frame
-    if(!is.data.frame(data)) {
-        stop("The 'data' argument must be a data frame.")
-    }
-
-    # Check if the "Timepoint (min)" column exists in the data frame
-    if(!"Timepoint (min)" %in% names(data)) {
-        stop("The data frame does not contain a 'Timepoint (min)' column.")
-    }
-
-    # Initialize the 'timing' column to 0
-    data$timing <- 0
-
-    # Retrieve the "Timepoint (min)" column
-    timepoint_col <- data[["Timepoint (min)"]]
-
-    # Classify as pre-peak (coded as 1)
-    data$timing[timepoint_col < start_peak] <- 1
-
-    # Classify as post-peak (coded as 1)
-    data$timing[timepoint_col > stop_peak] <- 1
-
-    # Classify as during peak (neither pre-peak nor post-peak, coded as 0)
-    data$timing[timepoint_col >= start_peak & timepoint_col <= stop_peak] <- 0
-
-    return(data)}
-
-#ClassifyTiming(data, start_peak=120,stop_peak = 180)
-
-```
-
+#3.4.1.3 Subgroup Analyses RT
 ```{r moderation function}
 #library(metafor)
 
@@ -532,6 +503,43 @@ moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
 
 
 ```
+
+#3.4.1.3.1 Timing as moderator RT
+
+```{r TIming: pre vs during vs post peak}
+ClassifyTiming <- function(data, start_peak, stop_peak) {
+    # Ensure 'data' is a data frame
+    if(!is.data.frame(data)) {
+        stop("The 'data' argument must be a data frame.")
+    }
+
+    # Check if the "Timepoint (min)" column exists in the data frame
+    if(!"Timepoint (min)" %in% names(data)) {
+        stop("The data frame does not contain a 'Timepoint (min)' column.")
+    }
+
+    # Initialize the 'timing' column to 0
+    data$timing <- 0
+
+    # Retrieve the "Timepoint (min)" column
+    timepoint_col <- data[["Timepoint (min)"]]
+
+    # Classify as pre-peak (coded as 1)
+    data$timing[timepoint_col < start_peak] <- 1
+
+    # Classify as post-peak (coded as 1)
+    data$timing[timepoint_col > stop_peak] <- 1
+
+    # Classify as during peak (neither pre-peak nor post-peak, coded as 0)
+    data$timing[timepoint_col >= start_peak & timepoint_col <= stop_peak] <- 0
+
+    return(data)}
+
+#ClassifyTiming(data, start_peak=120,stop_peak = 180)
+
+```
+
+
 ```{r narrow peak window}	
 data_RT <- ClassifyTiming(data_RT, start_peak=90,stop_peak = 180)
 nrow(data_RT)
@@ -548,6 +556,9 @@ table(data_RT$timing)
 moderation_analysis( RT = TRUE, moderation_var = "timing")
 
 ```
+
+
+#3.4.1.3.2 Dosage as moderator
 ```{r Dosage}
 
 moderation_analysis( RT = TRUE, moderation_var = "dosage_cat_all")
