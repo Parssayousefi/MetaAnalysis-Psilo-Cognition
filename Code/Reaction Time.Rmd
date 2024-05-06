@@ -1,0 +1,883 @@
+---
+title: "Meta Analysis Psilocybin Cognition"
+author: "Parsa Yousefi"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)a
+#install.packages("readxl")
+#install.packages("rmarkdown")
+#install.packages("metafor")
+#install.packages("meta")
+#install.packages("dplyr")
+#install.packages("gridExtra")
+
+library("rmarkdown")
+library(stringr)
+library('readxl')
+library('metafor')
+library("meta")
+#install.packages("mvmeta")
+#library("mvmeta")
+library("dplyr")
+library("ggplot2")
+library("gridExtra")
+source("transform_functions.r")
+source("https://raw.githubusercontent.com/talgalili/R-code-snippets/master/boxplot.with.outlier.label.r")
+
+if (!require("remotes")) {
+  install.packages("remotes")
+}
+#remotes::install_github("guido-s/meta", ref = "R-book-first-edition")
+#remotes::install_github("MathiasHarrer/dmetar")
+
+# Define data file
+datafile <- "Overview_Studies.xlsx"
+```
+
+
+
+```{r Data Preparation}
+
+
+Read_Prepare <- function(datafile) {
+    # Read the overview sheet
+    data <- as.data.frame(read_excel(datafile, sheet = "Overview"))
+
+    # Define columns to select using all_of() for safe selection
+    cols_to_select <- c("ID", "CognitiveFunction", "N_final", "ES_final_RT", "ES_final_ACC", 
+                        "ES_final_other", "Timepoint (min)", "PlotLabel", "DoseLabel", "EF_sensitivity")
+
+    # Select the columns using all_of() to avoid tidyselect warning
+    data <- select(data, all_of(cols_to_select))
+
+    # Preprocessing: Assign numeric IDs and convert numeric columns
+    data$ES_ID <- seq_along(data$ID)
+    numeric_cols <- c("ID","ES_ID", "N_final", "ES_final_RT", "ES_final_ACC", "ES_final_other", "Timepoint (min)")
+    data[numeric_cols] <- lapply(data[numeric_cols], function(x) {
+        as.numeric(as.character(x))
+    })
+
+    # Handle potential NA introduction by coercion
+    if (any(sapply(data[numeric_cols], is.na))) {
+        warning("NA values were introduced by coercion.")
+    }
+
+    # Clean up text data
+    text_cols <- setdiff(names(data), numeric_cols)
+    data[text_cols] <- lapply(data[text_cols], gsub, pattern = "\r\n|\r|\n", replacement = "")
+
+    # Filter data by dose categories
+    data_micro <- filter(data, DoseLabel == "Micro")
+    data_low <- filter(data, DoseLabel == "Low")
+    data_mid <- filter(data, DoseLabel == "Medium")
+    data_high <- filter(data, DoseLabel == "High")
+
+    # Combine all the filtered data back into one dataframe in the correct order
+    data_combined <- bind_rows(data_micro, data_low, data_mid, data_high)
+
+    # Ensure all necessary dose data frames are correctly combined
+    if (!is.null(data_combined) && nrow(data_combined) == nrow(data)) {
+        # Assign dosage categories
+        data_combined$dosage_cat_all <- c(rep(0, nrow(data_micro)),
+                                          rep(1, nrow(data_low)),
+                                          rep(2, nrow(data_mid)),
+                                          rep(3, nrow(data_high)))
+        data_combined$dosage_cat_micro <- c(rep(0, nrow(data_micro)),
+                                            rep(1, nrow(data_low) + nrow(data_mid) + nrow(data_high)))
+        data_combined$dosage_cat_microlow_vs_midhigh <- c(rep(1, nrow(data_low)+ nrow(data_micro)),
+                                                     rep(2, nrow(data_mid) + nrow(data_high)))
+    } else {
+        stop("Row counts do not match after combining data subsets. Check the filtering criteria.")
+    }
+
+    # Replace original data with combined data
+    return(data_combined)
+}
+
+
+data <- Read_Prepare(datafile)
+
+```
+
+
+###add varaince of cohens d  to the dataset
+```{r}
+# add the variance of the Cohen's d to the dataset
+# https://stats.stackexchange.com/questions/144084/variance-of-cohens-d-statistic
+# https://stats.stackexchange.com/questions/495015/what-is-the-formula-for-the-standard-error-of-cohens-d
+AddCohensDVariance <- function(data) {
+    # Ensure 'data' is a data frame
+    if (!is.data.frame(data)) {
+        stop("The 'data' argument must be a data frame.")
+    }
+
+    # Initialize variance columns with NA
+    data$ES_var_RT <- NA
+    data$ES_var_ACC <- NA
+    data$ES_var_other <- NA
+
+    # Define split factor
+    splitfactor <- 2
+
+    # Loop through each row to calculate variances
+    for (i in 1:nrow(data)) {
+        N_sum <- data$N_final[i]
+        N_prod <- (data$N_final[i] / splitfactor) * (data$N_final[i] / splitfactor)
+        
+        # Calculating variance for each effect size
+        data$ES_var_RT[i] <- (N_sum / N_prod) + (data$ES_final_RT[i]^2 / (2 * N_sum))
+        data$ES_var_ACC[i] <- (N_sum / N_prod) + (data$ES_final_ACC[i]^2 / (2 * N_sum))
+        data$ES_var_other[i] <- (N_sum / N_prod) + (data$ES_final_other[i]^2 / (2 * N_sum))
+    }
+
+    return(data)}
+
+data <- AddCohensDVariance(data)
+```
+
+###dataset after completion
+```{r overview studies in dataset} 
+length(unique(data$ID))
+length(data[,1])
+#head(data)
+
+```
+
+```{r RT Selection}
+#select RT
+sel_RT  <- !is.na(data$ES_final_RT)
+data_RT <- data[sel_RT, ]
+# nr of ESs for RT measure
+nrow(data_RT)
+length(unique(data_RT$ID))
+
+```
+
+
+
+## Main Analysis RT
+
+```{r Meta analysis function}
+calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
+    
+    if(RT) {
+        data <- data_RT
+        effect_size_col <- "ES_final_RT"
+        variance_col <- "ES_var_RT"
+        if(multilevel) {
+            forest_title <- "Forest plot for the multilevel model of Reaction Times"
+            funnel_title <- "Funnel plot for the multilevel model of Reaction Times"
+            
+        } else {
+            forest_title <- "Forest plot for the random effects model of Reaction Times"
+            funnel_title <- "Funnel plot for the random effects model of Reaction Times"
+        
+        }
+    } else if (ACC) {
+        data <- data_ACC
+        effect_size_col <- "ES_final_ACC"
+        variance_col <- "ES_var_ACC"
+        if(multilevel) {
+            forest_title <- "Forest plot for the multilevel model of Accuracy"
+            funnel_title <- "Funnel plot for the multilevel model of Accuracy"
+        
+        } else {
+            forest_title <- "Forest plot for the random effects model of Accuracy"
+            funnel_title <- "Funnel plot for the random effects model of Accuracy"
+        
+        }
+    }
+
+    data <- data[order(data$ID), ]
+    
+    if(multilevel) {
+        library(metafor)
+
+        model <- rma.mv(yi = data[[effect_size_col]], 
+                        V = data[[variance_col]],
+                        random = ~ 1 | ID/ES_ID, 
+                        data = data,
+                        test = "t",
+                        method = "REML",
+                        slab = data$PlotLabel,
+                        )
+        model_plain <- rma.mv(yi = data[[effect_size_col]], 
+                        V = data[[variance_col]],
+                        random = ~ 1 | ID/ES_ID,
+                        data = data,
+                        test = "t",
+                        method = "REML",
+                        slab = data$PlotLabel,
+                        sigma2 =  c(0, NA)
+                        )
+    
+        #print("Model results non nested:")
+        #print(summary(model_plain))
+        print("Model results nested:")
+        print(summary(model))
+
+        I2_nested <- var.comp(model)
+
+        print(I2_nested)
+        print(I2_nested$totalI2)
+        print("model comparison nested vs non-nested:")
+        print(anova(model,model_plain))
+        if(plot) {
+            source("transform_functions.r")
+            par(mfrow=c(2,1))
+            I2_plot <- print(I2_nested$plot)
+
+            data$cluster_change <- c(0, diff(data$ID))  
+            data$cluster_change[data$cluster_change > 0] <- 1
+
+            rows <- (1:nrow(data)) + cumsum(data$cluster_change * 0.3)
+
+            op <- par(tck=-.01, mgp=c(1.6, .2, 0), mar=c(3, 8, 1, 6))
+
+            forest(model,
+                   slab = data$PlotLabel,
+                   ilab = cbind(data$N_final, data$DoseLabel),
+                   ilab.xpos = c(-3, -2),
+                   cex = 0.9,
+                   header = TRUE,
+                   rows = rows,
+                   ylim = c(0.5, max(rows) + 4),
+                   main = forest_title)
+
+            abline(h = rows[data$cluster_change == 1] - 0.5, lty = 2)
+
+            par(op)
+            funnel(model, main = funnel_title)
+        }
+
+    } else {
+        library(metafor)
+
+        model<- rma.mv(yi = data[[effect_size_col]], 
+                        V = data[[variance_col]],
+                        random = ~ 1 | ID,
+                        data = data,
+                        test = "t",
+                        method = "REML",
+                        slab = data$PlotLabel,
+                        )                    
+        print(summary(model))
+
+        if(plot) {
+            par(mfrow=c(2,1))
+            forest(model, 
+                   slab = data$PlotLabel, 
+                   ilab = cbind(data$N_final, data$DoseLabel),
+                   main = forest_title)
+             
+            funnel(model, main = funnel_title)
+        }
+    }
+    par(mfrow=c(1,1))  
+
+    return(invisible(model))
+}
+```
+
+```{r}
+
+calculate_meta(RT=TRUE, plot = TRUE,  multilevel=TRUE)
+
+```
+
+## Outlier handling RT
+
+```{r OUtlier handling RT}
+identify_outliers <- function(data_type, multi=FALSE) {
+  # Validate input
+  if(data_type != "RT" && data_type != "ACC") {
+    stop("data_type must be 'RT' or 'ACC'.")
+  }
+  
+  library(ggplot2) 
+  
+  # Select data, call calculate_meta accordingly, and set parameters based on the input arguments
+  if(data_type == "RT") {
+    data <- as.data.frame(data_RT) 
+    effect_size_col <- "ES_final_RT"
+    variance_col <- "ES_var_RT"
+    plottitle= "Reaction Time Effect Size Distribution"
+    print("Analyzing outliers for Reaction Times")
+
+  } else if (data_type == "ACC") {
+    data <- as.data.frame(data_ACC)  
+    effect_size_col <- "ES_final_ACC"
+    variance_col <- "ES_var_ACC"
+    plottitle= "Accuracy Effect Size Distribution"
+    print("Analyzing outliers for Accuracy")
+  }
+  
+  # Assuming calculate_meta is a predefined function that you have access to
+  model_results <- calculate_meta(RT=data_type == "RT", ACC=data_type == "ACC", multilevel=multi)
+  
+  overall_ci_lb <- model_results$ci.lb
+  overall_ci_ub <- model_results$ci.ub
+
+  data$d <- data[[effect_size_col]]
+  
+  # Calculate CI for all observed effect sizes and identify outliers
+  data$upperci <- data$d + 1.96 * sqrt(data[[variance_col]])
+  data$lowerci <- data$d - 1.96 * sqrt(data[[variance_col]])
+  data$outlier <- with(data, upperci < overall_ci_lb | lowerci > overall_ci_ub)
+  
+  pooled_effect <- model_results$beta
+  
+  # Plot
+  plot <- ggplot(data = data, aes(x = d, colour = outlier, fill = outlier)) +
+    geom_histogram(alpha = .2, position = "identity", bins = 20, binwidth = .3) + 
+    geom_vline(xintercept = pooled_effect, linetype="dashed", color="blue") +
+    theme_bw() +
+    labs(title=plottitle, x="Effect Size", y="Frequency") +
+    scale_fill_manual(values = c("FALSE" = "grey", "TRUE" = "red")) +
+    scale_colour_manual(values = c("FALSE" = "black", "TRUE" = "red"))
+
+  print(plot)
+
+  # Adjusted to include additional columns
+  outliers <- data[data$outlier, c("ID", "PlotLabel", "DoseLabel", "Cognitive measure", "Timepoint (min)", effect_size_col, variance_col, "d", "upperci", "lowerci", "outlier")]
+  
+  if(nrow(outliers) > 0) {
+    print("Nr of outliers:")
+    print(nrow(outliers))
+    print("Outliers details:")
+    print(outliers)
+  } else {
+    cat("No outliers identified.\n")
+  }
+
+  # Assuming rma.mv is from the 'metafor' package and you have previously defined and loaded it
+  filtered_data <- data[!data$outlier, ]
+  model_no_outlier <- rma.mv(yi = filtered_data[[effect_size_col]], 
+                             V = filtered_data[[variance_col]],
+                             random = ~ 1 | ID/ES_ID, 
+                             data = filtered_data, 
+                             test = "t",
+                             method = "REML"
+                             )
+
+  cat("Model results with outliers:", "G = ", round(model_results$b[1], 2),
+      ", 95% CI [", round(model_results$ci.lb, 2),
+      ", ", round(model_results$ci.ub, 2), "]" , sep = "")
+
+  cat("Model results No outlier:", "G = ", round(model_no_outlier$b[1], 2),
+      ", 95% CI [", round(model_no_outlier$ci.lb, 2),
+      ", ", round(model_no_outlier$ci.ub, 2), "]", sep = "")
+
+  return(invisible(outliers))
+}
+
+
+identify_outliers("RT", multi = TRUE)
+```
+
+
+```{r Residual inspection}
+calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) {
+    # Ensure that either RT or ACC is TRUE, but not both
+    if (RT == TRUE && ACC == TRUE) {
+        stop("Only one of RT or ACC should be TRUE")
+    } else if (RT == FALSE && ACC == FALSE) {
+        stop("At least one of RT or ACC should be TRUE")
+    }
+
+    # Select the appropriate data based on RT or ACC
+    data_selected <- if (RT) {
+        plottitle = "Reaction Time"
+        calculate_meta(RT = TRUE, plot = FALSE, multilevel = TRUE)
+        
+    } else if (ACC) {
+        plottitle = "Accuracy"
+        calculate_meta(ACC = TRUE, plot = FALSE, multilevel = TRUE)
+        
+    }
+    
+    # Standardized residuals
+    res_mod_all_ml <- rstandard(data_selected)
+    res_mod_all_plain <- residuals(data_selected)
+    # Determine the appropriate dataset for the ID
+    data_for_ID <- if (RT) data_RT else data_ACC
+
+    
+    # Set up the plotting area
+    par(mfrow=c(1,2))
+
+    # Boxplot
+    data_for_boxplot <- data.frame(z = res_mod_all_ml$z, ID = data_for_ID$ID)
+    boxplot <- ggplot(data_for_boxplot, aes(x = "", y = z)) +
+        geom_boxplot() +
+        theme_gray() +
+        labs(y = "Z values", title = paste("Boxplot of Standardized Residuals for", plottitle))
+    # Barplot
+    data_for_barplot <- data.frame(ID = data_for_ID$ID, Residuals = res_mod_all_ml$z)
+    barplot <- ggplot(data_for_barplot, aes(x = ID, y = Residuals)) +
+        geom_bar(stat = "identity", position = position_dodge()) +
+        coord_flip() +  # To make the barplot horizontal
+        theme_gray() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        labs(x = "ID", y = "Standardized Residuals", title = paste("Barplot of Standardized Residuals for", plottitle))
+    #display
+    library(gridExtra)
+    grid.arrange(boxplot, barplot, ncol = 1)
+
+    #outlier handling:
+    #outliers based on standardized residuals > multi_outlier
+    outliers_indices <- which(abs(res_mod_all_ml$z) > outlier_threshold) 
+    # Extract the corresponding rows from the dataset
+    outlier_studies <- data_for_ID[outliers_indices, ]
+
+    # outlier studies
+    print(outlier_studies)
+    return(invisible(res_mod_all_ml))
+}
+
+calculate_residuals(RT= TRUE, outlier_threshold = 3)
+
+
+```
+
+```{r }
+
+
+```
+
+#Moderation Analysis
+
+```{r TIming: pre vs during vs post peak}
+ClassifyTiming <- function(data, start_peak, stop_peak) {
+    # Ensure 'data' is a data frame
+    if(!is.data.frame(data)) {
+        stop("The 'data' argument must be a data frame.")
+    }
+
+    # Check if the "Timepoint (min)" column exists in the data frame
+    if(!"Timepoint (min)" %in% names(data)) {
+        stop("The data frame does not contain a 'Timepoint (min)' column.")
+    }
+
+    # Initialize the 'timing' column to 0
+    data$timing <- 0
+
+    # Retrieve the "Timepoint (min)" column
+    timepoint_col <- data[["Timepoint (min)"]]
+
+    # Classify as pre-peak (coded as 1)
+    data$timing[timepoint_col < start_peak] <- 1
+
+    # Classify as post-peak (coded as 1)
+    data$timing[timepoint_col > stop_peak] <- 1
+
+    # Classify as during peak (neither pre-peak nor post-peak, coded as 0)
+    data$timing[timepoint_col >= start_peak & timepoint_col <= stop_peak] <- 0
+
+    return(data)}
+
+#ClassifyTiming(data, start_peak=120,stop_peak = 180)
+
+```
+
+```{r moderation function}
+#library(metafor)
+
+moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
+    # Check that either RT or ACC is TRUE
+    if (RT == TRUE && ACC == TRUE) {
+        stop("Only one of RT or ACC should be TRUE")
+    } else if (RT == FALSE && ACC == FALSE) {
+        stop("At least one of RT or ACC should be TRUE")
+    }
+
+    # Select the appropriate data and columns based on RT or ACC
+    if (RT) {
+        data <- data_RT
+        effect_size_col <- "ES_final_RT"
+        variance_col <- "ES_var_RT"
+    } else if (ACC) {
+        data <- data_ACC
+        effect_size_col <- "ES_final_ACC"
+        variance_col <- "ES_var_ACC"
+    }
+
+    # Ensure the moderation variable exists in the data
+    if (!moderation_var %in% names(data)) {
+        stop(paste("The moderation variable", moderation_var, "is not in the dataset."))
+    }
+
+    # Convert moderation variable to a factor with specified reference category
+    if (moderation_var == "EF_sensitivity") {
+        data[[moderation_var]] <- factor(data[[moderation_var]], levels = c("3", "1", "2"))
+    } else {
+        data[[moderation_var]] <- as.factor(data[[moderation_var]])
+    }
+
+    # Running the mixed-effects model with moderation
+    model <- rma.mv(yi = data[[effect_size_col]], 
+                    V = data[[variance_col]],
+                    random = ~ 1 | ID/ES_ID, 
+                    data = data,
+                    method = "REML",
+                    mods = as.formula(paste0("~", moderation_var))
+                   )
+
+    # Return the summary of the model
+    return(summary(model))
+}
+
+
+```
+```{r narrow peak window}	
+data_RT <- ClassifyTiming(data_RT, start_peak=90,stop_peak = 180)
+nrow(data_RT)
+length(unique(data_RT$ID))
+table(data_RT$timing)
+moderation_analysis( RT = TRUE, moderation_var = "timing")
+```
+
+```{r wide  peak window}	
+data_RT <- ClassifyTiming(data_RT, start_peak=60,stop_peak = 210)
+nrow(data_RT)
+length(unique(data_RT$ID))
+table(data_RT$timing)
+moderation_analysis( RT = TRUE, moderation_var = "timing")
+
+```
+```{r Dosage}
+
+moderation_analysis( RT = TRUE, moderation_var = "dosage_cat_all")
+moderation_analysis( RT = TRUE, moderation_var = "dosage_cat_micro")
+moderation_analysis( RT = TRUE, moderation_var = "dosage_cat_microlow_vs_midhigh")
+
+```
+
+```{r moderation cognitive function category}
+
+
+moderation_analysis( RT = TRUE, moderation_var = "CognitiveFunction")
+table(data_RT$CognitiveFunction)
+
+```
+
+```{r moderation EF sensitivity}
+
+
+moderation_analysis( RT = TRUE, moderation_var = "EF_sensitivity")
+#table(data_RT$EF_sensitivity)
+#head(data_RT)
+```
+
+
+
+
+```{r}
+```
+
+##Publication Bias RT
+
+
+##Piublication Bias #nested model w.o outlier
+
+```{r}
+
+ranktest(calculate_meta(RT = TRUE, plot =FALSE, multilevel = TRUE))
+```
+
+#fail safe numbers w.o outlier
+
+
+```{r}
+fsn(x = data_RT$ES_final_RT, 
+    vi = data_RT$ES_var_RT, 
+    type = "Rosenthal")
+fsn(x = data_RT$ES_final_RT, 
+    vi = data_RT$ES_var_RT, 
+    type = "Orwin",
+    target = 0.1)
+fsn(x = data_RT$ES_final_RT, 
+    vi = data_RT$ES_var_RT, 
+    type = "Rosenberg")
+
+```
+
+
+
+```{r}
+#nested model with outlier
+ranktest(mod_all_ml)
+```
+
+#fail safe numbers with outlier
+
+```{r}
+fsn(yi     = ES_final_RT, 
+    vi     = ES_var_RT,
+    data   = data_RT,
+    type   = "Rosenthal")            
+fsn(yi     = ES_final_RT,
+    vi     = ES_var_RT,
+    data   = data_RT,
+    type   = "Orwin",
+    target = 0.1)                    
+fsn(yi     = ES_final_RT,
+    vi     = ES_var_RT,
+    data   = data_RT,
+    type   = "Rosenberg")
+
+
+```
+```{r}
+#modified Eggers test to assess publication bias
+#trim and fill deosnt work on rma.mv
+mod_egger_RT <- rma.mv(yi = ES_final_RT, 
+                    V = ES_var_RT, 
+                    mods = ~ I(1/sqrt(ES_var_RT)), # precision as moderator
+                    random = ~ 1 | ID, 
+                    data = data_RT)
+summary(mod_egger_RT)
+
+```
+##Moderation ###by dosage:low vs mid vs high
+
+```{r}
+(mod <- rma.mv(yi     = ES_final_RT, # low vs mid vs high
+               V      = ES_var_RT, 
+               random = ~ 1 | ID, 
+               mods   = ~factor(dosage_cat_3), 
+               data   = data_RT))
+
+
+```
+
+###by dosage:low vs mid & high
+
+```{r}
+(mod <- rma.mv(yi     = ES_final_RT, #low vs mid&high
+               V      = ES_var_RT, 
+               random = ~ 1 | ID, 
+               mods   = ~factor(dosage_cat_2), 
+               data   = data_RT))
+
+
+```
+```{r}
+print(unique(data_RT_no_outliers$CognitiveFunction))
+
+```
+
+##Mdoeration RT: Pre vs during vs post peak
+
+```{r}
+(mod <- rma.mv(yi     = ES_final_RT, 
+               V      = ES_var_RT, 
+               random = ~ 1 | ID, 
+               mods   = ~factor(timing), 
+               data   = data_RT))
+
+```
+
+##Mdoeration RT: Cognitive fucntion category
+
+```{r}
+(mod <- rma.mv(yi     = ES_final_RT, 
+               V      = ES_var_RT, 
+               random = ~ 1 | ID, 
+               mods   = ~factor(CognitiveFunction), 
+               data   = data_RT))
+
+
+```
+
+#Analysis for Accuracy
+```{r}
+#select ACC
+sel_ACC  <- !is.na(data$ES_final_ACC)
+data_ACC <- data[sel_ACC, ]
+# nr of ESs for RT measure
+nrow(data_ACC)
+#unique IDs
+length(unique(data_ACC$ID))
+```
+
+```{r}
+#nested model
+multilevel_meta(data = data_ACC,effect_size_col = "ES_final_ACC", variance_col = "ES_var_ACC", id_col = "ID")
+
+```
+```{r}
+(mod_ACC <- rma.mv(yi     = ES_final_ACC, 
+               V      = ES_var_ACC, 
+               random = ~ 1 | ID, 
+               data   = data_ACC))
+
+
+```
+```{r}
+#residuals  standardized
+
+(res_ACC    <- rstandard(mod_ACC))
+```
+# boxplot residuals
+
+```{r}
+data_for_plot <- data.frame(z = res_mod_all_ml$z, ID = data_ACC$ID)
+
+Q1 <- quantile(data_for_plot$z, 0.25)
+Q3 <- quantile(data_for_plot$z, 0.75)
+IQR <- Q3 - Q1
+outlier_threshold_lower <- Q1 - 1.5 * IQR
+outlier_threshold_upper <- Q3 + 1.5 * IQR
+
+data_for_plot$outlier <- data_for_plot$z < outlier_threshold_lower | data_for_plot$z > outlier_threshold_upper
+
+ggplot(data_for_plot, aes(x = "", y = z)) +
+    geom_boxplot() +
+    geom_text(data = filter(data_for_plot, outlier), aes(label = ID), nudge_y = 0.2) +
+    theme_gray() +
+    labs(y = "Z values", title = "Boxplot with Outliers Labeled")
+
+
+```
+# barplot residuals
+
+```{r}
+zresids <- data.frame(ID = data_ACC[,1], Residuals = rstandard(mod_ACC)$z)
+
+# Creating a horizontal barplot
+ggplot(zresids, aes(x = ID, y = Residuals)) +
+        geom_bar(stat = "identity", position = position_dodge()) +
+        coord_flip() +  # To make the barplot horizontal
+        theme_gray() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        labs(x = "ID", y = "Standardized Residuals", title = "Barplot of Standardized Residuals")
+
+```
+```{r}
+ranktest(mod_ACC)
+
+```
+```{r}
+fsn(x = data_ACC$ES_final_ACC, 
+    vi = data_ACC$ES_var_ACC, 
+    type = "Rosenthal")
+fsn(x = data_ACC$ES_final_ACC, 
+    vi = data_ACC$ES_var_ACC, 
+    type = "Orwin",
+    target = 0.1)
+fsn(x = data_ACC$ES_final_ACC, 
+    vi = data_ACC$ES_var_ACC, 
+    type = "Rosenberg")
+```
+
+##Forestplot
+
+```{r}
+
+slab_vector <- paste(data_ACC$ID, 
+                     data_ACC$PlotLabel, 
+                     data_ACC$CognitiveFunction, 
+                     data_ACC$DoseLabel, 
+                     data_ACC$`Timepoint (min)`, 
+                     sep = '   ')
+
+forest.rma(mod_ACC,
+           data        = data_ACC, 
+           header      = T,
+           addfit      = T,
+           showweights = T,
+           addcrea     = T,
+           annotate    = T,
+           xlim        = c(-17, 10), 
+           col         = 'red',
+           order       = order(data_ACC$ID),
+           slab        = slab_vector)
+
+
+```
+
+#funnelplot ACC
+
+```{r}
+funnel(mod_ACC,
+       yaxis            = "vi",
+       legend           = T,
+       level            = c(95, 99), 
+       shade            = c("white", "gray65"))
+
+
+print(data_ACC$ES_final_ACC)
+```
+```{r}
+#modified Eggers test to assess publication bias
+#trim and fill deosnt work on rma.mv
+mod_egger_ACC <- rma.mv(yi = ES_final_ACC, 
+                    V = ES_var_ACC, 
+                    mods = ~ I(1/sqrt(ES_var_ACC)), # precision as moderator
+                    random = ~ 1 | ID, 
+                    data = data_ACC)
+summary(mod_egger_ACC)
+```
+
+## drapery plot
+```{r}
+
+# Run the meta-analysis using the metafor package
+
+meta_analysis_rt <- calculate_meta(RT=TRUE, plot = FALSE,  multilevel=FALSE)
+
+# Check the meta-analysis results
+summary(meta_analysis_rt)
+
+# Prepare the data for drapery function manually
+meta_analysis_rt_for_drapery <- list(
+  TE = meta_analysis_rt$yi,
+  seTE = sqrt(meta_analysis_rt$vi),
+  lower = meta_analysis_rt$yi - qt(0.975, df=meta_analysis_rt$df.residual) * sqrt(meta_analysis_rt$vi),
+  upper = meta_analysis_rt$yi + qt(0.975, df=meta_analysis_rt$df.residual) * sqrt(meta_analysis_rt$vi),
+  k = length(meta_analysis_rt$yi),
+  studlab = paste(data$ID, data$CognitiveFunction, sep="_"),
+  data = data
+)
+class(meta_analysis_rt_for_drapery) <- "meta"
+
+# Now generate the drapery plot
+drapery_plot <- drapery(
+  x = meta_analysis_rt_for_drapery,
+  type = "zvalue",
+  layout = "grayscale",
+  study.results = TRUE,
+  lty.study = 1,
+  lwd.study = 1,
+  col.study = "darkgray",
+  labels = TRUE,
+  col.labels = "black",
+  cex.labels = 0.7,
+  common = TRUE,
+  random = TRUE,
+  lty.common = 1,
+  lwd.common = 3,
+  col.common = "blue",
+  lty.random = 1,
+  lwd.random = 3,
+  col.random = "red",
+  legend = TRUE,
+  pos.legend = "topleft",
+  bty = "o",
+  plot = TRUE
+)
+
+# Print the drapery plot
+print(drapery_plot)
+
+```
+
+
+
+
+
+
