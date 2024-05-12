@@ -173,7 +173,7 @@ cols_to_select_ACC <- c("ID", "ES_ID", "CognitiveFunction", "N_final", "ES_final
                         "ES_var_ACC", "Timepoint", "PlotLabel", "DoseLabel", "EF_sensitivity","dosage_cat_all", "dosage_cat_micro", "dosage_cat_microlow_vs_midhigh")
 
 # Select the columns and filter rows where ES_final_ACC is not NA
-data_ACC <- subset(data, select = cols_to_select_ACC, !is.na(ES_final_ACC))
+#data_ACC <- subset(data, select = cols_to_select_ACC, !is.na(ES_final_ACC))
 data_ACC$CognitiveFunction <- as.factor(data_ACC$CognitiveFunction)
 data_ACC$DoseLabel <- as.factor(data_ACC$DoseLabel)
 data_ACC$EF_sensitivity <- as.factor(data_ACC$EF_sensitivity)
@@ -877,8 +877,11 @@ print(results$plot)
 if (!is.null(results$model_summary)) {
     print(summary(results$model_summary))
 }
+results$outliers	
 
 ```
+
+
 
 ```{r Figure S16}
 calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) {
@@ -1131,5 +1134,9 @@ results$summary_table
 ```
 
 
+```{r}
+data_ACC <- data_ACC[data_ACC$ES_ID != 24, ]
+nrow(data_ACC)
 
+```
 
