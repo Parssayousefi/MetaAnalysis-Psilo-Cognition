@@ -161,130 +161,61 @@ length(unique(data_ACC$ID))
 ## Main Analysis Accuracy
 
 ```{r Meta analysis function}
-calculate_meta <- function(RT=FALSE, ACC=FALSE, plot=FALSE, multilevel=TRUE) {
-    
-    if(RT) {
+calculate_meta <- function(RT=FALSE, ACC=FALSE, multilevel=TRUE) {
+    library(metafor)  # Load the metafor library
+
+    # Select the appropriate dataset
+    if (RT) {
         data <- data_RT
         effect_size_col <- "ES_final_RT"
         variance_col <- "ES_var_RT"
-        if(multilevel) {
-            forest_title <- "Forest plot for the multilevel model of Reaction Times"
-            funnel_title <- "Funnel plot for the multilevel model of Reaction Times"
-            
-        } else {
-            forest_title <- "Forest plot for the random effects model of Reaction Times"
-            funnel_title <- "Funnel plot for the random effects model of Reaction Times"
-        
-        }
     } else if (ACC) {
         data <- data_ACC
         effect_size_col <- "ES_final_ACC"
         variance_col <- "ES_var_ACC"
-        if(multilevel) {
-            forest_title <- "Forest plot for the multilevel model of Accuracy"
-            funnel_title <- "Funnel plot for the multilevel model of Accuracy"
-        
-        } else {
-            forest_title <- "Forest plot for the random effects model of Accuracy"
-            funnel_title <- "Funnel plot for the random effects model of Accuracy"
-        
-        }
+    } else {
+        stop("Either RT or ACC must be set to TRUE.")
     }
 
+    # Order data by ID
     data <- data[order(data$ID), ]
-    
-    if(multilevel) {
-        library(metafor)
 
+    # Fit the model
+    if (multilevel) {
         model <- rma.mv(yi = data[[effect_size_col]], 
                         V = data[[variance_col]],
                         random = ~ 1 | ID/ES_ID, 
                         data = data,
                         test = "t",
                         method = "REML",
-                        slab = data$PlotLabel,
-                        )
-        model_plain <- rma.mv(yi = data[[effect_size_col]], 
-                        V = data[[variance_col]],
-                        random = ~ 1 | ID/ES_ID,
-                        data = data,
-                        test = "t",
-                        method = "REML",
-                        slab = data$PlotLabel,
-                        sigma2 =  c(0, NA)
-                        )
-    
-        #print("Model results non nested:")
-        #print(summary(model_plain))
-        print("Model results nested:")
-        print(summary(model))
-
-        I2_nested <- var.comp(model)
-
-        print(I2_nested)
-        print(I2_nested$totalI2)
-        print("model comparison nested vs non-nested:")
-        print(anova(model,model_plain))
-        if(plot) {
-            source("transform_functions.r")
-            par(mfrow=c(2,1))
-            I2_plot <- print(I2_nested$plot)
-
-            data$cluster_change <- c(0, diff(data$ID))  
-            data$cluster_change[data$cluster_change > 0] <- 1
-
-            rows <- (1:nrow(data)) + cumsum(data$cluster_change * 0.3)
-
-            op <- par(tck=-.01, mgp=c(1.6, .2, 0), mar=c(3, 8, 1, 6))
-
-            forest(model,
-                   slab = data$PlotLabel,
-                   ilab = cbind(data$N_final, data$DoseLabel),
-                   ilab.xpos = c(-3, -2),
-                   cex = 0.9,
-                   header = TRUE,
-                   rows = rows,
-                   ylim = c(0.5, max(rows) + 4),
-                   main = forest_title)
-
-            abline(h = rows[data$cluster_change == 1] - 0.5, lty = 2)
-
-            par(op)
-            funnel(model, main = funnel_title)
-        }
-
+                        slab = data$PlotLabel)
+        variance_analysis <- mlm.variance.distribution(model)
+        model_results <- list(
+            model_summary = summary(model),
+            variance_analysis = variance_analysis
+        )
     } else {
-        library(metafor)
-
-        model<- rma.mv(yi = data[[effect_size_col]], 
+        model <- rma.mv(yi = data[[effect_size_col]], 
                         V = data[[variance_col]],
                         random = ~ 1 | ID,
                         data = data,
                         test = "t",
                         method = "REML",
-                        slab = data$PlotLabel,
-                        )                    
-        print(summary(model))
-
-        if(plot) {
-            par(mfrow=c(2,1))
-            forest(model, 
-                   slab = data$PlotLabel, 
-                   ilab = cbind(data$N_final, data$DoseLabel),
-                   main = forest_title)
-             
-            funnel(model, main = funnel_title)
-        }
+                        slab = data$PlotLabel)
+        model_results <- list(
+            model_summary = summary(model)
+        )
     }
-    par(mfrow=c(1,1))  
 
-    return(invisible(model))
+    return(model_results)
 }
+
+
 ```
 
 ```{r}
 
-calculate_meta(ACC=TRUE, plot = TRUE,  multilevel=TRUE)
+calculate_meta(ACC=TRUE,  multilevel=TRUE)
 
 ```
 
@@ -485,9 +416,9 @@ ClassifyTiming <- function(data, start_peak, stop_peak) {
 
 
 ```
-
 ```{r moderation function}
 #library(metafor)
+
 moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
     # Check that either RT or ACC is TRUE
     if (RT == TRUE && ACC == TRUE) {
@@ -518,6 +449,12 @@ moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
     } else {
         data[[moderation_var]] <- as.factor(data[[moderation_var]])
     }
+    if (moderation_var == "CognitiveFunction") {
+        data[[moderation_var]] <- factor(data[[moderation_var]], levels = c("Attention", "Conflict monitoring", "Other EF", "Working Memory"))
+    } else {
+        data[[moderation_var]] <- as.factor(data[[moderation_var]])
+    }
+
 
     # Running the mixed-effects model with moderation
     model <- rma.mv(yi = data[[effect_size_col]], 
@@ -531,6 +468,7 @@ moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
     # Return the summary of the model
     return(summary(model))
 }
+
 
 ```
 ```{r narrow peak window}	
