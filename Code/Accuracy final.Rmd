@@ -1002,8 +1002,8 @@ diagnostic_analysis <- function(data_type, threshold = 2) {
         data <- data_ACC
         
     }
-    model <- calculate_meta(RT = data_type == "RT", ACC = data_type == "ACC", multilevel = TRUE)$model_multi
-    #model <- calculate_meta(ACC = TRUE, multilevel = TRUE)$model_multi
+    #model <- calculate_meta(RT = data_type == "RT", ACC = data_type == "ACC", multilevel = TRUE)$model_multi
+    model <- calculate_meta(ACC = TRUE, multilevel = TRUE)$model_multi
     n <- nrow(data)
 
     # Calculating Cook's Distance
@@ -1025,10 +1025,11 @@ diagnostic_analysis <- function(data_type, threshold = 2) {
     # Calculating DFBETAS
     dfbetas_values <- dfbetas(model)
     outliers_dfbetas <- which(abs(dfbetas_values[, "intrcpt"]) > 2 / sqrt(n))
-    print(" outliers dfbetas")
+    print(outliers_dfbetas)
+    
     data[outliers_dfbetas, "ES_ID"]
 
-    outliers <- unique(c(outliers_cooks, outliers_hatvals, outliers_dfbetas))
+    outliers <- (outliers_cooks, outliers_hatvals, outliers_dfbetas)
     #outliers <- unique(c( outliers_hatvals, outliers_dfbetas))
 
     # Create a data frame with outlier information
@@ -1046,10 +1047,10 @@ diagnostic_analysis <- function(data_type, threshold = 2) {
 
     # Exclude outliers and refit the model
     data_no_outliers <- data[-outliers, ]
-    model_no_outliers <- rma.mv(#yi = data_no_outliers[[ifelse(data_type == "RT", "ES_final_RT", "ES_final_ACC")]],
-                                yi = data_no_outliers$ES_final_ACC,
-                                V = data_ACC$ES_var_ACC,
-                                #V = data_no_outliers[[ifelse(data_type == "RT", "ES_var_RT", "ES_var_ACC")]],
+    model_no_outliers <- rma.mv(yi = data_no_outliers[[ifelse(data_type == "RT", "ES_final_RT", "ES_final_ACC")]],
+                                #yi = data_no_outliers$ES_final_ACC,
+                                #V = data_ACC$ES_var_ACC,
+                                V = data_no_outliers[[ifelse(data_type == "RT", "ES_var_RT", "ES_var_ACC")]],
                                 random = ~ 1 | ID/ES_ID,
                                 data = data_no_outliers,
                                 test = "t",
@@ -1109,14 +1110,14 @@ diagnostic_analysis <- function(data_type, threshold = 2) {
 }
 
 # Using the function
-# results <- diagnostic_analysis("ACC")
+results <- diagnostic_analysis("ACC")
 
 # # Display the arranged plots
 # results$plots
 
 # # Display the outlier information
-print(diagnostic_analysis("ACC")$model_no_outliers)
-print(diagnostic_analysis("ACC")$outlier_info)
+print(results$model_no_outliers)
+print(results$outlier_info)
 
 
 # # Display the summary of diagnostics
@@ -1124,7 +1125,7 @@ print(diagnostic_analysis("ACC")$outlier_info)
 # print(diagnostic_analysis("ACC")$outlier_info)
 
 
-diagnostic_analysis("ACC")$summary_table
+results$summary_table
 
 
 ```
