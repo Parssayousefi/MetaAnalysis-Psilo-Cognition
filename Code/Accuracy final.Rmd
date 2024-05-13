@@ -1140,3 +1140,5 @@ nrow(data_ACC)
 
 ```
 
+data_RT <- data_RT[data_RT$ES_ID != 7, ]
+data_RT <- data_RT[data_RT$ES_ID != 37, ]
