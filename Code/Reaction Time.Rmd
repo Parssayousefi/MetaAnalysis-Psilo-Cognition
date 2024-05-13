@@ -195,6 +195,8 @@ n_unique_ids_ACC <- length(unique(data_ACC$ID))
 cat("Number of entries for ACC measure:", n_rows_ACC, "\n")
 cat("Number of unique IDs:", n_unique_ids_ACC, "\n")
 
+print(data_ACC$ID)
+
 ```
 
 ```{r calculate_meta function}
