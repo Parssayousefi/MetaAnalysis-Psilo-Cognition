@@ -245,6 +245,16 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, multilevel=TRUE) {
                               slab = data$ES_ID,
                               sigma2 = c(0, NA))
         
+        # Fit the univariate model
+        model_uni <- rma.uni(yi = data[[effect_size_col]], 
+                                    vi = data[[variance_col]],
+                                    #random = ~ 1 | ID/ES_ID, 
+                                    data = data,
+                                    test = "t",
+                                    method = "REML",
+                                    slab = data$ES_ID)
+
+        
         # Perform variance analysis and model comparison
         variance_analysis <- mlm.variance.distribution(model_multi)
         model_comparison <- anova(model_multi, model_plain)
@@ -253,6 +263,7 @@ calculate_meta <- function(RT=FALSE, ACC=FALSE, multilevel=TRUE) {
         model_results <- list(
             model_multi = model_multi,
             model_plain = model_plain,
+            model_uni = model_uni,
             variance_analysis = variance_analysis,
             model_comparison = model_comparison
         )
@@ -264,6 +275,13 @@ summary(calculate_meta(RT=TRUE, multilevel=TRUE)$model_multi)
 calculate_meta(RT=TRUE, multilevel=TRUE)$variance_analysis$ResultsTable
 calculate_meta(RT=TRUE, multilevel=TRUE)$variance_analysis$TotalI2
 ```
+
+```{r}
+
+
+
+```
+
 
 # 3.4.1.1 Outliers and influential cases RT
 
