@@ -14,6 +14,15 @@ iqr_psilo <- 48.31 - 36.71
 median_placebo <- 35.17
 iqr_placebo <- 45.22 - 32.08
 
+
+# Convert medians and IQRs to milliseconds
+median_psilo <- median_psilo_sec * 1000
+iqr_psilo <- iqr_psilo_sec * 1000
+
+median_placebo <- median_placebo_sec * 1000
+iqr_placebo <- iqr_placebo_sec * 1000
+
+
 # standard deviations
 sd_psilo <- iqr_psilo / 1.35
 sd_placebo <- iqr_placebo / 1.35

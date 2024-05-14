@@ -1137,8 +1137,8 @@ results$summary_table
 ```{r}
 data_ACC <- data_ACC[data_ACC$ES_ID != 24, ]
 nrow(data_ACC)
+data_RT <- data_RT[data_RT$ES_ID != 7, ]
+data_RT <- data_RT[data_RT$ES_ID != 37, ]
 
 ```
 
-data_RT <- data_RT[data_RT$ES_ID != 7, ]
-data_RT <- data_RT[data_RT$ES_ID != 37, ]

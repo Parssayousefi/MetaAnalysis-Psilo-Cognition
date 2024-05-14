@@ -20,6 +20,11 @@ print(nrow(StroopPsilo))
 StroopPlacebo$SubjectNumber <- as.integer(str_extract(StroopPlacebo$Sub_id, "[0-9]+"))
 StroopPsilo$SubjectNumber <- as.integer(str_extract(StroopPsilo$Sub_id, "[0-9]+"))
 
+
+StroopPlacebo$RT <- StroopPlacebo$RT * 1000
+StroopPsilo$RT <- StroopPsilo$RT * 1000
+
+
 print(length(unique(StroopPlacebo$SubjectNumber)))
 print(length(unique(StroopPsilo$SubjectNumber)))
 

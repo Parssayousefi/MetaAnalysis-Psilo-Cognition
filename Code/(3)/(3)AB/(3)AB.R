@@ -113,6 +113,7 @@ print(cohens_d_ACC)
 # Define the function to calculate reaction time differences
 calculate_rt_difference_t2 <- function(data) {
   data %>%
+    mutate(Reaction.Time.T2 = Reaction.Time.T2 * 1000) %>%  # Convert RT to milliseconds
     filter(Correcto.T1 == 1 & Correcto.T2 == 1) %>% 
     group_by(Subject, Lag) %>%
     summarize(MeanRT_T2 = mean(Reaction.Time.T2, na.rm = TRUE), .groups = 'drop') %>% 

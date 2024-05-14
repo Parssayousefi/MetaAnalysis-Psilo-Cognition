@@ -676,9 +676,6 @@ plot_meta_results(RT=TRUE)
 
 ```
 
-
-
-
 ```{r Figure 4 Funnel plot RT}
 funnel_plot <- function(RT=FALSE, ACC=FALSE) {
     library(metafor)
@@ -728,7 +725,7 @@ funnel_plot <- function(RT=FALSE, ACC=FALSE) {
            #refline2=0
            main = funnel_title)
     # Add the points using the points function
-    points(point_data$x, point_data$y, col = point_data$col, pch = nrow(plot_data),cex = 1.5)
+    points(point_data$x, point_data$y, col = point_data$col, pch = 16,cex = 1.5)
     
     legend_data <- data.frame(ID = unique(plot_data$ID), PlotLabel = unique(plot_data$PlotLabel))
   
@@ -743,7 +740,7 @@ funnel_plot <- function(RT=FALSE, ACC=FALSE) {
     # Reset graphical parameters
     par(mfrow=c(1,1))
 }
-funnel_plot(ACC=TRUE)
+funnel_plot(RT=TRUE)
 
 
 ```
