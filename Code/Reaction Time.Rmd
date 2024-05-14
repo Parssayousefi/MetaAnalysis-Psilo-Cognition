@@ -704,7 +704,7 @@ plot_meta_results <- function(RT = FALSE, ACC = FALSE) {
 plot_meta_results(RT = TRUE)
 ```
 
-```{r Forest plot Function}
+```{r Forest plot Function "working here"}
 forest_plot <- function(RT = FALSE, ACC = FALSE) {
     library(metafor)
 
@@ -794,13 +794,10 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     } else {
         stop("Either RT or ACC must be set to TRUE.")
     }
-    color_mapping <- setNames(hcl.colors(length(unique(plot_data$PlotLabel)), "viridis"), unique(plot_data$PlotLabel))
+    color_mapping <- setNames(hcl.colors(length(unique(plot_data$PlotLabel)), "Green-Brown"), unique(plot_data$PlotLabel))
     model <- model_results$model_multi
-    # Prepare data for the plots
-    plot_data <- plot_data[order(plot_data$ID), ]
-    plot_data$cluster_change <- c(0, diff(plot_data$ID))
-    plot_data$cluster_change[plot_data$cluster_change > 0] <- 1
-    rows <- (1:nrow(plot_data)) + cumsum(plot_data$cluster_change * 0.001)
+    model_uni <- model_results$model_uni
+    trim <- trimfill(model_uni)
 
     # Create a data frame for the points
     point_data <- data.frame(
@@ -809,35 +806,69 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
         col = color_mapping[plot_data$PlotLabel]
     )
 
+
+
+    # Extract the filled studies
+    filled_indices <- trim$fill
+    filled_studies <- trim$yi[filled_indices]
+    filled_sei <- sqrt(trim$vi[filled_indices])
+    print(filled_studies)
+
     # Set up the graphical environment
-    par(mfrow = c(1, 1), tck = -.01, mgp = c(1.6, .2, 0), mar = c(3, 8, 1, 6))
+    par(mfrow = c(1, 1), tck = -.03, mgp = c(6, 3, 0), mar = c(8, 10, 5, 6), bg = "white",
+        cex.main = 1.5, # Font size for the main title
+        cex.lab = 3,  # Font size for the axis titles
+        cex.axis = 2  # Font size for the axis tick labels
+        
+    )
     # Create a contour-enhanced funnel plot
     funnel(model,
-        refline = 0,
+        refline = model_uni$beta,
+        refline2=0,
+        lty = c(0,5),
         level = c(90, 95, 99), # Adding multiple levels for contours
-        shade = c("white", "gray55", "gray75"), # Adjust as per your color preference for the contours
+        shade = c("gray90", "gray55", "gray75"), 
         label = "all", # Label all points with study labels
         slab = plot_data$ES_ID,
-        # refline2=0
-        main = funnel_title
+        xlab=  "Reaction Time (Hedges' g)",
+        back = "white",
+        cex= 2,
+        lwd = 3,
+        xlim = c(-1, 3.5),
+        ylim = c(0.6, 0),
+        digits=c(2,2)
     )
+
+        
+
     # Add the points using the points function
-    points(point_data$x, point_data$y, col = point_data$col, pch = 16, cex = 1.5)
+    points(point_data$x, point_data$y, col = point_data$col, pch = 16, cex = 2)
+
+    # Add filled studies
+    points(filled_studies, filled_sei, col = "red", pch = 16, cex = 2)
+
+
 
     legend_data <- data.frame(ID = unique(plot_data$ID), PlotLabel = unique(plot_data$PlotLabel))
-
     print(legend_data)
-    legend("topright",
-        legend = c("90% CI", "95% CI", "99% CI", legend_data$PlotLabel),
-        fill = c("gray75", "white", "gray55", color_mapping[legend_data$PlotLabel]),
-        col = NA, # c(NA, NA, color_mapping[legend_data$PlotLabel]),
-        pch = c(NA, NA, rep(16, nrow(legend_data))),
-        lty = c(1, 1, rep(NA, nrow(legend_data))),
+
+    legend("topright",ncol = 1,
+        legend = c("90% CI", "95% CI", "99% CI", "Trim and Fill", legend_data$PlotLabel),
+        fill = c("gray75", "gray90", "gray55","red", color_mapping[legend_data$PlotLabel]),
+        col = c(NA, NA, NA, NA, NA),
+        pch = c(16,16,16,16,rep(16, nrow(legend_data))),
+        lty = c(1, 1, 1, rep(NA, nrow(legend_data) + 1)),
+        y.intersp = 0.6,
+        x.intersp = 0.2
     )
     # Reset graphical parameters
     par(mfrow = c(1, 1))
 }
+
 funnel_plot(RT = TRUE)
+
+
+
 ```
 
 ```{r}
