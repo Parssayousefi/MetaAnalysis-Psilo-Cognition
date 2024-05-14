@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
+# setup
 ```{r setup, include=FALSE}
 
 #knitr::opts_chunk$set(echo = TRUE)a
@@ -40,7 +41,7 @@ datafile <- "Overview_Studies.xlsx"
 
 ```
 
-## Load Data
+# Load Data
 ```{r Data Preparation}
     Read_Prepare <- function(datafile) {
         # Read the overview sheet
@@ -195,7 +196,7 @@ n_unique_ids_ACC <- length(unique(data_ACC$ID))
 cat("Number of entries for ACC measure:", n_rows_ACC, "\n")
 cat("Number of unique IDs:", n_unique_ids_ACC, "\n")
 
-print(data_ACC$ID)
+
 
 ```
 
@@ -367,6 +368,7 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
     # Standardized residuals
     res_mod_all_ml <- rstandard(data_selected)
     res_mod_all_plain <- residuals(data_selected)
+
     # Determine the appropriate dataset for the ID
     data_for_ID <- if (RT) data_RT else data_ACC
 
@@ -375,19 +377,19 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
     par(mfrow=c(1,2))
 
     # Boxplot
-    data_for_boxplot <- data.frame(z = res_mod_all_ml$z, ID = data_for_ID$ID)
+    data_for_boxplot <- data.frame(z = res_mod_all_ml$z, ID = data_for_ID$ES_ID)
     boxplot <- ggplot(data_for_boxplot, aes(x = "", y = z)) +
         geom_boxplot() +
         theme_gray() +
         labs(y = "Z values", title = paste("Boxplot of Standardized Residuals for", plottitle))
     # Barplot
-    data_for_barplot <- data.frame(ID = data_for_ID$ID, Residuals = res_mod_all_ml$z)
+    data_for_barplot <- data.frame(ID = data_for_ID$ES_ID, Residuals = res_mod_all_ml$z)
     barplot <- ggplot(data_for_barplot, aes(x = ID, y = Residuals)) +
         geom_bar(stat = "identity", position = position_dodge()) +
         coord_flip() +  # To make barplot horizontal
         theme_gray() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        labs(x = "ID", y = "Standardized Residuals", title = paste("Barplot of Standardized Residuals for", plottitle))
+        labs(x = "ES_ID", y = "Standardized Residuals", title = paste("Barplot of Standardized Residuals for", plottitle))
     #display
     library(gridExtra)
     grid.arrange(boxplot, barplot, ncol = 1)
@@ -590,63 +592,6 @@ print(diagnostic_analysis("RT")$outlier_info)
 
 # 3.4.1.2 Nested Model Reaction Times
 ```{r Figure 3 Forrest plot RT}
-library(forrest)
-plot_meta_results <- function(RT=FALSE, ACC=FALSE) {
-    library(metafor)
-
-    
-    # Fetch the model results using calculate_meta
-    if (RT) {
-        model_results <- calculate_meta(RT=TRUE, multilevel=TRUE)
-        forest_title <- "Forest plot for the multilevel model of Reaction Times"
-        funnel_title <- "Funnel plot for the multilevel model of Reaction Times"
-        plot_data <- data_RT
-    } else if (ACC) {
-        model_results <- calculate_meta(ACC=TRUE, multilevel=TRUE)
-        forest_title <- "Forest plot for the multilevel model of Accuracy"
-        funnel_title <- "Funnel plot for the multilevel model of Accuracy"
-        plot_data <- data_ACC
-    } else {
-        stop("Either RT or ACC must be set to TRUE.")
-    }
-    
-    # Extract the multi-level model for plotting
-    model <- model_results$model_multi
-    
-    # Prepare data and parameters for the plots
-    plot_data <- plot_data[order(plot_data$ID), ]
-    plot_data$cluster_change <- c(0, diff(plot_data$ID))  
-    plot_data$cluster_change[plot_data$cluster_change > 0] <- 1
-    rows <- (1:nrow(plot_data)) + cumsum(plot_data$cluster_change * 0.3)
-
-    # Set graphical parameters
-    par(mfrow=c(2,1), tck=-.01, mgp=c(1.6, .2, 0), mar=c(3, 8, 1, 6))
-    
-    # Forest plot
-    forest(model,
-        
-           slab = plot_data$PlotLabel,
-           ilab = cbind(plot_data$N_final, plot_data$DoseLabel),
-           ilab.xpos = c(-3, -2),
-           cex = 0.9,
-           header = TRUE,
-           rows = rows,
-           ylim = c(0.5, max(rows) + 4),
-           main = forest_title)
-    abline(h = rows[plot_data$cluster_change == 1] - 0.5, lty = 2)
-
-    # Funnel plot
-    funnel(model, main = funnel_title)
-
-    # Reset graphical parameters
-    par(mfrow=c(1,1), family="Times New Roman")
-}
-
-plot_meta_results(RT=TRUE)
-
-```
-
-```{r plot test}
 plot_meta_results <- function(RT=FALSE, ACC=FALSE) {
     library(metafor)
     
@@ -656,22 +601,31 @@ plot_meta_results <- function(RT=FALSE, ACC=FALSE) {
         forest_title <- "Forest plot for the multilevel model of Reaction Times"
         funnel_title <- "Funnel plot for the multilevel model of Reaction Times"
         plot_data <- data_RT
+        plot_data$yi <- plot_data$ES_final_RT
+        plot_data$sei <- sqrt(plot_data$ES_var_RT)
     } else if (ACC) {
         model_results <- calculate_meta(ACC=TRUE, multilevel=TRUE)
         forest_title <- "Forest plot for the multilevel model of Accuracy"
         funnel_title <- "Funnel plot for the multilevel model of Accuracy"
         plot_data <- data_ACC
+        plot_data$yi <- plot_data$ES_final_ACC
+        plot_data$sei <- sqrt(plot_data$ES_var_ACC)
     } else {
         stop("Either RT or ACC must be set to TRUE.")
     }
-    
+    color_mapping <- setNames(hcl.colors(length(unique(plot_data$PlotLabel)), "Set3"), unique(plot_data$PlotLabel))
     model <- model_results$model_multi
     # Prepare data for the plots
     plot_data <- plot_data[order(plot_data$ID), ]
     plot_data$cluster_change <- c(0, diff(plot_data$ID))  
     plot_data$cluster_change[plot_data$cluster_change > 0] <- 1
     rows <- (1:nrow(plot_data)) + cumsum(plot_data$cluster_change * 0.001)
-
+    point_data <- data.frame(
+    x = plot_data$yi,
+    y = plot_data$sei,
+    col = color_mapping[plot_data$PlotLabel]
+  )
+  
     # Set up the graphical environment
     par(mfrow=c(2,1), tck=-.01, mgp=c(1.6, .2, 0), mar=c(3, 8, 1, 6))
 
@@ -697,7 +651,10 @@ plot_meta_results <- function(RT=FALSE, ACC=FALSE) {
            label = "all",  # Label all points with study labels
            slab = plot_data$ES_ID)
            #main = funnel_title)
-
+    # Add the points using the points function
+    points(point_data$x, point_data$y, col = point_data$col, pch = 16, cex = 1.5)
+    legend_data <- data.frame(ID = unique(plot_data$ID), PlotLabel = unique(plot_data$PlotLabel))
+  print(legend_data)
     legend("topright", 
         legend=c("95% CI", "99% CI"),
         fill=c("white", "gray55"),
@@ -707,23 +664,95 @@ plot_meta_results <- function(RT=FALSE, ACC=FALSE) {
         merge=TRUE,        # Combine points and lines in the legend
         title="Studies"
         )
-
+    
     # Reset graphical parameters
     par(mfrow=c(1,1))
 }
 plot_meta_results(RT=TRUE)
-```
-
-```{r}
-
 
 ```
+
+```{r plot test}
+
+```
+
 
 
 
 ```{r Figure 4 Funnel plot RT}
+funnel_plot <- function(RT=FALSE, ACC=FALSE) {
+    library(metafor)
+    
+    # Fetch the model results using calculate_meta
+    if (RT) {
+        model_results <- calculate_meta(RT=TRUE, multilevel=TRUE)
+        forest_title <- "Forest plot for the multilevel model of Reaction Time"
+        funnel_title <- "Funnel plot for the multilevel model of Reaction Time"
+        plot_data <- data_RT
+        plot_data$yi <- plot_data$ES_final_RT
+        plot_data$sei <- sqrt(plot_data$ES_var_RT)
+    } else if (ACC) {
+        model_results <- calculate_meta(ACC=TRUE, multilevel=TRUE)
+        forest_title <- "Forest plot for the multilevel model of Accuracy"
+        funnel_title <- "Funnel plot for the multilevel model of Accuracy"
+        plot_data <- data_ACC
+        plot_data$yi <- plot_data$ES_final_ACC
+        plot_data$sei <- sqrt(plot_data$ES_var_ACC)
+    } else {
+        stop("Either RT or ACC must be set to TRUE.")
+    }
+    color_mapping <- setNames(hcl.colors(length(unique(plot_data$PlotLabel)), "viridis"), unique(plot_data$PlotLabel))
+    model <- model_results$model_multi
+    # Prepare data for the plots
+    plot_data <- plot_data[order(plot_data$ID), ]
+    plot_data$cluster_change <- c(0, diff(plot_data$ID))  
+    plot_data$cluster_change[plot_data$cluster_change > 0] <- 1
+    rows <- (1:nrow(plot_data)) + cumsum(plot_data$cluster_change * 0.001)
+
+    # Create a data frame for the points
+    point_data <- data.frame(
+    x = plot_data$yi,
+    y = plot_data$sei,
+    col = color_mapping[plot_data$PlotLabel]
+  )
+  
+    # Set up the graphical environment
+    par(mfrow=c(1,1), tck=-.01, mgp=c(1.6, .2, 0), mar=c(3, 8, 1, 6))
+    # Create a contour-enhanced funnel plot
+    funnel(model, 
+           refline = 0,
+           level = c(90, 95, 99),  # Adding multiple levels for contours
+           shade = c("white", "gray55", "gray75"),  # Adjust as per your color preference for the contours
+           label = "all",  # Label all points with study labels
+           slab = plot_data$ES_ID,
+           #refline2=0
+           main = funnel_title)
+    # Add the points using the points function
+    points(point_data$x, point_data$y, col = point_data$col, pch = nrow(plot_data),cex = 1.5)
+    
+    legend_data <- data.frame(ID = unique(plot_data$ID), PlotLabel = unique(plot_data$PlotLabel))
+  
+    print(legend_data)
+    legend("topright", 
+            legend = c("90% CI","95% CI", "99% CI", legend_data$PlotLabel),
+            fill = c("gray75","white", "gray55",color_mapping[legend_data$PlotLabel]),
+            col = NA,#c(NA, NA, color_mapping[legend_data$PlotLabel]),
+            pch = c(NA, NA, rep(16, nrow(legend_data))),
+            lty = c(1, 1, rep(NA, nrow(legend_data))),
+            )
+    # Reset graphical parameters
+    par(mfrow=c(1,1))
+}
+funnel_plot(ACC=TRUE)
+
 
 ```
+
+
+```{r}
+
+```	
+
 
 # 3.4.1.3 Model comparison Reaction Time
 ```{r}
