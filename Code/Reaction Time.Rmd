@@ -16,19 +16,25 @@ output: html_document
 # install.packages("gridExtra")
 # install.packages("caret")
 # install.packages("forrest")
+# install.packages("tidyverse")
+# install.packages("mvmeta")
+# install.packages("plotly")
+# install.packages("RColorBrewer")
 
-library()
+
+# library("mvmeta")
+library(tidyverse)
 library("caret")
 library("rmarkdown")
 library("stringr")
 library("readxl")
 library("metafor")
 library("meta")
-# install.packages("mvmeta")
-# library("mvmeta")
 library("dplyr")
 library("ggplot2")
 library("gridExtra")
+library("plotly")
+library("RColorBrewer")
 source("transform_functions.r")
 
 
@@ -773,6 +779,7 @@ forest_plot(RT = TRUE)
 ```
 
 ```{r Figure 4 Funnel plot Function}
+
 funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     library(metafor)
 
@@ -784,6 +791,10 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
         plot_data <- data_RT
         plot_data$yi <- plot_data$ES_final_RT
         plot_data$sei <- sqrt(plot_data$ES_var_RT)
+        xlab_text <- "Reaction Time (Hedges' g)"
+        xlim_values <- c(-1, 3)
+        ylim_values <- c(0.6, 0)
+        color_points <- brewer.pal(nrow(unique(plot_data)), "Dark2")
     } else if (ACC) {
         model_results <- calculate_meta(ACC = TRUE)
         forest_title <- "Forest plot for the multilevel model of Accuracy"
@@ -791,10 +802,19 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
         plot_data <- data_ACC
         plot_data$yi <- plot_data$ES_final_ACC
         plot_data$sei <- sqrt(plot_data$ES_var_ACC)
+        xlab_text <- "Accuracy (Hedges' g)"
+        xlim_values <- c(-2.5, 2)
+        ylim_values <- c(0.9, 0)
+        color_points <- brewer.pal(nrow(unique(plot_data)), "Paired")
     } else {
         stop("Either RT or ACC must be set to TRUE.")
     }
-    color_mapping <- setNames(hcl.colors(length(unique(plot_data$PlotLabel)), "Green-Brown"), unique(plot_data$PlotLabel))
+
+    #color_points <- brewer.pal(nrow(unique(plot_data)), "Dark2")
+
+    color_mapping <- setNames(color_points, unique(plot_data$PlotLabel))
+        
+    
     model <- model_results$model_multi
     model_uni <- model_results$model_uni
     trim <- trimfill(model_uni)
@@ -805,7 +825,7 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
         y = plot_data$sei,
         col = color_mapping[plot_data$PlotLabel]
     )
-
+    
 
 
     # Extract the filled studies
@@ -821,21 +841,27 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
         cex.axis = 2  # Font size for the axis tick labels
         
     )
+
+    cantour_shades <- brewer.pal(9,"Blues")[c(2, 4, 6)]
+
+    # Reverse the palette if needed to match the order of light to dark for contour shades
+    #cantour_shades <- rev(brewer_palette)  # Use rev() if you need the darkest color for the highest contour
+
     # Create a contour-enhanced funnel plot
     funnel(model,
-        refline = model_uni$beta,
-        refline2=0,
-        lty = c(0,5),
+        refline2 = model_uni$beta,
+        refline=0,
+        lty = c(0,0),
         level = c(90, 95, 99), # Adding multiple levels for contours
-        shade = c("gray90", "gray55", "gray75"), 
-        label = "all", # Label all points with study labels
+        shade = cantour_shades, 
+        label = "none", # Label all points with study labels
         slab = plot_data$ES_ID,
-        xlab=  "Reaction Time (Hedges' g)",
+        xlab=  xlab_text,
         back = "white",
         cex= 2,
         lwd = 3,
-        xlim = c(-1, 3.5),
-        ylim = c(0.6, 0),
+        xlim = xlim_values,
+        ylim = ylim_values,
         digits=c(2,2)
     )
 
@@ -845,16 +871,17 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     points(point_data$x, point_data$y, col = point_data$col, pch = 16, cex = 2)
 
     # Add filled studies
-    points(filled_studies, filled_sei, col = "red", pch = 16, cex = 2)
+    points(filled_studies, filled_sei, col = "red", pch = 4, cex = 1.7)
 
-
+    # Add labels on top of each point
+    text(point_data$x, point_data$y, labels = plot_data$ES_ID, pos = 3, offset= 1, cex = 0.9) # 'pos = 3' places the label above the point
 
     legend_data <- data.frame(ID = unique(plot_data$ID), PlotLabel = unique(plot_data$PlotLabel))
     print(legend_data)
 
     legend("topright",ncol = 1,
         legend = c("90% CI", "95% CI", "99% CI", "Trim and Fill", legend_data$PlotLabel),
-        fill = c("gray75", "gray90", "gray55","red", color_mapping[legend_data$PlotLabel]),
+        fill = c(cantour_shades,"red", color_mapping[legend_data$PlotLabel]),
         col = c(NA, NA, NA, NA, NA),
         pch = c(16,16,16,16,rep(16, nrow(legend_data))),
         lty = c(1, 1, 1, rep(NA, nrow(legend_data) + 1)),
@@ -865,13 +892,141 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     par(mfrow = c(1, 1))
 }
 
-funnel_plot(RT = TRUE)
-
-
+funnel_plot(RT= TRUE)
 
 ```
 
-```{r}
+```{r baustelle}	
+library(metafor)
+library(ggplot2)
+library(RColorBrewer)
+library(grid)
+library(gridBase)
+# install.packages("gridBase")
+install.packages("viewports")
+
+funnel_plot_hybrid <- function(RT = FALSE, ACC = FALSE) {
+    # Fetch the model results using calculate_meta
+    if (RT) {
+        model_results <- calculate_meta(RT = TRUE)
+        plot_data <- data_RT
+        effect_size_label <- "Reaction Time (Hedges' g)"
+        xlab_text <- "Reaction Time (Hedges' g)"
+        xlim_values <- c(-1, 3)
+        ylim_values <- c(0, 0.6)
+        color_palette <- brewer.pal(nrow(unique(plot_data$PlotLabel)), "Dark2")
+    } else if (ACC) {
+        model_results <- calculate_meta(ACC = TRUE)
+        plot_data <- data_ACC
+        effect_size_label <- "Accuracy (Hedges' g)"
+        xlab_text <- "Accuracy (Hedges' g)"
+        xlim_values <- c(-2.5, 2)
+        ylim_values <- c(0, 0.9)
+        color_palette <- brewer.pal(nrow(unique(plot_data)), "Paired")
+    } else {
+        stop("Either RT or ACC must be set to TRUE.")
+    }
+  
+    # Prepare plot data
+    plot_data$yi <- ifelse(RT, plot_data$ES_final_RT, plot_data$ES_final_ACC)
+    plot_data$sei <- sqrt(ifelse(RT, plot_data$ES_var_RT, plot_data$ES_var_ACC))
+    plot_data$color <- as.factor(plot_data$PlotLabel)
+
+    # Prepare colors
+    color_palette <- setNames(brewer.pal(n_distinct(plot_data$color), "Set1"), levels(plot_data$color))
+    color_points
+    # Setup ggplot
+    p <- ggplot(plot_data, aes(x = yi, y = sei, color = color)) +
+        geom_point(shape = 16) +
+        scale_color_manual(values = color_palette) +
+        labs(x = effect_size_label, y = "Standard Error", title = "Funnel Plot with Contours") +
+        theme_minimal() +
+        theme(legend.title = element_blank()) +
+        xlim(xlim_values) + ylim(ylim_values)  # Setting axis limits based on the provided values
+
+    # Print initial ggplot
+    print(p)
+
+    # Capture the ggplot as a grob and plot it on a viewport
+    grid.newpage()
+    g <- ggplotGrob(p)
+    grid.draw(g)
+
+    # Since ggplot2 does not allow adding metafor plots directly, we recreate this plot using base plotting in a new viewport
+    pushViewport(viewport(width = 0.8, height = 0.8))
+    par(new = TRUE, mar = c(5.1, 4.1, 4.1, 2.1))
+
+    # Add metafor funnel plot lines and trim-and-fill
+    contour_shades <- brewer.pal(9, "Blues")[c(2, 4, 6)]
+    funnel(model_results$model_multi,
+        refline = model_results$model_uni$beta,
+        xlim = xlim_values,
+        ylim = ylim_values,
+        xlab = xlab_text,
+        ylab = "Standard Error",
+        lty = c(0, 0),
+        level = c(90, 95, 99),  # Adding multiple levels for contours
+        shade = contour_shades,
+        label = "none",  # Label all points with study labels
+        slab = plot_data$ES_ID,
+        back = "white",
+        cex = 2,
+        lwd = 3,
+        digits = c(2, 2)
+    )
+
+    trim <- trimfill(model_results$model_uni, add = TRUE, col.trim = "red")
+
+    # Return control to the top-level viewport
+    popViewport()
+}
+
+# Example call
+funnel_plot_hybrid(ACC = TRUE)
+
+```
+
+
+
+```{r test metaviz}
+#install.packages("metaviz")
+library(metaviz)
+
+mozart <- data_RT
+
+mozart$d <- mozart$ES_final_RT
+mozart$se <- sqrt(mozart$ES_var_RT)
+
+
+
+summary_table <- data.frame(
+    name = "Summary",
+    eventsT = paste(sum(mozart$ai), "/", sum(mozart$ai + mozart$bi), sep = ""),
+    eventsC = paste(sum(mozart$ci), "/", sum(mozart$ci + mozart$di), sep = ""))
+head(summary_table)
+
+study_table <- data.frame(
+  name = mozart[, "PlotLabel"],
+  eventsT = paste(mozart$ai, "/", mozart$ai + mozart$bi, sep = ""),
+  eventsC = paste(mozart$ci, "/", mozart$ci + mozart$di, sep = ""))
+head(study_table)
+
+
+viz_forest(x = mozart[, c("d", "se")], 
+            group = mozart[, "CognitiveFunction"], 
+            study_labels = mozart[, c("PlotLabel")],
+            summary_label = "Summary effect", xlab = "Cohen d",
+            variant = "rain", 
+            #type="summary_only", 
+            study_table = study_table,
+            summary_table = summary_table,
+            method ="DL",
+            annotate_CI = TRUE)
+
+
+
+viz_funnel(mozart[1:10, c("d", "se")], sig_contours = FALSE, addev_contours = TRUE)
+funnelinf(mozart[1:10, c("d", "se")],show_solution = TRUE)
 
 ```	
 
@@ -1187,45 +1342,70 @@ PartialDependence(final, moderator = "CognitiveFunction", rawdata = TRUE, pi = .
 
 # 3.4.1.5 Publication Bias RT
 ```{r}
-# kendals tau
-ranktest(x = data_RT$ES_final_RT, vi = data_RT$ES_var_RT)
 
-# fail safe numbers
-fsn(
-    x = data_RT$ES_final_RT,
-    vi = data_RT$ES_var_RT,
-    type = "Rosenthal"
-)
-fsn(
-    x = data_RT$ES_final_RT,
-    vi = data_RT$ES_var_RT,
-    type = "Orwin",
-    target = 0.1
-)
-fsn(
-    x = data_RT$ES_final_RT,
-    vi = data_RT$ES_var_RT,
-    type = "Rosenberg"
-)
+
+publication_bias <- function(data_type) {
+  # Determine which type of data to use
+  if (data_type == "RT") {
+    model_results <- calculate_meta(RT = TRUE)
+    data <- data_RT
+  } else if (data_type == "ACC") {
+    model_results <- calculate_meta(ACC = TRUE)
+    data <- data_ACC
+  } else {
+    stop("Invalid data type specified. Use 'RT' or 'ACC'.")
+  }
+  
+  # Perform Kendall's tau rank correlation test
+  kendalls_tau <- ranktest(x = data$ES_final, vi = data$ES_var)
+  print(kendalls_tau)
+  
+  # Calculate fail-safe numbers
+  fsn_rosenthal <- fsn(x = data$ES_final, vi = data$ES_var, type = "Rosenthal")
+  print(fsn_rosenthal)
+  
+  fsn_orwin <- fsn(x = data$ES_final, vi = data$ES_var, type = "Orwin", target = 0.1)
+  print(fsn_orwin)
+  
+  fsn_rosenberg <- fsn(x = data$ES_final, vi = data$ES_var, type = "Rosenberg")
+  print(fsn_rosenberg)
+}
+
+
+publication_bias("RT")
+
 ```
 ```{r}
-# modified Eggers test to assess publication bias
-# trim and fill deosnt work on rma.mv
 
-# trim and fill
-plain <- rma.uni(yi = data_ACC$ES_final_ACC, vi = data_ACC$ES_var_ACC, method = "REML")
 
-x <- plain
-regtest(x, model = "rma")
-trim <- trimfill(plain)
-plot(plain)
-funnel(trim)
-mod_egger_RT <- rma.mv(
-    yi = ES_final_RT,
-    V = ES_var_RT,
-    mods = ~ I(1 / sqrt(ES_var_RT)), # precision as moderator
-    random = ~ 1 | ID,
-    data = data_RT
-)
-summary(mod_egger_RT)
+mod_egger <- function(data_type) {
+  # Determine which type of data and model to use
+  if (data_type == "RT") {
+    model_results <- calculate_meta(RT = TRUE)
+    data <- data_RT
+    yi <- data$ES_final_RT
+    V <- data$ES_var_RT
+  } else if (data_type == "ACC") {
+    model_results <- calculate_meta(ACC = TRUE)
+    data <- data_ACC
+    yi <- data$ES_final_ACC
+    V <- data$ES_var_ACC
+  } else {
+    stop("Invalid data type specified. Use 'RT' or 'ACC'.")
+  }
+  
+  # Perform the regression analysis using rma.mv
+  mod_egger <- rma.mv(
+    yi = yi,
+    V = V,
+    mods = ~ I(1 / sqrt(V)),  # precision as moderator
+    random = ~ 1 | ID/ ES_ID,
+    data = data
+  )
+  # Print the summary of the model
+  summary(mod_egger)
+}
+
+# Example usage:
+mod_egger("RT")$beta
 ```
