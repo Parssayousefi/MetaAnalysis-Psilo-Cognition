@@ -153,8 +153,7 @@ AddCohensDVariance <- function(data) {
 data <- AddCohensDVariance(data)
 ```
 
-# 3.4 Results
-# 3.4.1 Reaction Time
+# select data
 ```{r RT Selection}
 # Define the columns to select
 cols_to_select <- c(
@@ -209,6 +208,9 @@ n_unique_ids_ACC <- length(unique(data_ACC$ID))
 cat("Number of entries for ACC measure:", n_rows_ACC, "\n")
 cat("Number of unique IDs:", n_unique_ids_ACC, "\n")
 ```
+
+# 3.4 Results
+# 3.4.1 Reaction Time
 
 ```{r calculate_meta function}
 calculate_meta <- function(RT = FALSE, ACC = FALSE) {
@@ -627,161 +629,78 @@ print(diagnostic_analysis("RT")$outlier_info)
 # diagnostic_analysis("ACC")$summary_table
 ```
 
-# 3.4.1.2 Nested Model Reaction Times
-```{r Forest + Funnel plot function}
-plot_meta_results <- function(RT = FALSE, ACC = FALSE) {
-    library(metafor)
+# 3.4.1.2 Publication Bias RT
+```{r fail safe nrs}
 
-    # Fetch the model results using calculate_meta
-    if (RT) {
-        model_results <- calculate_meta(RT = TRUE)
-        forest_title <- "Forest plot for the multilevel model of Reaction Times"
-        funnel_title <- "Funnel plot for the multilevel model of Reaction Times"
-        plot_data <- data_RT
-        plot_data$yi <- plot_data$ES_final_RT
-        plot_data$sei <- sqrt(plot_data$ES_var_RT)
-    } else if (ACC) {
-        model_results <- calculate_meta(ACC = TRUE)
-        forest_title <- "Forest plot for the multilevel model of Accuracy"
-        funnel_title <- "Funnel plot for the multilevel model of Accuracy"
-        plot_data <- data_ACC
-        plot_data$yi <- plot_data$ES_final_ACC
-        plot_data$sei <- sqrt(plot_data$ES_var_ACC)
-    } else {
-        stop("Either RT or ACC must be set to TRUE.")
-    }
-    color_mapping <- setNames(hcl.colors(length(unique(plot_data$PlotLabel)), "Set3"), unique(plot_data$PlotLabel))
-    model <- model_results$model_multi
-    # Prepare data for the plots
-    plot_data <- plot_data[order(plot_data$ID), ]
-    plot_data$cluster_change <- c(0, diff(plot_data$ID))
-    plot_data$cluster_change[plot_data$cluster_change > 0] <- 1
-    rows <- (1:nrow(plot_data)) + cumsum(plot_data$cluster_change * 0.001)
-    point_data <- data.frame(
-        x = plot_data$yi,
-        y = plot_data$sei,
-        col = color_mapping[plot_data$PlotLabel]
-    )
-
-    # Set up the graphical environment
-    par(mfrow = c(2, 1), tck = -.01, mgp = c(1.6, .2, 0), mar = c(3, 8, 1, 6))
-
-    # Create the forest plot
-    forest(model,
-        annotate = FALSE,
-        slab = plot_data$PlotLabel,
-        ilab = cbind(ES_ID = plot_data$ES_ID, CognitiveFunction = plot_data$CognitiveFunction),
-        ilab.xpos = c(-2.5, -3),
-        cex = 0.8,
-        header = TRUE,
-        rows = rows,
-        ylim = c(0.2, max(rows) + 3),
-        main = forest_title
-    )
-    addpoly(model)
-    abline(h = rows[plot_data$cluster_change == 1] - 0.5, lty = 2)
-
-    # Create a contour-enhanced funnel plot
-    funnel(model,
-        refline = 0,
-        level = c(95, 99), # Adding multiple levels for contours
-        shade = c("white", "gray55"), # Adjust as per your color preference for the contours
-        label = "all", # Label all points with study labels
-        slab = plot_data$ES_ID
-    )
-    # main = funnel_title)
-    # Add the points using the points function
-    points(point_data$x, point_data$y, col = point_data$col, pch = 16, cex = 1.5)
-    legend_data <- data.frame(ID = unique(plot_data$ID), PlotLabel = unique(plot_data$PlotLabel))
-    print(legend_data)
-    legend("topright",
-        legend = c("95% CI", "99% CI"),
-        fill = c("white", "gray55"),
-        # col=c("red", "blue", "green"),
-        pch = c(17, 18, 19),
-        lty = 1, # Same line type for simplicity
-        merge = TRUE, # Combine points and lines in the legend
-        title = "Studies"
-    )
-
-    # Reset graphical parameters
-    par(mfrow = c(1, 1))
-}
-plot_meta_results(RT = TRUE)
-```
-
-```{r Forest plot Function "working here"}
-forest_plot <- function(RT = FALSE, ACC = FALSE) {
-    library(metafor)
-
-    # Fetch the model results using calculate_meta
-    if (RT) {
-        model_results <- calculate_meta(RT = TRUE)
-        forest_title <- "Forest plot for the multilevel model of Reaction Times"
-        funnel_title <- "Funnel plot for the multilevel model of Reaction Times"
-        plot_data <- data_RT
-        plot_data$yi <- plot_data$ES_final_RT
-        plot_data$sei <- sqrt(plot_data$ES_var_RT)
-    } else if (ACC) {
-        model_results <- calculate_meta(ACC = TRUE)
-        forest_title <- "Forest plot for the multilevel model of Accuracy"
-        funnel_title <- "Funnel plot for the multilevel model of Accuracy"
-        plot_data <- data_ACC
-        plot_data$yi <- plot_data$ES_final_ACC
-        plot_data$sei <- sqrt(plot_data$ES_var_ACC)
-    } else {
-        stop("Either RT or ACC must be set to TRUE.")
-    }
-    color_mapping <- setNames(hcl.colors(length(unique(plot_data$PlotLabel)), "Set3"), unique(plot_data$PlotLabel))
-    model <- model_results$model_multi
-    # Prepare data for the plots
-    plot_data <- plot_data[order(plot_data$ID), ]
-    plot_data$cluster_change <- c(0, diff(plot_data$ID))
-    plot_data$cluster_change[plot_data$cluster_change > 0] <- 1
-    rows <- (1:nrow(plot_data)) + cumsum(plot_data$cluster_change * 0.001)
-    point_data <- data.frame(
-        x = plot_data$yi,
-        y = plot_data$sei,
-        col = color_mapping[plot_data$PlotLabel]
-    )
-
-    # Set up the graphical environment
-    par(mfrow = c(1, 1), tck = -.01, mgp = c(1.6, .2, 0), mar = c(3, 8, 1, 6))
-
-    # Create the forest plot
-    forest(model,
-        annotate = FALSE,
-        slab = plot_data$PlotLabel,
-        ilab = cbind(ES_ID = plot_data$ES_ID, CognitiveFunction = plot_data$CognitiveFunction),
-        ilab.xpos = c(-2.5, -3),
-        cex = 0.8,
-        header = TRUE,
-        rows = rows,
-        ylim = c(0.2, max(rows) + 3),
-        main = forest_title
-    )
-    addpoly(model)
-    abline(h = rows[plot_data$cluster_change == 1] - 0.5, lty = 2)
-
-    # Add the points using the points function
-    points(point_data$x, point_data$y, col = point_data$col, pch = 16, cex = 1.5)
-    legend_data <- data.frame(ID = unique(plot_data$ID), PlotLabel = unique(plot_data$PlotLabel))
-    print(legend_data)
-
-
-    # Reset graphical parameters
-    par(mfrow = c(1, 1))
+publication_bias <- function(data_type) {
+  # Determine which type of data to use
+  if (data_type == "RT") {
+    model_results <- calculate_meta(RT = TRUE)
+    data <- data_RT
+  } else if (data_type == "ACC") {
+    model_results <- calculate_meta(ACC = TRUE)
+    data <- data_ACC
+  } else {
+    stop("Invalid data type specified. Use 'RT' or 'ACC'.")
+  }
+  
+  # Perform Kendall's tau rank correlation test
+  kendalls_tau <- ranktest(x = data$ES_final, vi = data$ES_var)
+  print(kendalls_tau)
+  
+  # Calculate fail-safe numbers
+  fsn_rosenthal <- fsn(x = data$ES_final, vi = data$ES_var, type = "Rosenthal")
+  print(fsn_rosenthal)
+  
+  fsn_orwin <- fsn(x = data$ES_final, vi = data$ES_var, type = "Orwin", target = 0.1)
+  print(fsn_orwin)
+  
+  fsn_rosenberg <- fsn(x = data$ES_final, vi = data$ES_var, type = "Rosenberg")
+  print(fsn_rosenberg)
 }
 
-forest_plot(RT = TRUE)
 
+publication_bias("RT")
 
 ```
+```{r Eggers test}
 
+mod_egger <- function(data_type) {
+  # Determine which type of data and model to use
+  if (data_type == "RT") {
+    model_results <- calculate_meta(RT = TRUE)
+    data <- data_RT
+    yi <- data$ES_final_RT
+    V <- data$ES_var_RT
+  } else if (data_type == "ACC") {
+    model_results <- calculate_meta(ACC = TRUE)
+    data <- data_ACC
+    yi <- data$ES_final_ACC
+    V <- data$ES_var_ACC
+  } else {
+    stop("Invalid data type specified. Use 'RT' or 'ACC'.")
+  }
+  
+  # Perform the regression analysis using rma.mv
+  mod_egger <- rma.mv(
+    yi = yi,
+    V = V,
+    mods = ~ I(1 / sqrt(V)),  # precision as moderator
+    random = ~ 1 | ID/ ES_ID,
+    data = data
+  )
+  # Print the summary of the model
+  summary(mod_egger)
+}
+
+# Example usage:
+mod_egger("RT")
+
+```
 ```{r Figure 4 Funnel plot Function}
-
 funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     library(metafor)
+    library(RColorBrewer)
 
     # Fetch the model results using calculate_meta
     if (RT) {
@@ -794,7 +713,7 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
         xlab_text <- "Reaction Time (Hedges' g)"
         xlim_values <- c(-1, 3)
         ylim_values <- c(0.6, 0)
-        color_points <- brewer.pal(nrow(unique(plot_data)), "Dark2")
+        color_points <- brewer.pal(nrow(unique(plot_data$PlotLabel)), "Dark2")
     } else if (ACC) {
         model_results <- calculate_meta(ACC = TRUE)
         forest_title <- "Forest plot for the multilevel model of Accuracy"
@@ -805,28 +724,32 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
         xlab_text <- "Accuracy (Hedges' g)"
         xlim_values <- c(-2.5, 2)
         ylim_values <- c(0.9, 0)
-        color_points <- brewer.pal(nrow(unique(plot_data)), "Paired")
+        color_points <- brewer.pal(nrow(unique(plot_data$PlotLabel)), "Paired")
     } else {
         stop("Either RT or ACC must be set to TRUE.")
     }
 
-    #color_points <- brewer.pal(nrow(unique(plot_data)), "Dark2")
-
     color_mapping <- setNames(color_points, unique(plot_data$PlotLabel))
-        
     
+    # Create a mapping for shapes based on DoseLabel
+    shape_mapping <- setNames(c(16, 17, 18, 19), unique(plot_data$CognitiveFunction))
+    
+
+   # Create a mapping for sizes based on DoseLabel (example sizes, adjust as needed)
+    size_mapping <- setNames(seq(1, length(unique(plot_data$DoseLabel))), unique(plot_data$DoseLabel)) 
+
     model <- model_results$model_multi
     model_uni <- model_results$model_uni
     trim <- trimfill(model_uni)
 
-    # Create a data frame for the points
+    # Create a data frame for the points with colors and shapes
     point_data <- data.frame(
         x = plot_data$yi,
         y = plot_data$sei,
-        col = color_mapping[plot_data$PlotLabel]
+        col = color_mapping[plot_data$PlotLabel],
+        pch = shape_mapping[plot_data$CognitiveFunction],
+        cex = size_mapping[plot_data$DoseLabel]
     )
-    
-
 
     # Extract the filled studies
     filled_indices <- trim$fill
@@ -839,150 +762,216 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
         cex.main = 1.5, # Font size for the main title
         cex.lab = 3,  # Font size for the axis titles
         cex.axis = 2  # Font size for the axis tick labels
-        
     )
 
     cantour_shades <- brewer.pal(9,"Blues")[c(2, 4, 6)]
 
-    # Reverse the palette if needed to match the order of light to dark for contour shades
-    #cantour_shades <- rev(brewer_palette)  # Use rev() if you need the darkest color for the highest contour
-
     # Create a contour-enhanced funnel plot
     funnel(model,
         refline2 = model_uni$beta,
-        refline=0,
-        lty = c(0,0),
+        refline = 0,
+        lty = c(0, 0),
         level = c(90, 95, 99), # Adding multiple levels for contours
         shade = cantour_shades, 
         label = "none", # Label all points with study labels
         slab = plot_data$ES_ID,
-        xlab=  xlab_text,
+        xlab = xlab_text,
         back = "white",
-        cex= 2,
+        cex = 2,
         lwd = 3,
         xlim = xlim_values,
         ylim = ylim_values,
-        digits=c(2,2)
+        digits = c(2, 2)
     )
 
-        
-
-    # Add the points using the points function
-    points(point_data$x, point_data$y, col = point_data$col, pch = 16, cex = 2)
+    # Add the points using the points function with varying shapes
+    points(point_data$x, point_data$y, col = point_data$col, pch = point_data$pch, cex = point_data$cex)
 
     # Add filled studies
     points(filled_studies, filled_sei, col = "red", pch = 4, cex = 1.7)
 
     # Add labels on top of each point
-    text(point_data$x, point_data$y, labels = plot_data$ES_ID, pos = 3, offset= 1, cex = 0.9) # 'pos = 3' places the label above the point
+    text(point_data$x, point_data$y, labels = plot_data$ES_ID, pos = 3, offset = 1, cex = 0.9) # 'pos = 3' places the label above the point
 
     legend_data <- data.frame(ID = unique(plot_data$ID), PlotLabel = unique(plot_data$PlotLabel))
     print(legend_data)
 
-    legend("topright",ncol = 1,
+    legend("topright", ncol = 1,
         legend = c("90% CI", "95% CI", "99% CI", "Trim and Fill", legend_data$PlotLabel),
-        fill = c(cantour_shades,"red", color_mapping[legend_data$PlotLabel]),
+        fill = c(cantour_shades, "red", color_mapping[legend_data$PlotLabel]),
         col = c(NA, NA, NA, NA, NA),
-        pch = c(16,16,16,16,rep(16, nrow(legend_data))),
+        pch = c(16, 16, 16, 16, rep(16, nrow(legend_data))),
         lty = c(1, 1, 1, rep(NA, nrow(legend_data) + 1)),
         y.intersp = 0.6,
         x.intersp = 0.2
     )
+    
     # Reset graphical parameters
     par(mfrow = c(1, 1))
 }
 
-funnel_plot(RT= TRUE)
+funnel_plot(RT = TRUE)
+
+
+
 
 ```
 
 ```{r baustelle}	
-library(metafor)
-library(ggplot2)
-library(RColorBrewer)
-library(grid)
-library(gridBase)
-# install.packages("gridBase")
-install.packages("viewports")
+funnel_plot <- function(RT = FALSE, ACC = FALSE) {
+    library(metafor)
+    library(RColorBrewer)
 
-funnel_plot_hybrid <- function(RT = FALSE, ACC = FALSE) {
     # Fetch the model results using calculate_meta
     if (RT) {
         model_results <- calculate_meta(RT = TRUE)
+        egger_results <- mod_egger("RT")
+        funnel_title <- "Funnel plot for the multilevel model of Reaction Time"
         plot_data <- data_RT
-        effect_size_label <- "Reaction Time (Hedges' g)"
+        plot_data$yi <- plot_data$ES_final_RT
+        plot_data$sei <- sqrt(plot_data$ES_var_RT)
         xlab_text <- "Reaction Time (Hedges' g)"
         xlim_values <- c(-1, 3)
-        ylim_values <- c(0, 0.6)
-        color_palette <- brewer.pal(nrow(unique(plot_data$PlotLabel)), "Dark2")
+        ylim_values <- c(0.6, 0.3)
+        color_points <- brewer.pal(length(unique(plot_data$PlotLabel)), "Dark2")
     } else if (ACC) {
         model_results <- calculate_meta(ACC = TRUE)
+        egger_results <- mod_egger("ACC")
+        funnel_title <- "Funnel plot for the multilevel model of Accuracy"
         plot_data <- data_ACC
-        effect_size_label <- "Accuracy (Hedges' g)"
+        plot_data$yi <- plot_data$ES_final_ACC
+        plot_data$sei <- sqrt(plot_data$ES_var_ACC)
         xlab_text <- "Accuracy (Hedges' g)"
         xlim_values <- c(-2.5, 2)
-        ylim_values <- c(0, 0.9)
-        color_palette <- brewer.pal(nrow(unique(plot_data)), "Paired")
+        ylim_values <- c(0.8, 0.2)
+        color_points <- brewer.pal(length(unique(plot_data$PlotLabel)), "Paired")
     } else {
         stop("Either RT or ACC must be set to TRUE.")
     }
-  
-    # Prepare plot data
-    plot_data$yi <- ifelse(RT, plot_data$ES_final_RT, plot_data$ES_final_ACC)
-    plot_data$sei <- sqrt(ifelse(RT, plot_data$ES_var_RT, plot_data$ES_var_ACC))
-    plot_data$color <- as.factor(plot_data$PlotLabel)
 
-    # Prepare colors
-    color_palette <- setNames(brewer.pal(n_distinct(plot_data$color), "Set1"), levels(plot_data$color))
-    color_points
-    # Setup ggplot
-    p <- ggplot(plot_data, aes(x = yi, y = sei, color = color)) +
-        geom_point(shape = 16) +
-        scale_color_manual(values = color_palette) +
-        labs(x = effect_size_label, y = "Standard Error", title = "Funnel Plot with Contours") +
-        theme_minimal() +
-        theme(legend.title = element_blank()) +
-        xlim(xlim_values) + ylim(ylim_values)  # Setting axis limits based on the provided values
+    color_mapping <- setNames(color_points[1:length(unique(plot_data$PlotLabel))], unique(plot_data$PlotLabel))
 
-    # Print initial ggplot
-    print(p)
+    # Create a mapping for shapes based on DoseLabel
+    shape_mapping <- setNames(c(16, 17, 18, 19)[1:length(unique(plot_data$CognitiveFunction))], unique(plot_data$CognitiveFunction))
+    
+    # Create a mapping for sizes based on DoseLabel (example sizes, adjust as needed)
+    size_mapping <- setNames(seq(1, length(unique(plot_data$DoseLabel)))[1:length(unique(plot_data$DoseLabel))], unique(plot_data$DoseLabel)) 
+    
 
-    # Capture the ggplot as a grob and plot it on a viewport
-    grid.newpage()
-    g <- ggplotGrob(p)
-    grid.draw(g)
+    model <- model_results$model_multi
+    model_uni <- model_results$model_uni
+    trim <- trimfill(model_uni)
 
-    # Since ggplot2 does not allow adding metafor plots directly, we recreate this plot using base plotting in a new viewport
-    pushViewport(viewport(width = 0.8, height = 0.8))
-    par(new = TRUE, mar = c(5.1, 4.1, 4.1, 2.1))
 
-    # Add metafor funnel plot lines and trim-and-fill
-    contour_shades <- brewer.pal(9, "Blues")[c(2, 4, 6)]
-    funnel(model_results$model_multi,
-        refline = model_results$model_uni$beta,
-        xlim = xlim_values,
-        ylim = ylim_values,
-        xlab = xlab_text,
-        ylab = "Standard Error",
+    # Create a data frame for the points with colors and shapes
+    point_data <- data.frame(
+        x = plot_data$yi,
+        y = plot_data$sei,
+        col = color_mapping[plot_data$PlotLabel],
+        pch = shape_mapping[plot_data$CognitiveFunction],
+        cex = size_mapping[rev(plot_data$DoseLabel)]
+    )
+
+    # Extract the filled studies
+    filled_indices <- trim$fill
+    filled_studies <- trim$yi[filled_indices]
+    filled_sei <- sqrt(trim$vi[filled_indices])
+    print(filled_studies)
+
+    # Set up the graphical environment
+    par(mfrow = c(1, 1), tck = -.03, mgp = c(6, 3, 0), mar = c(8, 10, 5, 6), bg = "white",
+        cex.main = 1.5, # Font size for the main title
+        cex.lab = 3,  # Font size for the axis titles
+        cex.axis = 2  # Font size for the axis tick labels
+    )
+
+    cantour_shades <- brewer.pal(9,"Blues")[c(2, 4, 6)]
+
+    # Create a contour-enhanced funnel plot
+    funnel(model,
+        refline2 = c(model_uni$beta),
+        refline = c(0),
         lty = c(0, 0),
-        level = c(90, 95, 99),  # Adding multiple levels for contours
-        shade = contour_shades,
-        label = "none",  # Label all points with study labels
+        level = c(90, 95, 99), # Adding multiple levels for contours
+        shade = cantour_shades, 
+        label = "none", # Label all points with study labels
         slab = plot_data$ES_ID,
+        xlab = xlab_text,
         back = "white",
         cex = 2,
         lwd = 3,
+        xlim = xlim_values,
+        ylim = ylim_values,
         digits = c(2, 2)
     )
 
-    trim <- trimfill(model_results$model_uni, add = TRUE, col.trim = "red")
+    # Add the points using the points function with varying shapes
+    points(point_data$x, point_data$y, col = point_data$col, pch = point_data$pch, cex = point_data$cex)
 
-    # Return control to the top-level viewport
-    popViewport()
+    # Add filled studies
+    points(filled_studies, filled_sei, col = "red", pch = 4, cex = 2)
+
+    # Add labels on top of each point
+    text(point_data$x, point_data$y, labels = plot_data$ES_ID, pos = 3, offset = 1.5, cex = 1) # 'pos = 3' places the label above the point
+
+    legend_data <- data.frame(ID = unique(plot_data$ID), PlotLabel = unique(plot_data$PlotLabel))
+    print(legend_data)
+
+    # Add legend for color, shape, and size
+    # Add legend for confidence intervals and trim-and-fill
+    legend("topright", ncol = 1,inset = c(0, 0.255),
+        legend = c("90% CI", "95% CI", "99% CI", "Trim and Fill"),
+        fill = c(cantour_shades, NA),
+        col = c(rep(NA, length(cantour_shades)), "red"),
+        pch = c(rep(NA, length(cantour_shades)), 4),
+        lty = 0,
+        y.intersp = 0.6,
+        x.intersp = 0.5,
+        text.width = max(strwidth(c("90% CI", "95% CI", "99% CI", "Trim and Fill"))) * 1,
+     )
+    # Add legend for study labels (colors)
+    legend("topright", inset = c(0, 0),
+        legend = legend_data$PlotLabel,
+        fill = color_mapping[legend_data$PlotLabel],
+        col = NA,
+        pch = NA,
+        #lty = NA,
+        y.intersp = 0.6,
+        x.intersp = 0.2,
+        title = "Study"
+    )
+
+    # Add legend for cognitive functions (shapes)
+    legend("topright", inset = c(0, 0.143),
+        legend = names(shape_mapping),
+        col = 1,
+        pch = shape_mapping,
+        pt.cex = 2,
+        #lty = NA,
+        y.intersp = 0.6,
+        x.intersp = 0.8,
+        title = "Cognitive Function"
+    )
+    
+    # Add legend for dose labels (sizes)
+    legend("topright", inset = c(0, 0.35),
+        legend = names(size_mapping),
+        col = 1,
+        pch = 1,
+        pt.cex = size_mapping,
+        #lty = NA,
+        y.intersp = 0.8,
+        x.intersp = 2,
+        title = "Doseage"
+    )
+    
+    
+    
+    # Reset graphical parameters
+    par(mfrow = c(1, 1))
 }
 
-# Example call
-funnel_plot_hybrid(ACC = TRUE)
+funnel_plot(ACC = TRUE)
 
 ```
 
@@ -1033,6 +1022,60 @@ funnelinf(mozart[1:10, c("d", "se")],show_solution = TRUE)
 # 3.4.1.3 Model comparison Reaction Time
 ```{r}
 calculate_meta(RT = TRUE)$model_comparison
+```
+```{r}
+forest_plot <- function(RT = FALSE, ACC = FALSE) {
+  library(metaviz)
+  library(RColorBrewer)
+
+  # Fetch the model results using calculate_meta
+  if (RT) {
+    model_results <- calculate_meta(RT = TRUE)
+    plot_data <- data_RT
+    plot_data$yi <- plot_data$ES_final_RT
+    plot_data$sei <- sqrt(plot_data$ES_var_RT)
+    xlab_text <- "Reaction Time (Hedges' g)"
+  } else if (ACC) {
+    model_results <- calculate_meta(ACC = TRUE)
+    plot_data <- data_ACC
+    plot_data$yi <- plot_data$ES_final_ACC
+    plot_data$sei <- sqrt(plot_data$ES_var_ACC)
+    xlab_text <- "Accuracy (Hedges' g)"
+  } else {
+    stop("Either RT or ACC must be set to TRUE.")
+  }
+
+  # Create a data frame for the table
+  table_data <- data.frame(
+    PlotLabel = plot_data$PlotLabel,
+    DoseLabel = plot_data$DoseLabel,
+    N_final = plot_data$N_final,
+    Timepoint = plot_data$Timepoint,
+    CognitiveFunction = plot_data$CognitiveFunction
+  )
+
+  # Create color palette for CognitiveFunction subgroups
+  subgroup_colors <- brewer.pal(length(unique(plot_data$CognitiveFunction)), "Blues")
+  names(subgroup_colors) <- unique(plot_data$CognitiveFunction)
+
+  # Create the forest plot using viz_forest
+  viz_forest(
+    x = cbind(plot_data$yi, plot_data$sei),
+    variant= "thick",
+    type = "sensitivity",
+    study_labels = plot_data$PlotLabel,
+    group = plot_data$CognitiveFunction,
+    summary_label = names(subgroup_colors),
+    col = subgroup_colors[1],
+    summary_col = "darkblue",
+    xlab = xlab_text,
+    study_table = table_data,
+    table_headers = c("Study", "Dose", "N", "Time point", "Cognitive Function"),
+    table_layout = matrix(c(1, 2), nrow = 1)
+  )
+}
+
+forest_plot(ACC = TRUE)
 ```
 
 # 3.4.1.4 Subgroup Analyses RT
@@ -1340,72 +1383,3 @@ PartialDependence(final, rawdata = TRUE, pi = .95)
 PartialDependence(final, moderator = "CognitiveFunction", rawdata = TRUE, pi = .95)
 ```
 
-# 3.4.1.5 Publication Bias RT
-```{r}
-
-
-publication_bias <- function(data_type) {
-  # Determine which type of data to use
-  if (data_type == "RT") {
-    model_results <- calculate_meta(RT = TRUE)
-    data <- data_RT
-  } else if (data_type == "ACC") {
-    model_results <- calculate_meta(ACC = TRUE)
-    data <- data_ACC
-  } else {
-    stop("Invalid data type specified. Use 'RT' or 'ACC'.")
-  }
-  
-  # Perform Kendall's tau rank correlation test
-  kendalls_tau <- ranktest(x = data$ES_final, vi = data$ES_var)
-  print(kendalls_tau)
-  
-  # Calculate fail-safe numbers
-  fsn_rosenthal <- fsn(x = data$ES_final, vi = data$ES_var, type = "Rosenthal")
-  print(fsn_rosenthal)
-  
-  fsn_orwin <- fsn(x = data$ES_final, vi = data$ES_var, type = "Orwin", target = 0.1)
-  print(fsn_orwin)
-  
-  fsn_rosenberg <- fsn(x = data$ES_final, vi = data$ES_var, type = "Rosenberg")
-  print(fsn_rosenberg)
-}
-
-
-publication_bias("RT")
-
-```
-```{r}
-
-
-mod_egger <- function(data_type) {
-  # Determine which type of data and model to use
-  if (data_type == "RT") {
-    model_results <- calculate_meta(RT = TRUE)
-    data <- data_RT
-    yi <- data$ES_final_RT
-    V <- data$ES_var_RT
-  } else if (data_type == "ACC") {
-    model_results <- calculate_meta(ACC = TRUE)
-    data <- data_ACC
-    yi <- data$ES_final_ACC
-    V <- data$ES_var_ACC
-  } else {
-    stop("Invalid data type specified. Use 'RT' or 'ACC'.")
-  }
-  
-  # Perform the regression analysis using rma.mv
-  mod_egger <- rma.mv(
-    yi = yi,
-    V = V,
-    mods = ~ I(1 / sqrt(V)),  # precision as moderator
-    random = ~ 1 | ID/ ES_ID,
-    data = data
-  )
-  # Print the summary of the model
-  summary(mod_egger)
-}
-
-# Example usage:
-mod_egger("RT")$beta
-```
