@@ -24,7 +24,7 @@ output: html_document
 #     install.packages("remotes")
 # }
 
-setwd("C:/Users/prsyu/OneDrive/Bidlung/University/M.S. Leiden University/M.S. Neuroscience (Research)/Internship Groningen/GitHub_Multiverse_meta/MetaAnalysis-Psilo-Cognition")
+#setwd("C:/Users/prsyu/OneDrive/Bidlung/University/M.S. Leiden University/M.S. Neuroscience (Research)/Internship Groningen/GitHub_Multiverse_meta/MetaAnalysis-Psilo-Cognition")
 
 
 
@@ -42,12 +42,12 @@ library("ggplot2")
 library("gridExtra")
 library("plotly")
 library("RColorBrewer")
-source("Code/transform_functions.r")
+source("transform_functions.r")
 
 
 
 # Define data file
-datafile <- "/Overview_Studies.xlsx"
+datafile <- "Overview_Studies.xlsx"
 ```
 
 # Load Data
@@ -865,54 +865,6 @@ funnel_plot(ACC = TRUE)
 
 ```
 
-```{r baustelle}	
-
-```
-
-
-
-```{r test metaviz}
-#install.packages("metaviz")
-library(metaviz)
-
-mozart <- data_RT
-
-mozart$d <- mozart$ES_final_RT
-mozart$se <- sqrt(mozart$ES_var_RT)
-
-
-
-summary_table <- data.frame(
-    name = "Summary",
-    eventsT = paste(sum(mozart$ai), "/", sum(mozart$ai + mozart$bi), sep = ""),
-    eventsC = paste(sum(mozart$ci), "/", sum(mozart$ci + mozart$di), sep = ""))
-head(summary_table)
-
-study_table <- data.frame(
-  name = mozart[, "PlotLabel"],
-  eventsT = paste(mozart$ai, "/", mozart$ai + mozart$bi, sep = ""),
-  eventsC = paste(mozart$ci, "/", mozart$ci + mozart$di, sep = ""))
-head(study_table)
-
-
-viz_forest(x = mozart[, c("d", "se")], 
-            group = mozart[, "CognitiveFunction"], 
-            study_labels = mozart[, c("PlotLabel")],
-            summary_label = "Summary effect", xlab = "Cohen d",
-            variant = "rain", 
-            #type="summary_only", 
-            study_table = study_table,
-            summary_table = summary_table,
-            method ="DL",
-            annotate_CI = TRUE)
-
-
-
-viz_funnel(mozart[1:10, c("d", "se")], sig_contours = FALSE, addev_contours = TRUE)
-funnelinf(mozart[1:10, c("d", "se")],show_solution = TRUE)
-
-```	
-
 # 3.4.1.3 Model comparison Reaction Time
 ```{r run calcualte_meta for RT}
 calculate_meta(RT = TRUE)$model_comparison
@@ -1059,12 +1011,12 @@ forest_plot(ACC = TRUE)
 ```
 
 ```{r forest plot bauastelle}	
-forest_plot <- function(RT = FALSE, ACC = FALSE) {
-  library(metafor)
-  library(RColorBrewer)
-  library(forestploter)
-  library(grid)
-  library(dplyr)
+    forest_plot <- function(RT = FALSE, ACC = FALSE) {
+        library(metafor)
+        library(RColorBrewer)
+        library(forestploter)
+        library(grid)
+        library(dplyr)
 
   # Fetch the model results using calculate_meta
   if (RT) {
@@ -1097,14 +1049,13 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
     ES = plot_data$yi,
     LowerCI = plot_data$yi - 1.96 * plot_data$sei,
     UpperCI = plot_data$yi + 1.96 * plot_data$sei,
-    ci = sprintf("%.2f (%.2f, %.2f)", plot_data$yi, plot_data$yi - 1.96 * plot_data$sei, plot_data$yi + 1.96 * plot_data$sei)
+    #blank = "",
+    CI = sprintf("%.2f (%.2f, %.2f)", plot_data$yi, plot_data$yi - 1.96 * plot_data$sei, plot_data$yi + 1.96 * plot_data$sei)
   )
 
   # Add a blank column for the forest plot to display CI
-  forest_data$blank <- paste(rep(" ", 20), collapse = " ")
-
-  # Add the CI column
-  forest_data$CI <- sprintf("%.2f (%.2f, %.2f)", forest_data$ES, forest_data$LowerCI, forest_data$UpperCI)
+  #forest_data$blank <- paste(rep(" ", 20), collapse = " ")
+  forest_data$` ` <- paste(rep(" ", 20), collapse = " ")
 
   # Order the table according to the Dose column
   forest_data <- forest_data %>%
@@ -1121,18 +1072,19 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
 
 
   # Add the overall Hedges' g row
-overall_row <- data.frame(
-    Study = "Overall",
-    Dose = "",
-    CognitiveFunction = "",
-    N = overall_N,
-    Timepoint = "",
-    ES = model_results$model_multi$beta,
-    LowerCI = model_results$model_multi$ci.lb,
-    UpperCI = model_results$model_multi$ci.ub,
-    #blank = paste(rep(" ", 20), collapse = " "),
-    CI = sprintf("%.2f (%.2f, %.2f)", model_results$model_multi$beta, model_results$model_multi$ci.lb, model_results$model_multi$ci.ub)
-  )
+    	overall_row <- data.frame(
+            Study = "Overall",
+            Dose = "",
+            CognitiveFunction = "",
+            N = overall_N,
+            Timepoint = "",
+            ES = model_results$model_multi$beta,
+            LowerCI = model_results$model_multi$ci.lb,
+            UpperCI = model_results$model_multi$ci.ub,
+            CI = sprintf("%.2f (%.2f, %.2f)", model_results$model_multi$beta, model_results$model_multi$ci.lb, model_results$model_multi$ci.ub)
+        )
+  
+  overall_row$` ` <- paste(rep(" ", 20), collapse = " ")
   forest_data <- rbind(forest_data, overall_row)
 
   # Set up the theme using Blues color palette
@@ -1149,7 +1101,7 @@ overall_row <- data.frame(
 
   # Create the forest plot
   p <- forestploter::forest(
-    forest_data[,c("Study", "Dose", "CognitiveFunction", "N", "Timepoint", "CI")],
+    forest_data[,c("Study", "Dose", "CognitiveFunction", "N", "Timepoint", " ", "CI")],
     est = forest_data$ES,
     lower = forest_data$LowerCI,
     upper = forest_data$UpperCI,
@@ -1166,7 +1118,7 @@ overall_row <- data.frame(
 
   return(p)
 }
-forest_plot(ACC = TRUE)
+forest_plot(RT = TRUE)
 
 ```
 
@@ -1269,6 +1221,9 @@ nrow(data_RT)
 length(unique(data_RT$ID))
 
 moderation_analysis(RT = TRUE, moderation_var = "timing")
+
+
+#data_ACC <- ClassifyTiming(data_ACC, start_peak = 90, stop_peak = 180)
 ```
 
 # 3.4.1.4.2 Dosage as moderator RT
@@ -1304,17 +1259,30 @@ run_metaforest_analysis <- function(data_type) {
     # Load and prepare data based on the specified data type
     if (data_type == "RT") {
         data_metaforest <- data_RT
+        data_metaforest$timing <- as.factor(data_RT$timing)
         outcome_var <- "ES_final_RT"
         vi_variable <- "ES_var_RT"
         metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
     } else if (data_type == "ACC") {
         data_metaforest <- data_ACC
+        data_metaforest$timing <- as.factor(data_ACC$timing)
         outcome_var <- "ES_final_ACC"
         vi_variable <- "ES_var_ACC"
         metaforest_formula <- ES_final_ACC~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
     } else {
         stop("Invalid data type specified. Use 'RT' or 'ACC'.")
     }
+    # Debugging step: Check the structure of the dataset
+    print("Data Structure:")
+    print(str(data_metaforest))
+
+    # Debugging step: Check the column names
+    print("Column Names:")
+    print(colnames(data_metaforest))
+
+    # Debugging step: Check the first few rows of the dataset
+    print("First Few Rows:")
+    print(head(data_metaforest))
 
 
     # Convert factor variables explicitly if not already
@@ -1322,7 +1290,6 @@ run_metaforest_analysis <- function(data_type) {
     data_metaforest$DoseLabel <- as.factor(data_metaforest$DoseLabel)
     data_metaforest$EF_sensitivity <- as.factor(data_metaforest$EF_sensitivity)
     data_metaforest$dosage_cat_all <- as.factor(data_metaforest$dosage_cat_all)
-
     data_metaforest$ID <- as.factor(data_metaforest$ID)
     data_metaforest$timing <- as.factor(data_metaforest$timing)
     data_metaforest$ES_ID <- as.factor(data_metaforest$ES_ID)
@@ -1359,7 +1326,7 @@ run_metaforest_analysis <- function(data_type) {
     retain_mods <- preselect_vars(preselected, cutoff = 0.5)
 
     # Print out the moderators that are retained
-    # print(retain_mods)
+     print(retain_mods)
 
     results <- list(
         model = metaforest_reduced,
@@ -1370,6 +1337,9 @@ run_metaforest_analysis <- function(data_type) {
 
     return(results)
 }
+
+retain_mods <- run_metaforest_analysis("ACC")
+
 ```
 
 ```{r Figure S1 Convergence graph Metaforest RT}
