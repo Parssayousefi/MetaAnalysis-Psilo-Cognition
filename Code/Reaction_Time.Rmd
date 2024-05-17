@@ -7,7 +7,7 @@ output: html_document
 
 # setup
 ```{r setup, include=FALSE}
-# knitr::opts_chunk$set(echo = TRUE)a
+# knitr::opts_chunk$set(echo = TRUE)
 # install.packages("readxl")
 # install.packages("rmarkdown")
 # install.packages("metafor")
@@ -20,10 +20,17 @@ output: html_document
 # install.packages("mvmeta")
 # install.packages("plotly")
 # install.packages("RColorBrewer")
+# if (!require("remotes")) {
+#     install.packages("remotes")
+# }
+
+setwd("C:/Users/prsyu/OneDrive/Bidlung/University/M.S. Leiden University/M.S. Neuroscience (Research)/Internship Groningen/GitHub_Multiverse_meta/MetaAnalysis-Psilo-Cognition")
+
 
 
 # library("mvmeta")
-library(tidyverse)
+
+library("tidyverse")
 library("caret")
 library("rmarkdown")
 library("stringr")
@@ -35,14 +42,12 @@ library("ggplot2")
 library("gridExtra")
 library("plotly")
 library("RColorBrewer")
-source("transform_functions.r")
+source("Code/transform_functions.r")
 
 
-if (!require("remotes")) {
-    install.packages("remotes")
-}
+
 # Define data file
-datafile <- "Overview_Studies.xlsx"
+datafile <- "/Overview_Studies.xlsx"
 ```
 
 # Load Data
@@ -292,7 +297,7 @@ summary(calculate_meta(RT = TRUE)$model_multi)
 calculate_meta(RT = TRUE)$variance_analysis$ResultsTable
 calculate_meta(RT = TRUE)$variance_analysis$TotalI2
 
-# calculate_meta(RT=TRUE, multilevel=TRUE)$model_uni
+# calculate_meta(RT=TRUE)$model_uni
 ```
 
 
@@ -321,8 +326,8 @@ identify_outliers <- function(data_type, multi = FALSE) {
     }
 
     # Perform meta-analysis using calculate_meta function
-    meta_results <- calculate_meta(RT = (data_type == "RT"), ACC = (data_type == "ACC"), multilevel = multi)
-    model <- meta_results$model_multi # Assuming this is the correct model object
+    meta_results <- calculate_meta(RT = (data_type == "RT"), ACC = (data_type == "ACC"))
+    model <- meta_results$model_multi 
 
     # Extracting the confidence intervals from the model
     overall_ci_lb <- coef(summary(model))["intrcpt", "ci.lb"]
@@ -705,126 +710,6 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     # Fetch the model results using calculate_meta
     if (RT) {
         model_results <- calculate_meta(RT = TRUE)
-        forest_title <- "Forest plot for the multilevel model of Reaction Time"
-        funnel_title <- "Funnel plot for the multilevel model of Reaction Time"
-        plot_data <- data_RT
-        plot_data$yi <- plot_data$ES_final_RT
-        plot_data$sei <- sqrt(plot_data$ES_var_RT)
-        xlab_text <- "Reaction Time (Hedges' g)"
-        xlim_values <- c(-1, 3)
-        ylim_values <- c(0.6, 0)
-        color_points <- brewer.pal(nrow(unique(plot_data$PlotLabel)), "Dark2")
-    } else if (ACC) {
-        model_results <- calculate_meta(ACC = TRUE)
-        forest_title <- "Forest plot for the multilevel model of Accuracy"
-        funnel_title <- "Funnel plot for the multilevel model of Accuracy"
-        plot_data <- data_ACC
-        plot_data$yi <- plot_data$ES_final_ACC
-        plot_data$sei <- sqrt(plot_data$ES_var_ACC)
-        xlab_text <- "Accuracy (Hedges' g)"
-        xlim_values <- c(-2.5, 2)
-        ylim_values <- c(0.9, 0)
-        color_points <- brewer.pal(nrow(unique(plot_data$PlotLabel)), "Paired")
-    } else {
-        stop("Either RT or ACC must be set to TRUE.")
-    }
-
-    color_mapping <- setNames(color_points, unique(plot_data$PlotLabel))
-    
-    # Create a mapping for shapes based on DoseLabel
-    shape_mapping <- setNames(c(16, 17, 18, 19), unique(plot_data$CognitiveFunction))
-    
-
-   # Create a mapping for sizes based on DoseLabel (example sizes, adjust as needed)
-    size_mapping <- setNames(seq(1, length(unique(plot_data$DoseLabel))), unique(plot_data$DoseLabel)) 
-
-    model <- model_results$model_multi
-    model_uni <- model_results$model_uni
-    trim <- trimfill(model_uni)
-
-    # Create a data frame for the points with colors and shapes
-    point_data <- data.frame(
-        x = plot_data$yi,
-        y = plot_data$sei,
-        col = color_mapping[plot_data$PlotLabel],
-        pch = shape_mapping[plot_data$CognitiveFunction],
-        cex = size_mapping[plot_data$DoseLabel]
-    )
-
-    # Extract the filled studies
-    filled_indices <- trim$fill
-    filled_studies <- trim$yi[filled_indices]
-    filled_sei <- sqrt(trim$vi[filled_indices])
-    print(filled_studies)
-
-    # Set up the graphical environment
-    par(mfrow = c(1, 1), tck = -.03, mgp = c(6, 3, 0), mar = c(8, 10, 5, 6), bg = "white",
-        cex.main = 1.5, # Font size for the main title
-        cex.lab = 3,  # Font size for the axis titles
-        cex.axis = 2  # Font size for the axis tick labels
-    )
-
-    cantour_shades <- brewer.pal(9,"Blues")[c(2, 4, 6)]
-
-    # Create a contour-enhanced funnel plot
-    funnel(model,
-        refline2 = model_uni$beta,
-        refline = 0,
-        lty = c(0, 0),
-        level = c(90, 95, 99), # Adding multiple levels for contours
-        shade = cantour_shades, 
-        label = "none", # Label all points with study labels
-        slab = plot_data$ES_ID,
-        xlab = xlab_text,
-        back = "white",
-        cex = 2,
-        lwd = 3,
-        xlim = xlim_values,
-        ylim = ylim_values,
-        digits = c(2, 2)
-    )
-
-    # Add the points using the points function with varying shapes
-    points(point_data$x, point_data$y, col = point_data$col, pch = point_data$pch, cex = point_data$cex)
-
-    # Add filled studies
-    points(filled_studies, filled_sei, col = "red", pch = 4, cex = 1.7)
-
-    # Add labels on top of each point
-    text(point_data$x, point_data$y, labels = plot_data$ES_ID, pos = 3, offset = 1, cex = 0.9) # 'pos = 3' places the label above the point
-
-    legend_data <- data.frame(ID = unique(plot_data$ID), PlotLabel = unique(plot_data$PlotLabel))
-    print(legend_data)
-
-    legend("topright", ncol = 1,
-        legend = c("90% CI", "95% CI", "99% CI", "Trim and Fill", legend_data$PlotLabel),
-        fill = c(cantour_shades, "red", color_mapping[legend_data$PlotLabel]),
-        col = c(NA, NA, NA, NA, NA),
-        pch = c(16, 16, 16, 16, rep(16, nrow(legend_data))),
-        lty = c(1, 1, 1, rep(NA, nrow(legend_data) + 1)),
-        y.intersp = 0.6,
-        x.intersp = 0.2
-    )
-    
-    # Reset graphical parameters
-    par(mfrow = c(1, 1))
-}
-
-funnel_plot(RT = TRUE)
-
-
-
-
-```
-
-```{r baustelle}	
-funnel_plot <- function(RT = FALSE, ACC = FALSE) {
-    library(metafor)
-    library(RColorBrewer)
-
-    # Fetch the model results using calculate_meta
-    if (RT) {
-        model_results <- calculate_meta(RT = TRUE)
         egger_results <- mod_egger("RT")
         funnel_title <- "Funnel plot for the multilevel model of Reaction Time"
         plot_data <- data_RT
@@ -973,6 +858,15 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
 
 funnel_plot(ACC = TRUE)
 
+
+
+
+
+
+```
+
+```{r baustelle}	
+
 ```
 
 
@@ -1020,10 +914,12 @@ funnelinf(mozart[1:10, c("d", "se")],show_solution = TRUE)
 ```	
 
 # 3.4.1.3 Model comparison Reaction Time
-```{r}
+```{r run calcualte_meta for RT}
 calculate_meta(RT = TRUE)$model_comparison
+
+
 ```
-```{r}
+```{r forest plot metaviz}
 forest_plot <- function(RT = FALSE, ACC = FALSE) {
   library(metaviz)
   library(RColorBrewer)
@@ -1061,8 +957,8 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
   # Create the forest plot using viz_forest
   viz_forest(
     x = cbind(plot_data$yi, plot_data$sei),
-    variant= "thick",
-    type = "sensitivity",
+    variant= "rain",
+    #type = "sensitivity",
     study_labels = plot_data$PlotLabel,
     group = plot_data$CognitiveFunction,
     summary_label = names(subgroup_colors),
@@ -1072,11 +968,208 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
     study_table = table_data,
     table_headers = c("Study", "Dose", "N", "Time point", "Cognitive Function"),
     table_layout = matrix(c(1, 2), nrow = 1)
+    #row_spacing = 0.7
+
   )
 }
 
-forest_plot(ACC = TRUE)
+forest_plot(RT = TRUE)
 ```
+
+```{r forestploter}
+
+forest_plot <- function(RT = FALSE, ACC = FALSE) {
+  library(metafor)
+  library(RColorBrewer)
+  library(forestploter)
+   library(grid)
+   library(dplyr)
+
+  # Fetch the model results using calculate_meta
+  if (RT) {
+    model_results <- calculate_meta(RT = TRUE)
+    plot_data <- data_RT
+    plot_data$yi <- plot_data$ES_final_RT
+    plot_data$sei <- sqrt(plot_data$ES_var_RT)
+    forest_title <- "Forest plot for the multilevel model of Reaction Time"
+    xlab_text <- "Reaction Time (Hedges' g)"
+    xlim_values <- c(-1, 3)
+  } else if (ACC) {
+    model_results <- calculate_meta(ACC = TRUE)
+    plot_data <- data_ACC
+    plot_data$yi <- plot_data$ES_final_ACC
+    plot_data$sei <- sqrt(plot_data$ES_var_ACC)
+    forest_title <- "Forest plot for the multilevel model of Accuracy"
+    xlab_text <- "Accuracy (Hedges' g)"
+    xlim_values <- c(-2.5, 2)
+  } else {
+    stop("Either RT or ACC must be set to TRUE.")
+  }
+
+  # Create a data frame for the forest plot
+  forest_data <- data.frame(
+    CognitiveFunction = plot_data$CognitiveFunction,
+    DoseLabel = plot_data$DoseLabel,
+    StudyLabel = plot_data$PlotLabel,
+    N = plot_data$N_final,
+    Timepoint = plot_data$Timepoint,
+    ES = plot_data$yi,
+    LowerCI = plot_data$yi - 1.96 * plot_data$sei,
+    UpperCI = plot_data$yi + 1.96 * plot_data$sei,
+    ci = sprintf("%.2f (%.2f, %.2f)", plot_data$yi, plot_data$yi - 1.96 * plot_data$sei, plot_data$yi + 1.96 * plot_data$sei)
+  )
+
+  # Add a blank column for the forest plot to display CI
+  forest_data$` ` <- paste(rep(" ", 20), collapse = " ")
+
+  # Set up the theme using Blues color palette
+  blues_palette <- brewer.pal(9, "Blues")
+  tm <- forest_theme(
+    base_size = 10,
+    refline_lty = "solid",
+    ci_pch = 15,
+    ci_col = blues_palette[5],
+    footnote_gp = gpar(col = blues_palette[9]),
+    vertline_lty = "dashed",
+    vertline_col = blues_palette[3]
+  )
+
+  # Create the forest plot
+  p <- forestploter::forest(
+    forest_data[,c("CognitiveFunction", "DoseLabel", "StudyLabel", "N", "Timepoint", " ", "ci")],
+    est = forest_data$ES,
+    lower = forest_data$LowerCI,
+    upper = forest_data$UpperCI,
+    ci_column = 6,
+    ref_line = 0,
+    xlim = xlim_values,
+    xlab = xlab_text,
+    group = forest_data$CognitiveFunction,
+    theme = tm
+  )
+
+  # Reset graphical parameters
+  par(mfrow = c(1, 1))
+
+  return(p)
+}
+
+forest_plot(ACC = TRUE)
+
+```
+
+```{r forest plot bauastelle}	
+forest_plot <- function(RT = FALSE, ACC = FALSE) {
+  library(metafor)
+  library(RColorBrewer)
+  library(forestploter)
+  library(grid)
+  library(dplyr)
+
+  # Fetch the model results using calculate_meta
+  if (RT) {
+    model_results <- calculate_meta(RT = TRUE)
+    plot_data <- data_RT
+    plot_data$yi <- plot_data$ES_final_RT
+    plot_data$sei <- sqrt(plot_data$ES_var_RT)
+    forest_title <- "Forest plot for the multilevel model of Reaction Time"
+    xlab_text <- "Reaction Time (Hedges' g)"
+    xlim_values <- c(-1, 3)
+  } else if (ACC) {
+    model_results <- calculate_meta(ACC = TRUE)
+    plot_data <- data_ACC
+    plot_data$yi <- plot_data$ES_final_ACC
+    plot_data$sei <- sqrt(plot_data$ES_var_ACC)
+    forest_title <- "Forest plot for the multilevel model of Accuracy"
+    xlab_text <- "Accuracy (Hedges' g)"
+    xlim_values <- c(-2.5, 2)
+  } else {
+    stop("Either RT or ACC must be set to TRUE.")
+  }
+
+  # Create a data frame for the forest plot
+  forest_data <- data.frame(
+    Study = plot_data$PlotLabel,
+    Dose = plot_data$DoseLabel,
+    CognitiveFunction = plot_data$CognitiveFunction,
+    N = plot_data$N_final,
+    Timepoint = plot_data$Timepoint,
+    ES = plot_data$yi,
+    LowerCI = plot_data$yi - 1.96 * plot_data$sei,
+    UpperCI = plot_data$yi + 1.96 * plot_data$sei,
+    ci = sprintf("%.2f (%.2f, %.2f)", plot_data$yi, plot_data$yi - 1.96 * plot_data$sei, plot_data$yi + 1.96 * plot_data$sei)
+  )
+
+  # Add a blank column for the forest plot to display CI
+  forest_data$blank <- paste(rep(" ", 20), collapse = " ")
+
+  # Add the CI column
+  forest_data$CI <- sprintf("%.2f (%.2f, %.2f)", forest_data$ES, forest_data$LowerCI, forest_data$UpperCI)
+
+  # Order the table according to the Dose column
+  forest_data <- forest_data %>%
+    mutate(Dose = factor(Dose, levels = c("Micro", "Low", "Medium", "High"))) %>%
+    arrange(Dose)
+    print(forest_data)
+
+
+      # Calculate the overall N by counting each unique study only once
+  overall_N <- forest_data %>%
+    distinct(Study, .keep_all = TRUE) %>%
+    summarise(sum(N)) %>%
+    pull()
+
+
+  # Add the overall Hedges' g row
+overall_row <- data.frame(
+    Study = "Overall",
+    Dose = "",
+    CognitiveFunction = "",
+    N = overall_N,
+    Timepoint = "",
+    ES = model_results$model_multi$beta,
+    LowerCI = model_results$model_multi$ci.lb,
+    UpperCI = model_results$model_multi$ci.ub,
+    #blank = paste(rep(" ", 20), collapse = " "),
+    CI = sprintf("%.2f (%.2f, %.2f)", model_results$model_multi$beta, model_results$model_multi$ci.lb, model_results$model_multi$ci.ub)
+  )
+  forest_data <- rbind(forest_data, overall_row)
+
+  # Set up the theme using Blues color palette
+  blues_palette <- brewer.pal(9, "Blues")
+  tm <- forest_theme(
+    base_size = 10,
+    refline_itly =  "solid",
+    ci_pch = 15,
+    ci_col = blues_palette[5],
+    footnote_gp = gpar(col = blues_palette[9]),
+    vertline_lty = "dashed",
+    vertline_col = blues_palette[3]
+  )
+
+  # Create the forest plot
+  p <- forestploter::forest(
+    forest_data[,c("Study", "Dose", "CognitiveFunction", "N", "Timepoint", "CI")],
+    est = forest_data$ES,
+    lower = forest_data$LowerCI,
+    upper = forest_data$UpperCI,
+    ci_column = 5,
+    ref_line = 0,
+    xlim = xlim_values,
+    xlab = xlab_text,
+    group = forest_data$CognitiveFunction,
+    theme = tm
+  )
+
+  # Reset graphical parameters
+  par(mfrow = c(1, 1))
+
+  return(p)
+}
+forest_plot(ACC = TRUE)
+
+```
+
 
 # 3.4.1.4 Subgroup Analyses RT
 ```{r moderation function}
@@ -1188,6 +1281,7 @@ moderation_analysis(RT = TRUE, moderation_var = "dosage_cat_microlow_vs_midhigh"
 ```{r moderation cognitive function category}
 moderation_analysis(RT = TRUE, moderation_var = "CognitiveFunction")
 table(data_RT$CognitiveFunction)
+
 ```
 # 3.4.1.4.4 EF sensitivity as moderator RT
 ```{r moderation EF sensitivity}
