@@ -6,7 +6,7 @@ output: html_document
 ---
 
 # setup
-```{r setup, include=FALSE}
+```{r setup,}
 # knitr::opts_chunk$set(echo = TRUE)
 # install.packages("readxl")
 # install.packages("rmarkdown")
@@ -23,9 +23,6 @@ output: html_document
 # if (!require("remotes")) {
 #     install.packages("remotes")
 # }
-
-#setwd("C:/Users/prsyu/OneDrive/Bidlung/University/M.S. Leiden University/M.S. Neuroscience (Research)/Internship Groningen/GitHub_Multiverse_meta/MetaAnalysis-Psilo-Cognition")
-
 
 
 # library("mvmeta")
@@ -1228,9 +1225,11 @@ moderation_analysis(RT = TRUE, moderation_var = "timing")
 
 # 3.4.1.4.2 Dosage as moderator RT
 ```{r Dosage}
+
 moderation_analysis(RT = TRUE, moderation_var = "dosage_cat_all")
 moderation_analysis(RT = TRUE, moderation_var = "dosage_cat_micro")
 moderation_analysis(RT = TRUE, moderation_var = "dosage_cat_microlow_vs_midhigh")
+
 ```
 # 3.4.1.4.3 Cognitive function as moderator RT
 ```{r moderation cognitive function category}
@@ -1241,6 +1240,7 @@ table(data_RT$CognitiveFunction)
 # 3.4.1.4.4 EF sensitivity as moderator RT
 ```{r moderation EF sensitivity}
 moderation_analysis(RT = TRUE, moderation_var = "EF_sensitivity")
+moderation_analysis(RT = TRUE, moderation_var = "ID")
 # table(data_RT$EF_sensitivity)
 # head(data_RT)
 ```
@@ -1255,6 +1255,8 @@ set.seed(242)
 run_metaforest_analysis <- function(data_type) {
     library(metaforest)
     library(dplyr)
+
+    metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
 
     # Load and prepare data based on the specified data type
     if (data_type == "RT") {
@@ -1294,7 +1296,7 @@ run_metaforest_analysis <- function(data_type) {
     data_metaforest$timing <- as.factor(data_metaforest$timing)
     data_metaforest$ES_ID <- as.factor(data_metaforest$ES_ID)
 
-    # check for convergence
+    #check for convergence
     check_conv <- MetaForest(
         formula = metaforest_formula,
         data = data_metaforest,
@@ -1304,7 +1306,7 @@ run_metaforest_analysis <- function(data_type) {
         method = "REML",
         num.trees = 20000
     )
-    # plot(check_conv)
+    plot(check_conv)
 
 
     # rerun with reduced number of trees
@@ -1320,7 +1322,7 @@ run_metaforest_analysis <- function(data_type) {
 
     # Run recursive preselection to refine the selection of moderators
     preselected <- preselect(metaforest_reduced, replications = 300, algorithm = "recursive")
-    # plot(preselected)  # Plot the results of the preselection
+    plot(preselected)  # Plot the results of the preselection
 
     # Retain only moderators with positive variable importance in more than 50% of replications
     retain_mods <- preselect_vars(preselected, cutoff = 0.5)
@@ -1338,20 +1340,21 @@ run_metaforest_analysis <- function(data_type) {
     return(results)
 }
 
-retain_mods <- run_metaforest_analysis("RT")
 
 ```
 
 ```{r Figure S1 Convergence graph Metaforest RT}
 retain_mods <- run_metaforest_analysis("RT")
 conv <- retain_mods$check_conv
+print(conv)
 plot(conv)
 ```
 ```{r Figure S2 retained moderators RT}
 # change nr of trees based on convergence!
-retain_mods <- run_metaforest_analysis("RT")
+#retain_mods <- run_metaforest_analysis("RT")
 plot(retain_mods$preselected)
 print(retain_mods$retained_mods)
+
 ```
 
 ```{r fine tuning Metaforest}
@@ -1447,3 +1450,29 @@ PartialDependence(final, rawdata = TRUE, pi = .95)
 PartialDependence(final, moderator = "CognitiveFunction", rawdata = TRUE, pi = .95)
 ```
 
+
+
+# P curve analysis RT
+```{r P curve analysis}
+
+# data_p <- data_RT
+
+# # Load the dmetar package
+# # install.packages("dmetar")
+# library(dmetar)
+
+# # Ensure your data is in the correct format
+# data_p <- data.frame(
+#   "studlab" = data_p$PlotLabel,
+#   "TE" = data_p$ES_final_RT,
+#   "seTE" = sqrt(data_p$ES_var_RT)
+# )
+
+# # Run the p-curve analysis
+# pcurve_result <- pcurve(data_p)
+
+# # Print the results
+# print(pcurve_result)
+
+
+```
