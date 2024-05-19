@@ -1338,7 +1338,7 @@ run_metaforest_analysis <- function(data_type) {
     return(results)
 }
 
-retain_mods <- run_metaforest_analysis("ACC")
+retain_mods <- run_metaforest_analysis("RT")
 
 ```
 
