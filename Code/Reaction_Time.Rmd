@@ -1,13 +1,15 @@
 ---
 title: "Meta Analysis Psilocybin Cognition: Reaction Time"
-author: "Parsa Yousefi"
+authors: "Parsa Yousefi, Ralph Rippe"
 date: "`r Sys.Date()`"
 output: html_document
 ---
 
+
 # setup
-```{r setup,}
-# knitr::opts_chunk$set(echo = TRUE)
+```{r setup,results='hide'}
+ knitr::opts_knit$set(root.dir = "C:/Users/prsyu/OneDrive/Bidlung/University/M.S. Leiden University/M.S. Neuroscience (Research)/Internship Groningen/GitHub_Multiverse_meta/MetaAnalysis-Psilo-Cognition")
+ knitr::opts_chunk$set(echo = TRUE,  fig.show = 'hold', fig.align = 'center')
 # install.packages("readxl")
 # install.packages("rmarkdown")
 # install.packages("metafor")
@@ -23,10 +25,9 @@ output: html_document
 # if (!require("remotes")) {
 #     install.packages("remotes")
 # }
-
-
 # library("mvmeta")
-
+install.packages("here")
+library("here")
 library("tidyverse")
 library("caret")
 library("rmarkdown")
@@ -39,16 +40,14 @@ library("ggplot2")
 library("gridExtra")
 library("plotly")
 library("RColorBrewer")
-source("transform_functions.r")
-
-
+source(here::here("Code", "functions.r"))
 
 # Define data file
 datafile <- "Overview_Studies.xlsx"
 ```
 
 # Load Data
-```{r Data Preparation}
+```{r Data Preparation, echo=TRUE, warning = FALSE }
 Read_Prepare <- function(datafile) {
     # Read the overview sheet
     data <- as.data.frame(read_excel(datafile, sheet = "Overview"))
@@ -118,9 +117,10 @@ Read_Prepare <- function(datafile) {
 
 
 data <- Read_Prepare(datafile)
+head(data_RT)
 ```
 
-```{r add varaince of cohens d}
+```{r Add varaince of cohens d, echo=TRUE, results='hide',warning = FALSE}
 # add the variance of the Cohen's d to the dataset
 # https://stats.stackexchange.com/questions/144084/variance-of-cohens-d-statistic
 # https://stats.stackexchange.com/questions/495015/what-is-the-formula-for-the-standard-error-of-cohens-d
@@ -139,7 +139,7 @@ AddCohensDVariance <- function(data) {
     splitfactor <- 2
 
     # Loop through each row to calculate variances
-    for (i in 1:nrow(data)) {
+    for (i in seq_len(nrow(data))) {
         N_sum <- data$N_final[i]
         N_prod <- (data$N_final[i] / splitfactor) * (data$N_final[i] / splitfactor)
 
@@ -153,6 +153,7 @@ AddCohensDVariance <- function(data) {
 }
 
 data <- AddCohensDVariance(data)
+
 ```
 
 # select data
@@ -169,7 +170,7 @@ data_RT$CognitiveFunction <- as.factor(data_RT$CognitiveFunction)
 data_RT$DoseLabel <- as.factor(data_RT$DoseLabel)
 data_RT$EF_sensitivity <- as.factor(data_RT$EF_sensitivity)
 data_RT$dosage_cat_all <- as.factor(data_RT$dosage_cat_all)
-data_RT$ES_ID <- as.numeric(data_RT$ES_ID)
+data_RT$ES_ID <- as.factor(data_RT$ES_ID)
 data_RT$ID <- as.factor(data_RT$ID)
 
 # Number of entries for RT measure
@@ -180,6 +181,7 @@ n_unique_ids <- length(unique(data_RT$ID))
 # Print the results
 cat("Number of entries for RT measure:", n_rows, "\n")
 cat("Number of unique IDs:", n_unique_ids, "\n")
+head(data_RT)
 ```
 
 ```{r ACC Selection}
@@ -196,7 +198,7 @@ data_ACC$CognitiveFunction <- as.factor(data_ACC$CognitiveFunction)
 data_ACC$DoseLabel <- as.factor(data_ACC$DoseLabel)
 data_ACC$EF_sensitivity <- as.factor(data_ACC$EF_sensitivity)
 data_ACC$dosage_cat_all <- as.factor(data_ACC$dosage_cat_all)
-data_ACC$ES_ID <- as.numeric(data_ACC$ES_ID)
+data_ACC$ES_ID <- as.factor(data_ACC$ES_ID)
 data_ACC$ID <- as.factor(data_ACC$ID)
 
 
@@ -209,13 +211,16 @@ n_unique_ids_ACC <- length(unique(data_ACC$ID))
 # Print the results
 cat("Number of entries for ACC measure:", n_rows_ACC, "\n")
 cat("Number of unique IDs:", n_unique_ids_ACC, "\n")
+head(data_ACC)
+
 ```
 
 # 3.4 Results
 # 3.4.1 Reaction Time
 
-```{r calculate_meta function}
+```{r calculate_meta function, echo=TRUE, fig.show='hold', fig.align='center'}
 calculate_meta <- function(RT = FALSE, ACC = FALSE) {
+    source("transform_functions.r")
     library(metafor) # Load the metafor library
 
     # Select the appropriate dataset
@@ -300,7 +305,7 @@ calculate_meta(RT = TRUE)$variance_analysis$TotalI2
 
 # 3.4.1.1 Outliers and influential cases RT
 
-```{r Figure S6}
+```{r Figure S6, fig.show='hold', fig.align='center'}
 library(ggplot2)
 library(metafor) # Ensure metafor is loaded for meta-analysis functions
 
@@ -336,15 +341,31 @@ identify_outliers <- function(data_type, multi = FALSE) {
     data$lowerci <- data$d - 1.96 * sqrt(data[[variance_col]])
     data$outlier <- with(data, upperci < overall_ci_lb | lowerci > overall_ci_ub)
 
-    # Plotting the data with outliers highlighted
-    plot <- ggplot(data, aes(x = d, colour = outlier, fill = outlier)) +
-        geom_histogram(alpha = 0.5, bins = 30) +
-        geom_vline(xintercept = coef(model)["intrcpt"], linetype = "dashed", color = "blue") +
-        scale_fill_manual(values = c("FALSE" = "grey", "TRUE" = "red")) +
-        scale_color_manual(values = c("FALSE" = "black", "TRUE" = "red")) +
-        labs(title = plottitle, x = "Effect Size", y = "Frequency") +
-        theme_bw()
+# Set up the color palette
+  color_palette <- brewer.pal(3, "Blues")[2:3]
+  names(color_palette) <- c("FALSE", "TRUE")
 
+  # Determine the range of effect sizes
+  effect_size_range <- range(data$d)
+  
+  # Determine the break points for the x-axis
+  break_points <- seq(floor(effect_size_range[1] * 4) / 4, ceiling(effect_size_range[2] * 4) / 4, by = 0.25)
+
+  # Plotting the data with outliers highlighted
+  plot <- ggplot(data, aes(x = d, colour = outlier, fill = outlier)) +
+    geom_histogram(alpha = 0.5, bins = 30) +
+    geom_vline(xintercept = coef(model)["intrcpt"], linetype = "dashed", color = "blue") +
+    scale_fill_manual(values = color_palette) +
+    scale_color_manual(values = color_palette) +
+    labs(title = plottitle, x = "Effect Size", y = "Frequency") +
+    scale_x_continuous(breaks = break_points) +  # Set the break points for the x-axis
+    theme_bw() +
+    theme(
+      plot.title = element_text(size = 18, face = "bold"),
+      axis.title = element_text(size = 14),
+      axis.text = element_text(size = 12),
+      legend.position = "none"
+    )
     # Filter data to remove outliers and re-run meta-analysis if required
     filtered_data <- data[!data$outlier, ]
     if (nrow(filtered_data) > 1) { # Check if there is enough data to re-run the meta-analysis
@@ -373,12 +394,11 @@ identify_outliers <- function(data_type, multi = FALSE) {
 # Example usage:
 results <- identify_outliers("RT", multi = TRUE)
 print(results$plot)
-if (!is.null(results$model_summary)) {
-    print(summary(results$model_summary))
-}
+print(results$outliers)
+print(results$model_summary)
 ```
 
-```{r Figure S7}
+```{r Figure S7,  fig.show='hold', fig.align='center'}
 calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) {
     # Ensure that either RT or ACC is TRUE, but not both
     if (RT == TRUE && ACC == TRUE) {
@@ -1251,7 +1271,7 @@ moderation_analysis(RT = TRUE, moderation_var = "ID")
 
 # Set a seed for reproducibility
 set.seed(242)
-
+metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
 run_metaforest_analysis <- function(data_type) {
     library(metaforest)
     library(dplyr)
@@ -1309,7 +1329,7 @@ run_metaforest_analysis <- function(data_type) {
     plot(check_conv)
 
 
-    # rerun with reduced number of trees
+    # rerun with reduced number of treesFfunnel
     metaforest_reduced <- MetaForest(
         formula = metaforest_formula,
         data = data_metaforest,
@@ -1343,7 +1363,7 @@ run_metaforest_analysis <- function(data_type) {
 
 ```
 
-```{r Figure S1 Convergence graph Metaforest RT}
+```{r Figure S1 Convergence graph Metaforest RT,cache = TRUE}
 retain_mods <- run_metaforest_analysis("RT")
 conv <- retain_mods$check_conv
 print(conv)
@@ -1425,7 +1445,7 @@ fine_tune_metaforest <- function(data_type, predictors) {
 }
 ```
 
-```{r Figure S3 Variable/Permutation Importance RT}
+```{r Figure S3 Variable/Permutation Importance RT, cache = TRUE}
 predictors <- c("EF_sensitivity", "CognitiveFunction") # adjust based on previous analysis
 
 mf_cv <- fine_tune_metaforest("RT", predictors)
