@@ -217,8 +217,8 @@ head(data_ACC)
 
 ```
 
-# 3.4 Results
-# 3.4.1 Reaction Time
+# 3.5 Results
+# 3.5.1 ACC
 
 ```{r calculate_meta function, echo=TRUE, fig.show='hold', fig.align='center'}
 calculate_meta <- function(RT = FALSE, ACC = FALSE) {
@@ -314,7 +314,7 @@ print(calculate_meta(ACC = TRUE)$model_comparison)
 
 ```
 
-# 3.4.1.1 Outliers and influential cases ACC
+# 3.5.1.1 Outliers and influential cases ACC
 
 ```{r Figure S6, fig.show='hold', fig.align='center'}
 library(ggplot2)
@@ -721,7 +721,7 @@ print(results$plots)
 
 ```
 
-# 3.4.1.2 Publication Bias RT
+# 3.5.1.2 Publication Bias ACC
 ```{r fail safe nrs}
 
 publication_bias <- function(data_type) {
@@ -947,8 +947,8 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
 funnel_plot(ACC = TRUE)
 ```
 
-# 3.4.1.3 Model comparison Reaction Time
-```{r run calcualte_meta for RT}
+# 3.5.1.3 Model comparison ACC
+```{r run calcualte_meta for ACC}
 calculate_meta(ACC = TRUE)$model_comparison
 ```
 ```{r forest plot metaviz, fig.width = 7, fig.height = 5}
@@ -1117,7 +1117,7 @@ forest_plot(ACC = TRUE)
 ```
 
 
-# 3.4.1.4 Subgroup Analyses RT
+# 3.5.1.4 Subgroup Analyses ACC
 ```{r moderation function}
 # library(metafor)
 
@@ -1174,7 +1174,7 @@ moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
 ```
 
 
-# 3.4.1.4.1 Timing as moderator RT
+# 3.5.1.4.1 Timing as moderator ACC
 
 ```{r Function to Code Timing in the dataset}
 ClassifyTiming <- function(data, start_peak, stop_peak) {
@@ -1218,7 +1218,7 @@ moderation_analysis(ACC = TRUE, moderation_var = "timing")
 
 ```
 
-# 3.4.1.4.2 Dosage as moderator ACC
+# 3.5.1.4.2 Dosage as moderator ACC
 ```{r Dosage}
 
 moderation_analysis(ACC = TRUE, moderation_var = "dosage_cat_all")
@@ -1226,13 +1226,13 @@ moderation_analysis(ACC = TRUE, moderation_var = "dosage_cat_micro")
 moderation_analysis(ACC = TRUE, moderation_var = "dosage_cat_microlow_vs_midhigh")
 
 ```
-# 3.4.1.4.3 Cognitive function as moderator ACC
+# 3.5.1.4.3 Cognitive function as moderator ACC
 ```{r moderation cognitive function category}
 moderation_analysis(ACC = TRUE, moderation_var = "CognitiveFunction")
 table(data_ACC$CognitiveFunction)
 
 ```
-# 3.4.1.4.4 EF sensitivity as moderator RT
+# 3.5.1.4.4 EF sensitivity as moderator ACC
 ```{r moderation EF sensitivity}
 moderation_analysis(ACC = TRUE, moderation_var = "EF_sensitivity")
 moderation_analysis(ACC = TRUE, moderation_var = "ID")
@@ -1240,7 +1240,7 @@ table(data_RT$EF_sensitivity)
 
 ```
 
-# 3.4.1.4.5 Metaforest Analysis RT
+# 3.5.1.4.5 Metaforest Analysis ACC
 ```{r MetaForest Function}
 # code adapted from (Van Lissa, 2017)
 
@@ -1338,13 +1338,13 @@ run_metaforest_analysis <- function(data_type) {
 
 ```
 
-```{r Figure S1 Convergence graph Metaforest RT} 
+```{r Figure S1 Convergence graph Metaforest ACC} 
 #,cache = TRUE
 retain_mods <- run_metaforest_analysis("ACC")
 conv <- retain_mods$check_conv
 plot(conv)
 ```
-```{r Figure S2 retained moderators RT}
+```{r Figure S2 retained moderators ACC}
 # change nr of trees based on convergence!
 retain_mods <- run_metaforest_analysis("ACC")
 plot(retain_mods$preselected)
@@ -1451,7 +1451,7 @@ PartialDependence(final, moderator = "EF_sensitivity", rawdata = TRUE, pi = .95)
 
 
 
-# P curve analysis RT
+# P curve analysis ACC
 ```{r P curve analysis}
 
 # data_p <- data_RT
