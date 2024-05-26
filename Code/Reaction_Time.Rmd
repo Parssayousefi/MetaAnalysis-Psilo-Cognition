@@ -12,7 +12,7 @@ output: html_document
  knitr::opts_chunk$set(echo = TRUE, fig.retina=2, fig.show = 'hold', fig.align = 'center', fig.width = 7, fig.height = 10, warning = FALSE)
 
 # install.packages("readxl")
-# install.packages("rmarkdown")
+ #install.packages("rmarkdown")
 # install.packages("metafor")
 # install.packages("meta")
 # install.packages("dplyr")
@@ -26,7 +26,7 @@ output: html_document
 # if (!require("remotes")) {
 #     install.packages("remotes")
 # }
-#install.packages("here")
+#install.packages("xfun")
 library("here")
 library("tidyverse")
 library("caret")
@@ -40,8 +40,8 @@ library("ggplot2")
 library("gridExtra")
 library("plotly")
 library("RColorBrewer")
-library(rmarkdown)
-library(knitr)
+library("rmarkdown")
+library("knitr")
 source(here("Code","functions.r"))
 
 # Define data file
@@ -316,7 +316,7 @@ print(calculate_meta(RT = TRUE)$model_comparison)
 
 # 3.4.1.1 Outliers and influential cases RT
 
-```{r Figure S6, fig.show='hold', fig.align='center}
+```{r Figure S6, fig.show='hold', fig.align='center'}
 library(ggplot2)
 library(metafor) # Ensure metafor is loaded for meta-analysis functions
 
@@ -981,7 +981,7 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
 forest_plot(RT = TRUE)
 ```
 
-```{r forestploter, fig.width = 7, fig.height = 8}
+```{r forestploter, fig.width = 15, fig.height = 15}
 
 forest_plot <- function(RT = FALSE, ACC = FALSE) {
   library(metafor)
@@ -1085,7 +1085,7 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
   return(p)
 }
 
-forest_plot(ACC = TRUE)
+forest_plot(RT = TRUE)
 
 ```
 
@@ -1400,27 +1400,27 @@ fine_tune_metaforest <- function(data_type, predictors) {
 #, cache = TRUE}
 predictors <- c("EF_sensitivity", "CognitiveFunction") # adjust based on previous analysis
 
-#mf_cv <- fine_tune_metaforest("RT", predictors)
+mf_cv <- fine_tune_metaforest("RT", predictors)
 # Check the results
-#print(mf_cv$r2_oob)
-#print(mf_cv$r2_cv)
-#final <- mf_cv$final
+print(mf_cv$r2_oob)
+print(mf_cv$r2_cv)
+final <- mf_cv$final
 
-#print(final)
+print(final)
 # variable importance plot
-#VarImpPlot(final)
+VarImpPlot(final)
 ```
 
 ```{r Figure S4 Partial Dependence Plot RT}
 # partial dependence plot
-#PartialDependence(final, rawdata = TRUE, pi = .95)
+PartialDependence(final, rawdata = TRUE, pi = .95)
 ```
 
 
 
 ```{r Figure S5 Moderated Partial Dependence Plot RT}
 # moderated partial dependence plot
-#PartialDependence(final, moderator = "CognitiveFunction", rawdata = TRUE, pi = .95)
+PartialDependence(final, moderator = "CognitiveFunction", rawdata = TRUE, pi = .95)
 ```
 
 
