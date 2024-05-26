@@ -7,9 +7,10 @@ output: html_document
 
 
 # setup
-```{r setup,results='hide'}
- knitr::opts_knit$set(root.dir = "C:/Users/prsyu/OneDrive/Bidlung/University/M.S. Leiden University/M.S. Neuroscience (Research)/Internship Groningen/GitHub_Multiverse_meta/MetaAnalysis-Psilo-Cognition")
- knitr::opts_chunk$set(echo = TRUE,  fig.show = 'hold', fig.align = 'center')
+```{r setup,results='hide',warning = FALSE}
+ knitr::opts_knit$set(root.dir = "C:/Users/prsyu/OneDrive/Bidlung/University/M.S. Leiden University/M.S. Neuroscience (Research)/Internship Groningen/GitHub_Multiverse_meta/MetaAnalysis-Psilo-Cognition/Code")
+ knitr::opts_chunk$set(echo = TRUE, fig.retina=2, fig.show = 'hold', fig.align = 'center', fig.width = 7, fig.height = 10, warning = FALSE)
+
 # install.packages("readxl")
 # install.packages("rmarkdown")
 # install.packages("metafor")
@@ -25,8 +26,7 @@ output: html_document
 # if (!require("remotes")) {
 #     install.packages("remotes")
 # }
-# library("mvmeta")
-install.packages("here")
+#install.packages("here")
 library("here")
 library("tidyverse")
 library("caret")
@@ -40,10 +40,12 @@ library("ggplot2")
 library("gridExtra")
 library("plotly")
 library("RColorBrewer")
-source(here::here("Code", "functions.r"))
+library(rmarkdown)
+library(knitr)
+source(here("Code","functions.r"))
 
 # Define data file
-datafile <- "Overview_Studies.xlsx"
+datafile <- here("Overview_Studies.xlsx")
 ```
 
 # Load Data
@@ -117,7 +119,7 @@ Read_Prepare <- function(datafile) {
 
 
 data <- Read_Prepare(datafile)
-head(data_RT)
+head(data)
 ```
 
 ```{r Add varaince of cohens d, echo=TRUE, results='hide',warning = FALSE}
@@ -220,7 +222,6 @@ head(data_ACC)
 
 ```{r calculate_meta function, echo=TRUE, fig.show='hold', fig.align='center'}
 calculate_meta <- function(RT = FALSE, ACC = FALSE) {
-    source("transform_functions.r")
     library(metafor) # Load the metafor library
 
     # Select the appropriate dataset
@@ -295,17 +296,27 @@ calculate_meta <- function(RT = FALSE, ACC = FALSE) {
 
     return(model_results)
 }
-summary(calculate_meta(RT = TRUE)$model_multi)
-calculate_meta(RT = TRUE)$variance_analysis$ResultsTable
-calculate_meta(RT = TRUE)$variance_analysis$TotalI2
-
-# calculate_meta(RT=TRUE)$model_uni
 ```
+nested model:
+```{r }
+print(calculate_meta(RT = TRUE)$model_multi)
+print(calculate_meta(RT = TRUE)$variance_analysis$ResultsTable)
+print(calculate_meta(RT = TRUE)$variance_analysis$TotalI2)
+print(calculate_meta(RT = TRUE)$variance_analysis$Plot)
+```
+non ntested model
+```{r }
+print(calculate_meta(RT=TRUE)$model_uni)
+```
+nested vs non nested model
+```{r }
+print(calculate_meta(RT = TRUE)$model_comparison)
 
+```
 
 # 3.4.1.1 Outliers and influential cases RT
 
-```{r Figure S6, fig.show='hold', fig.align='center'}
+```{r Figure S6, fig.show='hold', fig.align='center}
 library(ggplot2)
 library(metafor) # Ensure metafor is loaded for meta-analysis functions
 
@@ -398,7 +409,7 @@ print(results$outliers)
 print(results$model_summary)
 ```
 
-```{r Figure S7,  fig.show='hold', fig.align='center'}
+```{r Figure S7,  fig.show='hold', fig.align='center', fig.width = 10, fig.height = 10}
 calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) {
     # Ensure that either RT or ACC is TRUE, but not both
     if (RT == TRUE && ACC == TRUE) {
@@ -429,22 +440,40 @@ calculate_residuals <- function(RT = FALSE, ACC = FALSE, outlier_threshold = 2) 
 
     # Boxplot
     data_for_boxplot <- data.frame(z = res_mod_all_ml$z, ID = data_for_ID$ES_ID)
-    boxplot <- ggplot(data_for_boxplot, aes(x = "", y = z)) +
-        geom_boxplot() +
-        theme_gray() +
-        labs(y = "Z values", title = paste("Boxplot of Standardized Residuals for", plottitle))
-    # Barplot
-    data_for_barplot <- data.frame(ID = data_for_ID$ES_ID, Residuals = res_mod_all_ml$z)
-    barplot <- ggplot(data_for_barplot, aes(x = ID, y = Residuals)) +
-        geom_bar(stat = "identity", position = position_dodge()) +
-        coord_flip() + # To make barplot horizontal
-        theme_gray() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        labs(x = "ES_ID", y = "Standardized Residuals", title = paste("Barplot of Standardized Residuals for", plottitle))
-    # display
-    library(gridExtra)
-    grid.arrange(boxplot, barplot, ncol = 1)
+    data_for_barplot <- data.frame(ID = sort(data_for_ID$ES_ID), Residuals = res_mod_all_ml$z)
+    data_for_barplot$ID <- factor(data_for_barplot$ID, levels = sort(data_for_barplot$ID))
+    
+  # Set up the color palette
+  color_palette <- brewer.pal(3, "Blues")
+  
+  # Boxplot
+  boxplot <- ggplot(data_for_boxplot, aes(x = "", y = z)) +
+    geom_boxplot(fill = color_palette[2], color = "black", outlier.shape = NA) +
+    geom_jitter(width = 0.2, size = 2, color = color_palette[3]) +
+    labs(y = "Z values", x = "", title = paste("Boxplot of Standardized Residuals for", plottitle)) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(size = 18, face = "bold"),
+      axis.title = element_text(size = 20),
+      axis.text = element_text(size = 12)
+    )
 
+  barplot <- ggplot(data_for_barplot, aes(x = ID, y = Residuals)) +
+    geom_bar(stat = "identity", position = position_dodge(), fill = color_palette[3], color = "black") +
+    coord_flip() +
+    labs(x = "ES_ID", y = "Standardized Residuals", title = paste("Barplot of Standardized Residuals for", plottitle)) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(size = 18, face = "bold"),
+      axis.title = element_text(size = 20),
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+      axis.text.y = element_text(size = 12)
+    )
+  
+  # Display
+  library(gridExtra)
+  grid.arrange(boxplot, barplot, ncol = 1)
+  
     # outlier handling:
     # outliers based on standardized residuals > multi_outlier
     outliers_indices <- which(abs(res_mod_all_ml$z) > outlier_threshold)
@@ -496,9 +525,11 @@ run_diagnostics <- function(data_type) {
 }
 # Example call to the function for Reaction Time
 run_diagnostics("RT")
+
+
 ```
 
-```{r Figure S9}
+```{r Figure S9, fig.width = 15, fig.height = 15}
 library(metafor)
 library(ggplot2)
 library(gridExtra)
@@ -576,7 +607,14 @@ diagnostic_analysis <- function(data_type, threshold = 2) {
     ) +
         geom_bar(stat = "identity", fill = "skyblue") +
         geom_hline(yintercept = 4 / (n - 2), col = "red", linetype = "dashed") +
-        labs(title = "Cook's Distance", x = "Study Index", y = "Distance")
+        labs(title = "Cook's Distance", x = "Study ID", y = "Distance") +	
+        scale_x_continuous(breaks = seq_along(cooks), labels = seq_along(cooks)) + 
+        scale_y_continuous(n.breaks = 2 * 5) +
+         theme(
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        plot.title = element_text(size = 16, face = "bold")
+    )
 
     # Plotting Hat Values
     plot_hatvals <- ggplot(
@@ -585,7 +623,14 @@ diagnostic_analysis <- function(data_type, threshold = 2) {
     ) +
         geom_bar(stat = "identity", fill = "lightgreen") +
         geom_hline(yintercept = 2 * mean(hatvals), col = "red", linetype = "dashed") +
-        labs(title = "Hat Values", x = "Study Index", y = "Leverage")
+        labs(title = "Hat Values", x = "Study ID", y = "Leverage") +
+        scale_x_continuous(breaks = seq_along(hatvals), labels = seq_along(hatvals)) +
+        scale_y_continuous(n.breaks = 2 * 5) +
+         theme(
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        plot.title = element_text(size = 16, face = "bold")
+    )
 
     # Plotting DFBETAS for each coefficient
     plot_dfbetas <- list()
@@ -604,8 +649,14 @@ diagnostic_analysis <- function(data_type, threshold = 2) {
             ) +
             labs(
                 title = paste("DFBETAS for Coefficient", names(coef(model))[i]),
-                x = "Study Index", y = "DFBETAS"
-            )
+                x = "Study ID", y = "DFBETAS"
+            ) +	scale_x_continuous(breaks = seq_along(dfbetas_values[, i]), labels = seq_along(dfbetas_values[, i])) +
+            scale_y_continuous(n.breaks = 2 * 5) +
+             theme(
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        plot.title = element_text(size = 16, face = "bold")
+    )
     }
 
     # Arrange plots
@@ -632,23 +683,15 @@ diagnostic_analysis <- function(data_type, threshold = 2) {
     ))
 }
 
-# Using the function
-# results <- diagnostic_analysis("ACC")
 
-# # Display the arranged plots
-# results$plots
+results <- diagnostic_analysis("RT")
 
 # # Display the outlier information
-print(diagnostic_analysis("RT")$model_no_outliers)
-print(diagnostic_analysis("RT")$outlier_info)
+print(results$outlier_info)
+print(results$model_no_outliers)
+print(results$summary_table)
+print(results$plots)
 
-
-# # Display the summary of diagnostics
-# print(diagnostic_analysis("ACC")$model_no_outliers)
-# print(diagnostic_analysis("ACC")$outlier_info)
-
-
-# diagnostic_analysis("ACC")$summary_table
 ```
 
 # 3.4.1.2 Publication Bias RT
@@ -719,7 +762,8 @@ mod_egger <- function(data_type) {
 mod_egger("RT")
 
 ```
-```{r Figure 4 Funnel plot Function}
+```{r Figure 4 Funnel plot Function, fig.width = 10, fig.height = 15,  out.width="100%"}
+
 funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     library(metafor)
     library(RColorBrewer)
@@ -873,22 +917,14 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     par(mfrow = c(1, 1))
 }
 
-funnel_plot(ACC = TRUE)
-
-
-
-
-
-
+funnel_plot(RT = TRUE)
 ```
 
 # 3.4.1.3 Model comparison Reaction Time
 ```{r run calcualte_meta for RT}
 calculate_meta(RT = TRUE)$model_comparison
-
-
 ```
-```{r forest plot metaviz}
+```{r forest plot metaviz, fig.width = 7, fig.height = 5}
 forest_plot <- function(RT = FALSE, ACC = FALSE) {
   library(metaviz)
   library(RColorBrewer)
@@ -945,7 +981,7 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
 forest_plot(RT = TRUE)
 ```
 
-```{r forestploter}
+```{r forestploter, fig.width = 7, fig.height = 8}
 
 forest_plot <- function(RT = FALSE, ACC = FALSE) {
   library(metafor)
@@ -991,6 +1027,32 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
   # Add a blank column for the forest plot to display CI
   forest_data$` ` <- paste(rep(" ", 20), collapse = " ")
 
+      # Calculate the overall N by counting each unique study only once
+  overall_N <- forest_data %>%
+    distinct(StudyLabel, .keep_all = TRUE) %>%
+    summarise(sum(N)) %>%
+    pull()
+
+
+  # Add the overall Hedges' g row
+    	overall_row <- data.frame(
+            StudyLabel = "Total (Unique)",
+            DoseLabel = "",
+            CognitiveFunction = "",
+            N = overall_N,
+            Timepoint = "",
+            ES = model_results$model_multi$beta,
+            LowerCI = model_results$model_multi$ci.lb,
+            UpperCI = model_results$model_multi$ci.ub,
+            ci = sprintf("%.2f (%.2f, %.2f)", model_results$model_multi$beta, model_results$model_multi$ci.lb, model_results$model_multi$ci.ub)
+        )
+  
+  overall_row$` ` <- paste(rep(" ", 20), collapse = " ")
+  forest_data <- rbind(forest_data, overall_row)
+
+
+  
+
   # Set up the theme using Blues color palette
   blues_palette <- brewer.pal(9, "Blues")
   tm <- forest_theme(
@@ -1024,118 +1086,6 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
 }
 
 forest_plot(ACC = TRUE)
-
-```
-
-```{r forest plot bauastelle}	
-    forest_plot <- function(RT = FALSE, ACC = FALSE) {
-        library(metafor)
-        library(RColorBrewer)
-        library(forestploter)
-        library(grid)
-        library(dplyr)
-
-  # Fetch the model results using calculate_meta
-  if (RT) {
-    model_results <- calculate_meta(RT = TRUE)
-    plot_data <- data_RT
-    plot_data$yi <- plot_data$ES_final_RT
-    plot_data$sei <- sqrt(plot_data$ES_var_RT)
-    forest_title <- "Forest plot for the multilevel model of Reaction Time"
-    xlab_text <- "Reaction Time (Hedges' g)"
-    xlim_values <- c(-1, 3)
-  } else if (ACC) {
-    model_results <- calculate_meta(ACC = TRUE)
-    plot_data <- data_ACC
-    plot_data$yi <- plot_data$ES_final_ACC
-    plot_data$sei <- sqrt(plot_data$ES_var_ACC)
-    forest_title <- "Forest plot for the multilevel model of Accuracy"
-    xlab_text <- "Accuracy (Hedges' g)"
-    xlim_values <- c(-2.5, 2)
-  } else {
-    stop("Either RT or ACC must be set to TRUE.")
-  }
-
-  # Create a data frame for the forest plot
-  forest_data <- data.frame(
-    Study = plot_data$PlotLabel,
-    Dose = plot_data$DoseLabel,
-    CognitiveFunction = plot_data$CognitiveFunction,
-    N = plot_data$N_final,
-    Timepoint = plot_data$Timepoint,
-    ES = plot_data$yi,
-    LowerCI = plot_data$yi - 1.96 * plot_data$sei,
-    UpperCI = plot_data$yi + 1.96 * plot_data$sei,
-    #blank = "",
-    CI = sprintf("%.2f (%.2f, %.2f)", plot_data$yi, plot_data$yi - 1.96 * plot_data$sei, plot_data$yi + 1.96 * plot_data$sei)
-  )
-
-  # Add a blank column for the forest plot to display CI
-  #forest_data$blank <- paste(rep(" ", 20), collapse = " ")
-  forest_data$` ` <- paste(rep(" ", 20), collapse = " ")
-
-  # Order the table according to the Dose column
-  forest_data <- forest_data %>%
-    mutate(Dose = factor(Dose, levels = c("Micro", "Low", "Medium", "High"))) %>%
-    arrange(Dose)
-    print(forest_data)
-
-
-      # Calculate the overall N by counting each unique study only once
-  overall_N <- forest_data %>%
-    distinct(Study, .keep_all = TRUE) %>%
-    summarise(sum(N)) %>%
-    pull()
-
-
-  # Add the overall Hedges' g row
-    	overall_row <- data.frame(
-            Study = "Overall",
-            Dose = "",
-            CognitiveFunction = "",
-            N = overall_N,
-            Timepoint = "",
-            ES = model_results$model_multi$beta,
-            LowerCI = model_results$model_multi$ci.lb,
-            UpperCI = model_results$model_multi$ci.ub,
-            CI = sprintf("%.2f (%.2f, %.2f)", model_results$model_multi$beta, model_results$model_multi$ci.lb, model_results$model_multi$ci.ub)
-        )
-  
-  overall_row$` ` <- paste(rep(" ", 20), collapse = " ")
-  forest_data <- rbind(forest_data, overall_row)
-
-  # Set up the theme using Blues color palette
-  blues_palette <- brewer.pal(9, "Blues")
-  tm <- forest_theme(
-    base_size = 10,
-    refline_itly =  "solid",
-    ci_pch = 15,
-    ci_col = blues_palette[5],
-    footnote_gp = gpar(col = blues_palette[9]),
-    vertline_lty = "dashed",
-    vertline_col = blues_palette[3]
-  )
-
-  # Create the forest plot
-  p <- forestploter::forest(
-    forest_data[,c("Study", "Dose", "CognitiveFunction", "N", "Timepoint", " ", "CI")],
-    est = forest_data$ES,
-    lower = forest_data$LowerCI,
-    upper = forest_data$UpperCI,
-    ci_column = 5,
-    ref_line = 0,
-    xlim = xlim_values,
-    xlab = xlab_text,
-    group = forest_data$CognitiveFunction,
-    theme = tm
-  )
-
-  # Reset graphical parameters
-  par(mfrow = c(1, 1))
-
-  return(p)
-}
-forest_plot(RT = TRUE)
 
 ```
 
@@ -1363,15 +1313,15 @@ run_metaforest_analysis <- function(data_type) {
 
 ```
 
-```{r Figure S1 Convergence graph Metaforest RT,cache = TRUE}
+```{r Figure S1 Convergence graph Metaforest RT} 
+#,cache = TRUE
 retain_mods <- run_metaforest_analysis("RT")
 conv <- retain_mods$check_conv
-print(conv)
 plot(conv)
 ```
 ```{r Figure S2 retained moderators RT}
 # change nr of trees based on convergence!
-#retain_mods <- run_metaforest_analysis("RT")
+retain_mods <- run_metaforest_analysis("RT")
 plot(retain_mods$preselected)
 print(retain_mods$retained_mods)
 
@@ -1445,29 +1395,32 @@ fine_tune_metaforest <- function(data_type, predictors) {
 }
 ```
 
-```{r Figure S3 Variable/Permutation Importance RT, cache = TRUE}
+
+```{r Figure S3 Variable/Permutation Importance RT}
+#, cache = TRUE}
 predictors <- c("EF_sensitivity", "CognitiveFunction") # adjust based on previous analysis
 
-mf_cv <- fine_tune_metaforest("RT", predictors)
+#mf_cv <- fine_tune_metaforest("RT", predictors)
 # Check the results
-print(mf_cv$r2_oob)
-print(mf_cv$r2_cv)
-final <- mf_cv$final
-print(final)
+#print(mf_cv$r2_oob)
+#print(mf_cv$r2_cv)
+#final <- mf_cv$final
+
+#print(final)
 # variable importance plot
-VarImpPlot(final)
+#VarImpPlot(final)
 ```
 
 ```{r Figure S4 Partial Dependence Plot RT}
 # partial dependence plot
-PartialDependence(final, rawdata = TRUE, pi = .95)
+#PartialDependence(final, rawdata = TRUE, pi = .95)
 ```
 
 
 
 ```{r Figure S5 Moderated Partial Dependence Plot RT}
 # moderated partial dependence plot
-PartialDependence(final, moderator = "CognitiveFunction", rawdata = TRUE, pi = .95)
+#PartialDependence(final, moderator = "CognitiveFunction", rawdata = TRUE, pi = .95)
 ```
 
 

@@ -63,20 +63,30 @@ mlm.variance.distribution = function(x) {
         I2 = c(NA, level2_var_perc, level3_var_perc)
     )
 
-    # Plotting
-    plot = ggplot(results_df, aes(x = Level, y = Variance_Percentage, fill = Level)) +
-        geom_bar(stat = "identity") +
-        geom_text(aes(label = paste0(round(Variance_Percentage, 2), "%")), vjust = -0.5) +
-        theme_minimal() +
-        labs(title = "Variance Distribution in Multi-Level Meta-Analysis", y = "Percentage of Total Variance", x = NULL) +
-        scale_fill_brewer(palette = "Pastel1")
-
-    # Return structured output
-    return(invisible(list(
-        ResultsTable = results_df,
-        TotalI2 = total_i2,
-        Plot = plot
-    )))
+# Set up the color palette
+  color_palette <- brewer.pal(3, "Blues")
+  names(color_palette) <- c("Level 1 (Sampling Error)", "Level 2", "Level 3")
+  
+  # Plotting
+  plot = ggplot(results_df, aes(x = Level, y = Variance_Percentage, fill = Level)) +
+    geom_bar(stat = "identity") +
+    geom_text(aes(label = paste0(round(Variance_Percentage, 2), "%")), vjust = -0.5, size = 6) +
+    labs(title = "Variance Distribution in Multi-Level Meta-Analysis", y = "Percentage of Total Variance", x = NULL) +
+    scale_fill_manual(values = color_palette) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(size = 18, face = "bold"),
+      axis.title.y = element_text(size = 14),
+      axis.text = element_text(size = 12),
+      legend.position = "none"
+    )
+  
+  # Return structured output
+  return(invisible(list(
+    ResultsTable = results_df,
+    TotalI2 = total_i2,
+    Plot = plot
+  )))
 }
 
 
