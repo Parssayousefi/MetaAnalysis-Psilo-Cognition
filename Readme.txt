@@ -1,10 +1,8 @@
 Overview
 This repository contains the data and code used in our analysis for the systematic review and meta-analysis. Below is a description of the contents and their organization.
 
-1. Study_ID_Key.xlsx
-Description: This Excel file, named "Study_ID_Key", includes the reference of all the studies included in our analysis. Each study is associated with a unique ID that links to other relevant files and data in this repository.
 
-2. Overview_Studies.xlsx
+Overview_Studies.xlsx
 Description:  contains all the extracted effect sizes from the individual studies that were part of our review. Additionally, this file includes data that underlie the calculation of these effect sizes.
 Structure and Content: Within the "Code" folder, you will find subfolders labeled according to the study IDs, containing the specific R scripts used to calculate the effect sizes for each study. The results of these scripts build the data presented in the "Overview_Studies" Excel file.
 
