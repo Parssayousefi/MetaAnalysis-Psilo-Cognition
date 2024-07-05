@@ -113,6 +113,7 @@ print(cohens_d_ACC)
 # Define the function to calculate reaction time differences
 calculate_rt_difference_t2 <- function(data) {
   data %>%
+    mutate(Reaction.Time.T2 = Reaction.Time.T2 * 1000) %>%  # Convert RT to milliseconds
     filter(Correcto.T1 == 1 & Correcto.T2 == 1) %>% 
     group_by(Subject, Lag) %>%
     summarize(MeanRT_T2 = mean(Reaction.Time.T2, na.rm = TRUE), .groups = 'drop') %>% 
@@ -139,7 +140,7 @@ RT_diff_psilo$sq_dev = (RT_diff_psilo$RT_Diff - mean_rt_diff_psilo)^2
 RT_diff_placebo$sq_dev = (RT_diff_placebo$RT_Diff - mean_rt_diff_placebo)^2
 
 
-# Calculate Cohen's d using the effectsize package
+# Calculate Cohen's d
 cohens_d_result <- cohen.d(RT_diff_psilo$RT_Diff, RT_diff_placebo$RT_Diff)
 
 # Print the result
