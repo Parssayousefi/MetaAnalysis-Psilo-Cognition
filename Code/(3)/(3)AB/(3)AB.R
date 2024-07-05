@@ -140,7 +140,7 @@ RT_diff_psilo$sq_dev = (RT_diff_psilo$RT_Diff - mean_rt_diff_psilo)^2
 RT_diff_placebo$sq_dev = (RT_diff_placebo$RT_Diff - mean_rt_diff_placebo)^2
 
 
-# Calculate Cohen's d using the effectsize package
+# Calculate Cohen's d
 cohens_d_result <- cohen.d(RT_diff_psilo$RT_Diff, RT_diff_placebo$RT_Diff)
 
 # Print the result

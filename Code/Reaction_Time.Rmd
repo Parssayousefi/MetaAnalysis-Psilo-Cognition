@@ -4,7 +4,7 @@ authors: "Parsa Yousefi, Ralph Rippe"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-
+authors: Parsa Yousefi, Ralph Rippe
 
 # setup
 ```{r setup,results='hide',warning = FALSE}
@@ -27,6 +27,7 @@ output: html_document
 #     install.packages("remotes")
 # }
 #install.packages("xfun")
+#install.packages("zcurve")
 library("here")
 library("tidyverse")
 library("caret")
@@ -42,6 +43,8 @@ library("plotly")
 library("RColorBrewer")
 library("rmarkdown")
 library("knitr")
+library("zcurve")
+
 source(here("Code","functions.r"))
 
 # Define data file
@@ -764,6 +767,7 @@ mod_egger("RT")
 ```
 ```{r Figure 4 Funnel plot Function, fig.width = 10, fig.height = 15,  out.width="100%"}
 
+
 funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     library(metafor)
     library(RColorBrewer)
@@ -807,6 +811,7 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     model <- model_results$model_multi
     model_uni <- model_results$model_uni
     trim <- trimfill(model_uni)
+    print(trim)
 
 
     # Create a data frame for the points with colors and shapes
@@ -827,12 +832,17 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     # Set up the graphical environment
     par(mfrow = c(1, 1), tck = -.03, mgp = c(6, 3, 0), mar = c(8, 10, 5, 6), bg = "white",
         cex.main = 1.5, # Font size for the main title
-        cex.lab = 3,  # Font size for the axis titles
+        cex.lab = 10,  # Font size for the axis titles
         cex.axis = 2  # Font size for the axis tick labels
     )
 
     cantour_shades <- brewer.pal(9,"Blues")[c(2, 4, 6)]
 
+
+    # Save the plot as PNG
+    file_path <- file.path(getwd(), "figures", ifelse(RT, "funnelplot_RT.png", "funnelplot_ACC.png"))
+    png(filename = file_path, width = 2500, height = 3000, res = 300)
+   
     # Create a contour-enhanced funnel plot
     funnel(model,
         refline2 = c(model_uni$beta),
@@ -864,17 +874,7 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     print(legend_data)
 
     # Add legend for color, shape, and size
-    # Add legend for confidence intervals and trim-and-fill
-    legend("topright", ncol = 1,inset = c(0, 0.255),
-        legend = c("90% CI", "95% CI", "99% CI", "Trim and Fill"),
-        fill = c(cantour_shades, NA),
-        col = c(rep(NA, length(cantour_shades)), "red"),
-        pch = c(rep(NA, length(cantour_shades)), 4),
-        lty = 0,
-        y.intersp = 0.6,
-        x.intersp = 0.5,
-        text.width = max(strwidth(c("90% CI", "95% CI", "99% CI", "Trim and Fill"))) * 1,
-     )
+   
     # Add legend for study labels (colors)
     legend("topright", inset = c(0, 0),
         legend = legend_data$PlotLabel,
@@ -888,7 +888,7 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     )
 
     # Add legend for cognitive functions (shapes)
-    legend("topright", inset = c(0, 0.143),
+    legend("topright", inset = c(0, 0.2),
         legend = names(shape_mapping),
         col = 1,
         pch = shape_mapping,
@@ -898,9 +898,19 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
         x.intersp = 0.8,
         title = "Cognitive Function"
     )
-    
+     # Add legend for confidence intervals and trim-and-fill
+    legend("topright", ncol = 1,inset = c(0, 0.32),
+        legend = c("90% CI", "95% CI", "99% CI", "Trim and Fill"),
+        fill = c(cantour_shades, NA),
+        col = c(rep(NA, length(cantour_shades)), "red"),
+        pch = c(rep(NA, length(cantour_shades)), 4),
+        lty = 0,
+        y.intersp = 0.6,
+        x.intersp = 0.5,
+        text.width = max(strwidth(c("90% CI", "95% CI", "99% CI", "Trim and Fill"))) * 1,
+     )
     # Add legend for dose labels (sizes)
-    legend("topright", inset = c(0, 0.35),
+    legend("topright", inset = c(0, 0.41),
         legend = names(size_mapping),
         col = 1,
         pch = 1,
@@ -913,11 +923,13 @@ funnel_plot <- function(RT = FALSE, ACC = FALSE) {
     
     
     
-    # Reset graphical parameters
-    par(mfrow = c(1, 1))
+    dev.off()
 }
 
-funnel_plot(RT = TRUE)
+
+
+funnel_plot(ACC = TRUE)
+
 ```
 
 # 3.4.1.3 Model comparison Reaction Time
@@ -925,7 +937,7 @@ funnel_plot(RT = TRUE)
 calculate_meta(RT = TRUE)$model_comparison
 ```
 ```{r forest plot metaviz, fig.width = 7, fig.height = 5}
-forest_plot <- function(RT = FALSE, ACC = FALSE) {
+forest_plot_metaviz <- function(RT = FALSE, ACC = FALSE) {
   library(metaviz)
   library(RColorBrewer)
 
@@ -978,18 +990,17 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
   )
 }
 
-forest_plot(RT = TRUE)
+forest_plot_metaviz(RT = TRUE)
 ```
 
-```{r forestploter, fig.width = 15, fig.height = 15}
+```{r forestploter}
+library(metafor)
+library(RColorBrewer)
+library(forestploter)
+library(grid)
+library(dplyr)
 
 forest_plot <- function(RT = FALSE, ACC = FALSE) {
-  library(metafor)
-  library(RColorBrewer)
-  library(forestploter)
-   library(grid)
-   library(dplyr)
-
   # Fetch the model results using calculate_meta
   if (RT) {
     model_results <- calculate_meta(RT = TRUE)
@@ -1011,47 +1022,61 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
     stop("Either RT or ACC must be set to TRUE.")
   }
 
-  # Create a data frame for the forest plot
+  # Create a data frame for the forest plot using original column names
   forest_data <- data.frame(
     CognitiveFunction = plot_data$CognitiveFunction,
     DoseLabel = plot_data$DoseLabel,
-    StudyLabel = plot_data$PlotLabel,
-    N = plot_data$N_final,
+    PlotLabel = plot_data$PlotLabel,
+    N_final = plot_data$N_final,
     Timepoint = plot_data$Timepoint,
-    ES = plot_data$yi,
-    LowerCI = plot_data$yi - 1.96 * plot_data$sei,
-    UpperCI = plot_data$yi + 1.96 * plot_data$sei,
-    ci = sprintf("%.2f (%.2f, %.2f)", plot_data$yi, plot_data$yi - 1.96 * plot_data$sei, plot_data$yi + 1.96 * plot_data$sei)
+    ES = as.numeric(plot_data$yi),
+    LowerCI = as.numeric(plot_data$yi - 1.96 * plot_data$sei),
+    UpperCI = as.numeric(plot_data$yi + 1.96 * plot_data$sei),
+    CI = sprintf("%.2f (%.2f, %.2f)", plot_data$yi, plot_data$yi - 1.96 * plot_data$sei, plot_data$yi + 1.96 * plot_data$sei)
   )
+  
+  # Sort the dataframe by CognitiveFunction
+  forest_data <- forest_data[order(forest_data$CognitiveFunction), ]
 
   # Add a blank column for the forest plot to display CI
-  forest_data$` ` <- paste(rep(" ", 20), collapse = " ")
+  forest_data$Blank <- paste(rep(" ", 20), collapse = " ")
 
-      # Calculate the overall N by counting each unique study only once
+  # Calculate point sizes based on sample size
+  plim <- c(0.5, 1.5)
+  wi <- sqrt(forest_data$N_final)
+  rng <- max(wi, na.rm=TRUE) - min(wi, na.rm=TRUE)
+  if (rng <= .Machine$double.eps^0.5) {
+    psize <- rep(1, nrow(forest_data))
+  } else {
+    psize <- (wi - min(wi, na.rm=TRUE)) / rng
+    psize <- (psize * (plim[2] - plim[1])) + plim[1]
+  }
+
+  # Add psize to forest_data
+  forest_data$psize <- psize
+
+  # Calculate the overall N by counting each unique study only once
   overall_N <- forest_data %>%
-    distinct(StudyLabel, .keep_all = TRUE) %>%
-    summarise(sum(N)) %>%
-    pull()
-
+    distinct(PlotLabel, .keep_all = TRUE) %>%
+    summarise(total_n = sum(N_final)) %>%
+    pull(total_n)
 
   # Add the overall Hedges' g row
-    	overall_row <- data.frame(
-            StudyLabel = "Total (Unique)",
-            DoseLabel = "",
-            CognitiveFunction = "",
-            N = overall_N,
-            Timepoint = "",
-            ES = model_results$model_multi$beta,
-            LowerCI = model_results$model_multi$ci.lb,
-            UpperCI = model_results$model_multi$ci.ub,
-            ci = sprintf("%.2f (%.2f, %.2f)", model_results$model_multi$beta, model_results$model_multi$ci.lb, model_results$model_multi$ci.ub)
-        )
-  
-  overall_row$` ` <- paste(rep(" ", 20), collapse = " ")
+  overall_row <- data.frame(
+    CognitiveFunction = "Overall",
+    DoseLabel = "",
+    PlotLabel = paste("Total (Unique) N:", overall_N),
+    N_final = overall_N,
+    Timepoint = "",
+    ES = as.numeric(model_results$model_multi$beta),
+    LowerCI = as.numeric(model_results$model_multi$ci.lb),
+    UpperCI = as.numeric(model_results$model_multi$ci.ub),
+    CI = sprintf("%.2f (%.2f, %.2f)", model_results$model_multi$beta, model_results$model_multi$ci.lb, model_results$model_multi$ci.ub),
+    Blank = paste(rep(" ", 20), collapse = " "),
+    psize = max(psize) 
+  )
+
   forest_data <- rbind(forest_data, overall_row)
-
-
-  
 
   # Set up the theme using Blues color palette
   blues_palette <- brewer.pal(9, "Blues")
@@ -1066,34 +1091,42 @@ forest_plot <- function(RT = FALSE, ACC = FALSE) {
   )
 
   # Create the forest plot
-  p <- forestploter::forest(
-    forest_data[,c("CognitiveFunction", "DoseLabel", "StudyLabel", "N", "Timepoint", " ", "ci")],
+  p <- forest(
+    forest_data[, c("CognitiveFunction", "DoseLabel", "PlotLabel", "N_final", "Timepoint", "Blank", "CI")],
     est = forest_data$ES,
     lower = forest_data$LowerCI,
     upper = forest_data$UpperCI,
+    sizes = forest_data$psize,  # Corrected from psizes to psize
     ci_column = 6,
     ref_line = 0,
     xlim = xlim_values,
     xlab = xlab_text,
-    group = forest_data$CognitiveFunction,
     theme = tm
   )
 
-  # Reset graphical parameters
-  par(mfrow = c(1, 1))
+  # Add title
+  #p <- add_text(p, text = forest_title, part = "header", gp = gpar(fontface = "bold"))
 
+  # Save the plot as PNG
+  file_path <- file.path(getwd(), "figures", ifelse(RT, "forestplot_RT.png", "forestplot_ACC.png"))
+  png(filename = file_path, width = 2800, height = 2200, res = 300)
+  plot(p)
+  dev.off()
+
+  # Return the plot object
   return(p)
 }
 
-forest_plot(RT = TRUE)
+forest_plot(ACC = TRUE)
+
 
 ```
 
-
 # 3.4.1.4 Subgroup Analyses RT
 ```{r moderation function}
-# library(metafor)
+library(metafor)
 
+# Function for moderation analysis
 moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
     # Check that either RT or ACC is TRUE
     if (RT == TRUE && ACC == TRUE) {
@@ -1121,15 +1154,14 @@ moderation_analysis <- function(RT = FALSE, ACC = FALSE, moderation_var) {
     # Convert moderation variable to a factor with specified reference category
     if (moderation_var == "EF_sensitivity") {
         data[[moderation_var]] <- factor(data[[moderation_var]], levels = c("3", "1", "2"))
-    } else {
-        data[[moderation_var]] <- as.factor(data[[moderation_var]])
-    }
-    if (moderation_var == "CognitiveFunction") {
+    } else if (moderation_var == "CognitiveFunction") {
         data[[moderation_var]] <- factor(data[[moderation_var]], levels = c("Attention", "Conflict monitoring", "Other EF", "Working Memory"))
     } else {
         data[[moderation_var]] <- as.factor(data[[moderation_var]])
     }
 
+    # Trim whitespace from the moderation variable levels
+    data[[moderation_var]] <- factor(trimws(data[[moderation_var]]))
 
     # Running the mixed-effects model with moderation
     model <- rma.mv(
@@ -1207,6 +1239,44 @@ moderation_analysis(RT = TRUE, moderation_var = "CognitiveFunction")
 table(data_RT$CognitiveFunction)
 
 ```
+
+```{r }
+# Load necessary libraries
+library(ggplot2)
+library(metafor)
+
+# Step 1: Identify Excluded Rows in the Multivariate Model
+# Fit the multivariate model
+model <- rma.mv(yi = data_RT$ES_final_RT, V = data_RT$ES_var_RT, random = ~ 1 | ID / ES_ID, mods = ~ CognitiveFunction, data = data_RT)
+
+# Identify the rows being excluded in the multivariate model
+excluded_rows <- data_RT[!data_RT$ES_ID %in% model$slab, ]
+cat("Rows excluded in the multivariate model:\n")
+print(excluded_rows)
+
+# Step 2: Compare Included vs. Excluded Rows
+included_rows <- data_RT[data_RT$ES_ID %in% model$slab, ]
+
+cat("Included rows:\n")
+print(included_rows)
+
+cat("Excluded rows:\n")
+print(excluded_rows)
+
+# Step 3: Refit the Model with Identified Issues Addressed
+# Ensure that CognitiveFunction is treated as a factor with all levels included
+data_RT$CognitiveFunction <- factor(data_RT$CognitiveFunction, levels = c("Attention", "Cognitive  Flexibility", "Conflict monitoring", "Working Memory"))
+
+# Refit the multivariate model
+model_refit <- rma.mv(yi = data_RT$ES_final_RT, V = data_RT$ES_var_RT, random = ~ 1 | ID / ES_ID, mods = ~ CognitiveFunction, data = data_RT)
+print(summary(model_refit))
+
+
+```
+
+
+
+
 # 3.4.1.4.4 EF sensitivity as moderator RT
 ```{r moderation EF sensitivity}
 moderation_analysis(RT = TRUE, moderation_var = "EF_sensitivity")
@@ -1221,12 +1291,13 @@ moderation_analysis(RT = TRUE, moderation_var = "ID")
 
 # Set a seed for reproducibility
 set.seed(242)
-metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
+metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing
+
 run_metaforest_analysis <- function(data_type) {
     library(metaforest)
     library(dplyr)
 
-    metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
+    metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing
 
     # Load and prepare data based on the specified data type
     if (data_type == "RT") {
@@ -1234,13 +1305,13 @@ run_metaforest_analysis <- function(data_type) {
         data_metaforest$timing <- as.factor(data_RT$timing)
         outcome_var <- "ES_final_RT"
         vi_variable <- "ES_var_RT"
-        metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
+        metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing
     } else if (data_type == "ACC") {
         data_metaforest <- data_ACC
         data_metaforest$timing <- as.factor(data_ACC$timing)
         outcome_var <- "ES_final_ACC"
         vi_variable <- "ES_var_ACC"
-        metaforest_formula <- ES_final_ACC~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
+        metaforest_formula <- ES_final_ACC~CognitiveFunction + DoseLabel + EF_sensitivity + timing
     } else {
         stop("Invalid data type specified. Use 'RT' or 'ACC'.")
     }
@@ -1276,7 +1347,9 @@ run_metaforest_analysis <- function(data_type) {
         method = "REML",
         num.trees = 20000
     )
-    plot(check_conv)
+    plot(check_conv,col = brewer.pal(9, "Blues")[5],
+             cex.lab = 3,     # Increase the size of axis labels
+         cex.axis = 3)  # Increase the size of axis tick labels)
 
 
     # rerun with reduced number of treesFfunnel
@@ -1292,7 +1365,9 @@ run_metaforest_analysis <- function(data_type) {
 
     # Run recursive preselection to refine the selection of moderators
     preselected <- preselect(metaforest_reduced, replications = 300, algorithm = "recursive")
-    plot(preselected)  # Plot the results of the preselection
+    plot_variable_importance <- plot(preselected,col = brewer.pal(9, "Blues")[5],
+             cex.lab = 3,     # Increase the size of axis labels
+         cex.axis = 3) # Plot the results of the preselection
 
     # Retain only moderators with positive variable importance in more than 50% of replications
     retain_mods <- preselect_vars(preselected, cutoff = 0.5)
@@ -1303,6 +1378,7 @@ run_metaforest_analysis <- function(data_type) {
     results <- list(
         model = metaforest_reduced,
         preselected = preselected,
+        plot_variable_importance = plot_variable_importance,
         retained_mods = retain_mods,
         check_conv = check_conv
     )
@@ -1318,12 +1394,42 @@ run_metaforest_analysis <- function(data_type) {
 retain_mods <- run_metaforest_analysis("RT")
 conv <- retain_mods$check_conv
 plot(conv)
+
+
+
+save_plot <- function(conv) {
+    file_path <- file.path(getwd(), "figures/supplementary", "Metaforest_RT_Conv.png")
+    png(filename = file_path, width = 3500, height = 2200, res = 300)
+    
+    # Generate and save the plot
+    plot(conv)
+    
+    dev.off()
+}
+save_plot(plot(conv))
 ```
 ```{r Figure S2 retained moderators RT}
+
+
+metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing 
+
+
 # change nr of trees based on convergence!
 retain_mods <- run_metaforest_analysis("RT")
+print(retain_mods$preselected)
 plot(retain_mods$preselected)
 print(retain_mods$retained_mods)
+
+save_plot <- function(preselected) {
+    file_path <- file.path(getwd(), "figures/supplementary", "Metaforest_RT_Preselected.png")
+    png(filename = file_path, width = 3500, height = 2200, res = 300)
+    
+    # Generate and save the plot
+    plot(preselected)
+    
+    dev.off()
+}
+save_plot(plot(retain_mods$preselected))
 
 ```
 
@@ -1408,7 +1514,7 @@ final <- mf_cv$final
 
 print(final)
 # variable importance plot
-VarImpPlot(final)
+varIm_RT <- VarImpPlot(final)
 ```
 
 ```{r Figure S4 Partial Dependence Plot RT}
@@ -1421,31 +1527,170 @@ PartialDependence(final, rawdata = TRUE, pi = .95)
 ```{r Figure S5 Moderated Partial Dependence Plot RT}
 # moderated partial dependence plot
 PartialDependence(final, moderator = "CognitiveFunction", rawdata = TRUE, pi = .95)
+PartialDependence(final, moderator = "EF_sensitivity", rawdata = TRUE, pi = .95)
 ```
 
 
 
-# P curve analysis RT
-```{r P curve analysis}
+# P & Z curve analysis RT
 
-# data_p <- data_RT
+P-Curve-Analysis: The red dots represent the expected proportions of p-values in each bin under the null hypothesis.
+The null hypothesis assumes that there is no true effect and that the distribution of p-values should be uniform across all bins. In this case, the expected proportion for each bin is set to 0.2 (i.e., 20% of p-values are expected to fall into each bin if there is no true effect).
+The red dots are plotted at the positions corresponding to the expected proportions for each bin. They provide a visual reference to compare the observed proportions (represented by the blue bars) against the expected proportions under the null hypothesis.
+If the observed proportions deviate significantly from the expected proportions, it suggests that the distribution of p-values is not uniform and that there may be evidence of a true effect or potential publication bias. The chi-square test is used to assess the statistical significance of the difference between the observed and expected proportions.
 
-# # Load the dmetar package
-# # install.packages("dmetar")
-# library(dmetar)
+Z-Curve-Analysis:
+Histogram of Z-scores: The bars represent the distribution of observed z-scores from the studies. The height of each bar indicates the density of studies with corresponding z-scores.
+Blue Density Curve: The solid blue curve represents the estimated density of true z-scores. It suggests what the distribution of z-scores would look like if there were no selection bias. 
+The dashed blue curve might represent the confidence intervals or variability in the estimation.
 
-# # Ensure your data is in the correct format
-# data_p <- data.frame(
-#   "studlab" = data_p$PlotLabel,
-#   "TE" = data_p$ES_final_RT,
-#   "seTE" = sqrt(data_p$ES_var_RT)
-# )
+Red Vertical Line: The red vertical line typically represents the threshold for statistical significance (e.g., a z-score of 1.96 corresponding to p < 0.05). Studies to the right of this line are considered statistically significant.
+Observed Discovery Rate (ODR): The proportion of studies with z-scores above the significance threshold. This rate is often higher than the true discovery rate due to publication bias.
+Expected Discovery Rate (EDR): This is inferred from the Z-curve and represents the mean power of all conducted studies, both significant and non-significant. It gives an estimate of the proportion of studies expected to produce statistically significant results if all studies were published.
 
-# # Run the p-curve analysis
-# pcurve_result <- pcurve(data_p)
 
-# # Print the results
-# print(pcurve_result)
+```{r Z curve analysis}
+library(ggplot2)
+library(zcurve)
+library(gridExtra)
+library(cowplot)
+
+p_z_curve_analysis <- function(data_type) {
+  if (data_type == "RT") {
+    data <- data_RT
+    effect_size_col <- "ES_final_RT"
+    ES_var <- "ES_var_RT"
+    title <- "Reaction Time"
+  } else if (data_type == "ACC") {
+    data <- data_ACC
+    effect_size_col <- "ES_final_ACC"
+    ES_var <- "ES_var_ACC"
+    title <- "Accuracy"
+  } else {
+    stop("Invalid data_type. Please specify either 'RT' or 'ACC'.")
+  }
+
+  data$p_value <- 2 * pnorm(-abs(data[[effect_size_col]] / sqrt(data[[ES_var]])))
+
+  # Extract p-values
+  p_values <- data$p_value
+  
+  # Subset significant p-values (p < 0.05)
+  significant_p <- p_values[p_values < 0.05]
+  
+  # Calculate the proportion of p-values in each bin
+  bin_counts <- c(
+    sum(significant_p <= 0.01),
+    sum(significant_p > 0.01 & significant_p <= 0.02),
+    sum(significant_p > 0.02 & significant_p <= 0.03),
+    sum(significant_p > 0.03 & significant_p <= 0.04),
+    sum(significant_p > 0.04 & significant_p <= 0.05)
+  )
+
+  # Calculate the expected proportions under the null hypothesis
+  expected_proportions <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+  
+  # Perform chi-square test
+  chi_square_result <- suppressWarnings(chisq.test(bin_counts, p = expected_proportions))
+  
+  # Create a data frame with the results
+  result_df <- data.frame(
+    Bin = c("0.00-0.01", "0.01-0.02", "0.02-0.03", "0.03-0.04", "0.04-0.05"),
+    Observed = bin_counts,
+    Expected = expected_proportions * sum(bin_counts),
+    Proportion = bin_counts / sum(bin_counts)
+  )
+
+  # Create p-curve plot
+  p_plot <- ggplot(result_df, aes(x = Bin)) +
+    geom_bar(aes(y = Proportion), stat = "identity", fill = "steelblue", alpha = 0.7) +
+    geom_point(aes(y = Expected / sum(bin_counts)), color = "red", size = 3) +
+    labs(x = "P-value Bin", y = "Proportion", 
+         title = paste("P-Curve Analysis -", title),
+         subtitle = "Observed vs. Expected Proportions") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5, size = 12),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12))
+
+    # Try to fit the z-curve model
+  fit <- NULL
+  z_plot <- NULL
+  
+  tryCatch({
+    fit <- zcurve(p = p_values)
+    z_plot <- plot(fit, CI = TRUE, annotation = FALSE,
+                   main = paste("Z-Curve Analysis -", title), plot_type = "ggplot")
+  }, error = function(e) {
+    message("Not enough significant p-values for z-curve analysis. Displaying only p-curve plot.")
+    z_plot <- ggplot() + 
+      annotate("text", x = 0.5, y = 0.5, 
+               label = "Insufficient data for Z-curve analysis\n(less than 10 significant p-values)") + 
+      theme_void() +
+      theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+  })
+
+  # Always create a combined plot, even if z_plot is just a placeholder
+  combined_plot <- arrangeGrob(p_plot, z_plot, ncol = 2)
+
+  # Return the results, including the combined plot
+  list(
+    p_curve_data = result_df,
+    chi_square_test = chi_square_result,
+    z_curve_fit = fit,
+    p_plot = p_plot,
+    z_plot = z_plot,
+    combined_plot = combined_plot
+  )
+}
+
+
+
+save_plot <- function(results, data_type) {
+  file_path <- file.path(getwd(), "figures/supplementary", paste0("p_z_curve_", tolower(data_type), ".png"))
+  png(filename = file_path, width = 3500, height = 2200, res = 300)
+  
+  # Create the combined plot on the fly
+  gridExtra::grid.arrange(results$p_plot, results$z_plot, ncol = 2)
+  
+  dev.off()
+}
+
+# Usage:
+rt_results <- p_z_curve_analysis("RT")
+
+# Print p-curve results
+print(rt_results$p_curve_data)
+#print z curve fit results
+print(rt_results$z_curve_fit)
+# Print chi-square test results
+print(rt_results$chi_square_test)
+
+
+
+
+#acc_results <- p_z_curve_analysis("ACC")
+#print(acc_results$chi_square_test)
+
+# Print z-curve summary (only if available)
+if (!is.null(rt_results$z_curve_fit)) {
+  print(summary(rt_results$z_curve_fit, all = TRUE))
+}
+
+
+
+
+rt_results$p_plot
+rt_results$z_plot
+
+#acc_results <- p_z_curve_analysis("ACC")
+#acc_results$p_plot
+#acc_results$z_plot
+
+save_plot(rt_results, "RT")
+#save_plot(acc_results, "ACC")
+
 
 
 ```

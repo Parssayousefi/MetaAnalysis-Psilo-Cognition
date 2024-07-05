@@ -4,7 +4,7 @@ authors: "Parsa Yousefi, Ralph Rippe"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-
+authors: Parsa Yousefi, Ralph Rippe
 
 # setup
 ```{r setup,results='hide',warning = FALSE}
@@ -949,6 +949,7 @@ funnel_plot(ACC = TRUE)
 
 # 3.5.1.3 Model comparison ACC
 ```{r run calcualte_meta for ACC}
+calculate_meta(ACC = TRUE)
 calculate_meta(ACC = TRUE)$model_comparison
 ```
 ```{r forest plot metaviz, fig.width = 7, fig.height = 5}
@@ -1246,12 +1247,12 @@ table(data_RT$EF_sensitivity)
 
 # Set a seed for reproducibility
 set.seed(242)
-metaforest_formula <- ES_final_ACC~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
+metaforest_formula <- ES_final_ACC~CognitiveFunction + DoseLabel + EF_sensitivity + timing 
 run_metaforest_analysis <- function(data_type) {
     library(metaforest)
     library(dplyr)
 
-    metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
+    metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing 
 
     # Load and prepare data based on the specified data type
     if (data_type == "RT") {
@@ -1259,13 +1260,13 @@ run_metaforest_analysis <- function(data_type) {
         data_metaforest$timing <- as.factor(data_RT$timing)
         outcome_var <- "ES_final_RT"
         vi_variable <- "ES_var_RT"
-        metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
+        metaforest_formula <- ES_final_RT~CognitiveFunction + DoseLabel + EF_sensitivity + timing 
     } else if (data_type == "ACC") {
         data_metaforest <- data_ACC
         data_metaforest$timing <- as.factor(data_ACC$timing)
         outcome_var <- "ES_final_ACC"
         vi_variable <- "ES_var_ACC"
-        metaforest_formula <- ES_final_ACC~CognitiveFunction + DoseLabel + EF_sensitivity + timing + dosage_cat_all
+        metaforest_formula <- ES_final_ACC~CognitiveFunction + DoseLabel + EF_sensitivity + timing 
     } else {
         stop("Invalid data type specified. Use 'RT' or 'ACC'.")
     }
@@ -1343,12 +1344,39 @@ run_metaforest_analysis <- function(data_type) {
 retain_mods <- run_metaforest_analysis("ACC")
 conv <- retain_mods$check_conv
 plot(conv)
+
+
+save_plot <- function(conv) {
+    file_path <- file.path(getwd(), "figures/supplementary", "Metaforest_ACC_Conv.png")
+    png(filename = file_path, width = 3500, height = 2200, res = 300)
+    
+    # Generate and save the plot
+    plot(conv)
+    
+    dev.off()
+}
+#save_plot(plot(conv))
 ```
 ```{r Figure S2 retained moderators ACC}
+
+metaforest_formula <- ES_final_ACC~CognitiveFunction + DoseLabel + EF_sensitivity + timing 
+
 # change nr of trees based on convergence!
 retain_mods <- run_metaforest_analysis("ACC")
+print(retain_mods$preselected)
 plot(retain_mods$preselected)
 print(retain_mods$retained_mods)
+
+save_plot <- function(preselected) {
+    file_path <- file.path(getwd(), "figures/supplementary", "Metaforest_ACC_Preselected.png")
+    png(filename = file_path, width = 3500, height = 2200, res = 300)
+    
+    # Generate and save the plot
+    plot(preselected)
+    
+    dev.off()
+}
+save_plot(plot(retain_mods$preselected))
 
 ```
 
@@ -1375,13 +1403,14 @@ fine_tune_metaforest <- function(data_type, predictors) {
     }
 
     set.seed(78)
-
+    
     # Prepare the training control using grouped cross-validation
     grouped_cv <- trainControl(
         method = "cv",
         index = groupKFold(data$ID, k = length(unique(data$ID)))
     )
 
+    n_predictors <- length(predictors)
     # Set up a tuning grid for MetaForest
     tuning_grid <- expand.grid(
         whichweights = c("random", "fixed", "unif"),
@@ -1394,8 +1423,11 @@ fine_tune_metaforest <- function(data_type, predictors) {
     # Ensure the dataset has only the necessary columns
     X <- data[, c("ID", vi_variable, predictors)]
     data$ID <- as.factor(data$ID)
+    #data$predictors <- as.factor(data$predictors)
     data$EF_sensitivity <- as.factor(data$EF_sensitivity)
-
+    data$DoseLabel <- as.factor(data$DoseLabel)
+    data$CognitiveFunction <- as.factor(data$CognitiveFunction)
+    
     # Train the model
     mf_cv <- train(
         x = X,
@@ -1423,7 +1455,9 @@ fine_tune_metaforest <- function(data_type, predictors) {
 
 ```{r Figure S3 Variable/Permutation Importance ACC}
 #, cache = TRUE}
-predictors <- c("DoseLabel", "dosage_cat_all", "EF_sensitivity", "CognitiveFunction") # adjust based on previous analysis
+predictors <- c("DoseLabel", "CognitiveFunction")
+
+#, "dosage_cat_all", "EF_sensitivity", "CognitiveFunction") # adjust based on previous analysis
 
 mf_cv <- fine_tune_metaforest("ACC", predictors)
 # Check the results
@@ -1433,7 +1467,9 @@ final <- mf_cv$final
 
 print(final)
 # variable importance plot
+varIm_ACC <- VarImpPlot(final)
 VarImpPlot(final)
+
 ```
 
 ```{r Figure S4 Partial Dependence Plot ACC}
@@ -1446,32 +1482,154 @@ PartialDependence(final, rawdata = TRUE, pi = .95)
 ```{r Figure S5 Moderated Partial Dependence Plot ACC}
 # moderated partial dependence plot
 PartialDependence(final, moderator = "CognitiveFunction", rawdata = TRUE, pi = .95)
-PartialDependence(final, moderator = "EF_sensitivity", rawdata = TRUE, pi = .95)
+PartialDependence(final, moderator = "DoseLabel", rawdata = TRUE, pi = .95)
 ```
 
 
 
 # P curve analysis ACC
 ```{r P curve analysis}
+library(ggplot2)
+library(zcurve)
+library(gridExtra)
+library(cowplot)
 
-# data_p <- data_RT
+p_z_curve_analysis <- function(data_type) {
+  if (data_type == "RT") {
+    data <- data_RT
+    effect_size_col <- "ES_final_RT"
+    ES_var <- "ES_var_RT"
+    title <- "Reaction Time"
+  } else if (data_type == "ACC") {
+    data <- data_ACC
+    effect_size_col <- "ES_final_ACC"
+    ES_var <- "ES_var_ACC"
+    title <- "Accuracy"
+  } else {
+    stop("Invalid data_type. Please specify either 'RT' or 'ACC'.")
+  }
 
-# # Load the dmetar package
-# # install.packages("dmetar")
-# library(dmetar)
+  data$p_value <- 2 * pnorm(-abs(data[[effect_size_col]] / sqrt(data[[ES_var]])))
 
-# # Ensure your data is in the correct format
-# data_p <- data.frame(
-#   "studlab" = data_p$PlotLabel,
-#   "TE" = data_p$ES_final_RT,
-#   "seTE" = sqrt(data_p$ES_var_RT)
-# )
+  # Extract p-values
+  p_values <- data$p_value
+  
+  # Subset significant p-values (p < 0.05)
+  significant_p <- p_values[p_values < 0.05]
+  
+  # Calculate the proportion of p-values in each bin
+  bin_counts <- c(
+    sum(significant_p <= 0.01),
+    sum(significant_p > 0.01 & significant_p <= 0.02),
+    sum(significant_p > 0.02 & significant_p <= 0.03),
+    sum(significant_p > 0.03 & significant_p <= 0.04),
+    sum(significant_p > 0.04 & significant_p <= 0.05)
+  )
 
-# # Run the p-curve analysis
-# pcurve_result <- pcurve(data_p)
+  # Calculate the expected proportions under the null hypothesis
+  expected_proportions <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+  
+  # Perform chi-square test
+  chi_square_result <- suppressWarnings(chisq.test(bin_counts, p = expected_proportions))
+  
+  # Create a data frame with the results
+  result_df <- data.frame(
+    Bin = c("0.00-0.01", "0.01-0.02", "0.02-0.03", "0.03-0.04", "0.04-0.05"),
+    Observed = bin_counts,
+    Expected = expected_proportions * sum(bin_counts),
+    Proportion = bin_counts / sum(bin_counts)
+  )
 
-# # Print the results
-# print(pcurve_result)
+  # Create p-curve plot
+  p_plot <- ggplot(result_df, aes(x = Bin)) +
+    geom_bar(aes(y = Proportion), stat = "identity", fill = "steelblue", alpha = 0.7) +
+    geom_point(aes(y = Expected / sum(bin_counts)), color = "red", size = 3) +
+    labs(x = "P-value Bin", y = "Proportion", 
+         title = paste("P-Curve Analysis -", title),
+         subtitle = "Observed vs. Expected Proportions") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5, size = 12),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12))
+
+    # Try to fit the z-curve model
+  fit <- NULL
+  z_plot <- NULL
+  
+  tryCatch({
+    fit <- zcurve(p = p_values)
+    z_plot <- plot(fit, CI = TRUE, annotation = FALSE,
+                   main = paste("Z-Curve Analysis -", title), plot_type = "ggplot")
+  }, error = function(e) {
+    message("Not enough significant p-values for z-curve analysis. Displaying only p-curve plot.")
+    z_plot <- ggplot() + 
+      annotate("text", x = 0.5, y = 0.5, 
+               label = "Insufficient data for Z-curve analysis\n(less than 10 significant p-values)") + 
+      theme_void() +
+      theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+  })
+
+  # Always create a combined plot, even if z_plot is just a placeholder
+  combined_plot <- arrangeGrob(p_plot, z_plot, ncol = 2)
+
+  # Return the results, including the combined plot
+  list(
+    p_curve_data = result_df,
+    chi_square_test = chi_square_result,
+    z_curve_fit = fit,
+    p_plot = p_plot,
+    z_plot = z_plot,
+    combined_plot = combined_plot
+  )
+}
+
+
+
+save_plot <- function(results, data_type) {
+  file_path <- file.path(getwd(), "figures/supplementary", paste0("p_z_curve_", tolower(data_type), ".png"))
+  png(filename = file_path, width = 3500, height = 2200, res = 300)
+  
+  # Create the combined plot on the fly
+  gridExtra::grid.arrange(results$p_plot, results$z_plot, ncol = 2)
+  
+  dev.off()
+}
+
+# Usage:
+acc_results <- p_z_curve_analysis("ACC")
+
+# Print p-curve results
+print(acc_results$p_curve_data)
+#print z curve fit results
+print(acc_results$z_curve_fit)
+# Print chi-square test results
+print(acc_results$chi_square_test)
+
+
+
+
+#acc_results <- p_z_curve_analysis("ACC")
+#print(acc_results$chi_square_test)
+
+# Print z-curve summary (only if available)
+# if (!is.null(rt_results$z_curve_fit)) {
+#   print(summary(rt_results$z_curve_fit, all = TRUE))
+# }
+if (!is.null(acc_results$z_curve_fit)) {
+  print(summary(acc_results$z_curve_fit, all = TRUE))
+} else {
+  print("Insufficient data for Z-curve analysis of accuracy data")
+}
+
+
+
+acc_results$p_plot
+acc_results$z_plot
+
+
+save_plot(acc_results, "ACC")
+
 
 
 ```
